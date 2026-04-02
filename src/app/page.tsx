@@ -159,7 +159,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!normalizedEmail) {
-      alert("パスワード再設定メール送信のため、メールアドレスを入力してください")
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してからパスワード再設定リンクを押してください" })
       return
     }
 
@@ -171,18 +171,18 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     setLoading(false)
 
     if (error) {
-      alert("再設定メール送信失敗: " + toFriendlyAuthErrorMessage(error.message))
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
       return
     }
 
-    alert("パスワード再設定メールを送信しました。\nメール内リンクから新しいパスワードを設定できます。")
+    setSignupMessage({ type: "success", text: `${normalizedEmail} にパスワード再設定メールを送信しました。メール内のリンクから新しいパスワードを設定してください。` })
   }
 
   async function handleResendConfirmationEmail() {
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!normalizedEmail) {
-      alert("確認メール再送のため、メールアドレスを入力してください")
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してから確認メール再送を押してください" })
       return
     }
 
@@ -198,18 +198,18 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     setLoading(false)
 
     if (error) {
-      alert("確認メール再送失敗: " + toFriendlyAuthErrorMessage(error.message))
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
       return
     }
 
-    alert("確認メールを再送しました。")
+    setSignupMessage({ type: "success", text: `${normalizedEmail} に確認メールを再送しました。受信メールのリンクをクリックして認証を完了してください。` })
   }
 
   async function handleMagicLinkLogin() {
     const normalizedEmail = email.trim().toLowerCase()
 
     if (!normalizedEmail) {
-      alert("メールリンク送信のため、メールアドレスを入力してください")
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してからメールリンクログインを押してください" })
       return
     }
 
@@ -225,11 +225,11 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     setLoading(false)
 
     if (error) {
-      alert("メールリンク送信失敗: " + toFriendlyAuthErrorMessage(error.message))
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
       return
     }
 
-    alert("ログイン用メールリンクを送信しました。受信メールをご確認ください。")
+    setSignupMessage({ type: "success", text: `${normalizedEmail} にログイン用リンクを送信しました。受信メールをご確認ください。` })
   }
 
   async function handleLineLogin() {
@@ -256,7 +256,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     const demoPassword = process.env.NEXT_PUBLIC_DEMO_PASSWORD?.trim()
 
     if (!demoEmail || !demoPassword) {
-      alert("デモログインが未設定です。NEXT_PUBLIC_DEMO_EMAIL / NEXT_PUBLIC_DEMO_PASSWORD を設定してください。")
+      setSignupMessage({ type: "error", text: "デモログインが設定されていません" })
       return
     }
 
@@ -268,7 +268,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     setLoading(false)
 
     if (error) {
-      alert("デモログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
       return
     }
 
@@ -279,10 +279,10 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
     const normalizedEmail = email.trim().toLowerCase()
     const supabase = createClient()
 
-    if (!normalizedEmail || !password) { alert("メールアドレスとパスワードを入力してください"); return }
-    if (!isLogin && !isPasswordValid(password)) { 
-      alert("パスワードは以下を満たす必要があります：\n・8文字以上\n・英字を含む (A-Z, a-z)\n・数字を含む (0-9)"); 
-      return 
+    if (!normalizedEmail || !password) { setSignupMessage({ type: "error", text: "メールアドレスとパスワードを入力してください" }); return }
+    if (!isLogin && !isPasswordValid(password)) {
+      setSignupMessage({ type: "error", text: "パスワードは8文字以上・英字・数字を含む必要があります" })
+      return
     }
     setLoading(true)
     
@@ -310,16 +310,12 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
       setLoading(false)
       if (loginError) {
         const friendly = toFriendlyAuthErrorMessage(loginError)
-        alert("ログイン失敗: " + friendly)
         if (friendly.includes("メールアドレスまたはパスワードが間違っています")) {
-          if (window.confirm("メールリンクでログインしますか？")) {
-            await handleMagicLinkLogin()
-          }
-        }
-        if (friendly.includes("メール認証が完了していません")) {
-          if (window.confirm("確認メールを再送しますか？")) {
-            await handleResendConfirmationEmail()
-          }
+          setSignupMessage({ type: "error", text: friendly + "　→ 下の「メールリンクログイン」も使えます" })
+        } else if (friendly.includes("メール認証が完了していません")) {
+          setSignupMessage({ type: "error", text: friendly + "　→ 下の「確認メール再送」で再送できます" })
+        } else {
+          setSignupMessage({ type: "error", text: friendly })
         }
         return 
       }

@@ -50,6 +50,9 @@ function toFriendlyAuthErrorMessage(raw: string): string {
   if (message.includes("provider") && message.includes("disabled")) {
     return "このログイン方式は現在無効です。管理者に有効化を依頼してください"
   }
+  if (message.includes("provider line could not be found") || message.includes("unsupported provider") && message.includes("line")) {
+    return "この環境ではLINEログインが未対応です。メールリンクまたはワンタイムコードでログインしてください"
+  }
   if (message.includes("redirect_to is not allowed") || message.includes("redirect url") || message.includes("redirect_uri_mismatch")) {
     return "認証リダイレクトURL設定が一致していません。管理者に設定確認を依頼してください"
   }
@@ -144,15 +147,44 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
   )
 }
 
-function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void; initialMessage?: { type: "success" | "error"; text: string } | null }) {
+function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void; initialMessage?: { type: "success" | "error"; text: string } | null; initialEmail?: string }) {
   const [isLogin, setIsLogin] = useState(true)
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(initialEmail ?? "")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [signupMessage, setSignupMessage] = useState<{ type: "success" | "error"; text: string } | null>(initialMessage ?? null)
   const [otpCode, setOtpCode] = useState("")
   const [otpRequested, setOtpRequested] = useState(false)
   const [lineAuthUrl, setLineAuthUrl] = useState<string | null>(null)
+  const [lineQrUrl, setLineQrUrl] = useState<string | null>(null)
+  const [showLineQr, setShowLineQr] = useState(false)
+  const lineLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_LINE_LOGIN === "true"
+
+  useEffect(() => {
+    if (!initialEmail) return
+    setEmail(initialEmail)
+  }, [initialEmail])
+
+  useEffect(() => {
+    if (!initialMessage) return
+    setSignupMessage(initialMessage)
+  }, [initialMessage])
+
+  async function createLineAuthUrl() {
+    const response = await fetch("/api/auth/line/start", { method: "GET" })
+    const payload = await response.json().catch(() => ({}))
+
+    if (!response.ok || !payload?.authUrl) {
+      const message = typeof payload?.error === "string" && payload.error
+        ? payload.error
+        : "LINEログインの準備に失敗しました。しばらくしてから再試行してください。"
+      throw new Error(message)
+    }
+
+    setLineAuthUrl(payload.authUrl)
+    setLineQrUrl(payload.qrUrl ?? null)
+    return payload.authUrl as string
+  }
 
   async function handlePasswordLogin() {
     await handleSubmit()
@@ -291,35 +323,42 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
   }
 
   async function handleLineLogin() {
+    if (!lineLoginEnabled) {
+      setSignupMessage({ type: "error", text: "この環境ではLINEログインが未対応です。メールリンクまたはワンタイムコードをご利用ください。" })
+      return
+    }
+
     setSignupMessage(null)
     setLineAuthUrl(null)
+    setLineQrUrl(null)
     setLoading(true)
-    const callbackUrl = getAuthCallbackUrl()
-    const { data, error } = await createClient().auth.signInWithOAuth({
-      provider: "line" as "google",
-      options: {
-        redirectTo: callbackUrl,
-        skipBrowserRedirect: true,
-      },
-    })
-
-    if (error) {
-      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
+    try {
+      const authUrl = await createLineAuthUrl()
+      setSignupMessage({ type: "success", text: "LINEログイン画面へ移動します。PCではQRが使えます。開かない場合は下のリンクを押してください。" })
       setLoading(false)
+      window.location.assign(authUrl)
+    } catch (error) {
+      setLoading(false)
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error instanceof Error ? error.message : "LINEログインに失敗しました") })
+    }
+  }
+
+  async function handleShowLineQr() {
+    if (!lineLoginEnabled) {
+      setSignupMessage({ type: "error", text: "この環境ではLINEログインが未対応です。" })
       return
     }
 
-    if (!data?.url) {
-      setSignupMessage({ type: "error", text: "LINEログインを開始できませんでした。メールリンクログインもお試しください" })
+    setLoading(true)
+    try {
+      await createLineAuthUrl()
+      setShowLineQr(true)
+      setSignupMessage({ type: "success", text: "QRを表示しました。スマホのLINEで読み取ってください。" })
+    } catch (error) {
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error instanceof Error ? error.message : "LINE QRの生成に失敗しました") })
+    } finally {
       setLoading(false)
-      return
     }
-
-    setLineAuthUrl(data.url)
-    setSignupMessage({ type: "success", text: "LINEログイン画面へ移動します。PCでは遷移先でQR表示が出る場合があります。開かない場合は下のリンクを押してください。" })
-    setLoading(false)
-
-    window.location.assign(data.url)
   }
 
   async function handleSubmit() {
@@ -607,7 +646,7 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
               )}
             </div>
           )}
-          {isLogin && (
+          {isLogin && lineLoginEnabled && (
             <button
               type="button"
               onClick={handleLineLogin}
@@ -620,13 +659,41 @@ function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User
               LINEでログイン
             </button>
           )}
-          {isLogin && lineAuthUrl && (
+          {isLogin && lineLoginEnabled && (
+            <button
+              type="button"
+              onClick={handleShowLineQr}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              LINE QRを表示
+            </button>
+          )}
+          {isLogin && lineLoginEnabled && lineAuthUrl && (
             <a
               href={lineAuthUrl}
               className="block w-full py-2 text-center text-xs text-slate-300 hover:text-white underline underline-offset-2"
             >
               LINEログイン画面が開かない場合はこちら
             </a>
+          )}
+          {isLogin && lineLoginEnabled && showLineQr && lineQrUrl && (
+            <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 space-y-2">
+              <p className="text-xs text-slate-300 text-center">スマホLINEで読み取り</p>
+              <Image
+                src={lineQrUrl}
+                alt="LINEログインQR"
+                width={176}
+                height={176}
+                unoptimized
+                className="mx-auto w-44 h-44 rounded-lg bg-white p-2"
+              />
+            </div>
+          )}
+          {isLogin && !lineLoginEnabled && (
+            <p className="text-xs text-slate-400 text-center">
+              LINEログインは現在この環境で未対応です
+            </p>
           )}
         </div>
 
@@ -668,6 +735,7 @@ export default function Home() {
   const [showAuthView, setShowAuthView] = useState(false)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
   const [authNotice, setAuthNotice] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [authPrefillEmail, setAuthPrefillEmail] = useState("")
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark"
     const saved = window.localStorage.getItem("kakeibo-theme")
@@ -683,6 +751,7 @@ export default function Home() {
       setUser(nextUser)
       setShowAuthView(false)
       setAuthNotice(null)
+      setAuthPrefillEmail("")
       return
     }
 
@@ -691,6 +760,7 @@ export default function Home() {
       setUser(session.user)
       setShowAuthView(false)
       setAuthNotice(null)
+      setAuthPrefillEmail("")
       return
     }
 
@@ -750,16 +820,27 @@ export default function Home() {
   useEffect(() => {
     const supabase = createClient()
     let pendingAuthErrorMessage: string | null = null
+    let pendingLineOauth = false
+    let pendingLineEmail = ""
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       const authError = params.get("auth_error")
       const oauthErrorDescription = params.get("error_description")
       const oauthError = params.get("error")
+      const lineOauth = params.get("line_oauth")
+      const lineEmail = params.get("line_email")
       const displayError = authError || oauthErrorDescription || oauthError
 
       if (displayError) {
         pendingAuthErrorMessage = toFriendlyAuthErrorMessage(decodeURIComponent(displayError))
+        const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`
+        window.history.replaceState({}, "", cleanUrl)
+      }
+
+      if (lineOauth === "ok") {
+        pendingLineOauth = true
+        pendingLineEmail = lineEmail ? decodeURIComponent(lineEmail) : ""
         const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`
         window.history.replaceState({}, "", cleanUrl)
       }
@@ -774,6 +855,16 @@ export default function Home() {
       if (!session?.user && pendingAuthErrorMessage) {
         setShowAuthView(true)
         setAuthNotice({ type: "error", text: pendingAuthErrorMessage })
+      }
+
+      if (!session?.user && pendingLineOauth) {
+        setShowAuthView(true)
+        if (pendingLineEmail) {
+          setAuthPrefillEmail(pendingLineEmail)
+          setAuthNotice({ type: "success", text: "LINE本人確認が完了しました。メールのワンタイムコード認証でログインを完了してください。" })
+        } else {
+          setAuthNotice({ type: "error", text: "LINE認証は完了しましたが、メール情報を取得できませんでした。メールログインをご利用ください。" })
+        }
       }
 
       setUser(session?.user ?? null)
@@ -915,7 +1006,7 @@ export default function Home() {
         >
           {theme === "dark" ? "ライト" : "ダーク"}
         </button>
-        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} initialMessage={authNotice} />
+        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} initialMessage={authNotice} initialEmail={authPrefillEmail} />
       </>
     )
   }

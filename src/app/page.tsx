@@ -494,42 +494,35 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
             {loading ? "処理中..." : isLogin ? "パスワードでログイン" : "登録する"}
           </button>
           {isLogin && (
-            <button
-              type="button"
-              onClick={handleForgotPassword}
-              disabled={loading}
-              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
-            >
-              パスワード再設定リンク
-            </button>
-          )}
-          {isLogin && (
-            <button
-              type="button"
-              onClick={handleResendConfirmationEmail}
-              disabled={loading}
-              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
-            >
-              確認メール再送
-            </button>
-          )}
-          {isLogin && (
-            <button
-              type="button"
-              onClick={handleMagicLinkLogin}
-              disabled={loading}
-              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
-            >
-              メールリンクログイン
-            </button>
+            <div className="flex justify-between text-xs text-slate-400 pt-1">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={loading}
+                className="hover:text-slate-200 underline underline-offset-2 disabled:opacity-50"
+              >
+                パスワードを忘れた
+              </button>
+              <button
+                type="button"
+                onClick={handleResendConfirmationEmail}
+                disabled={loading}
+                className="hover:text-slate-200 underline underline-offset-2 disabled:opacity-50"
+              >
+                確認メール再送
+              </button>
+            </div>
           )}
           {isLogin && (
             <button
               type="button"
               onClick={handleLineLogin}
               disabled={loading}
-              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+              className="w-full py-2.5 flex items-center justify-center gap-2 bg-[#06C755] hover:bg-[#05b34c] disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-all text-white text-sm"
             >
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.06 2 11.07c0 4.5 3.59 8.26 8.45 8.93.31.07.74.2.85.47.1.24.06.6.03.84l-.14.82c-.04.24-.19.94.83.51 1.01-.43 5.47-3.22 7.46-5.51C20.82 15.34 22 13.33 22 11.07 22 6.06 17.52 2 12 2z"/>
+              </svg>
               LINEでログイン
             </button>
           )}
@@ -538,7 +531,7 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
               type="button"
               onClick={handleDemoLogin}
               disabled={loading}
-              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+              className="w-full py-2 text-xs text-slate-400 hover:text-white underline underline-offset-2 disabled:opacity-50"
             >
               デモアカウントでログイン
             </button>

@@ -1,7 +1,7 @@
 "use client"
 
 import { Transaction, Budget, Profile, formatCurrency } from "@/lib/utils"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 
 interface Props {
   transactions: Transaction[]
@@ -19,6 +19,13 @@ function safeLevel(savingRate: number): { level: string; color: string; bar: num
 }
 
 export default function Dashboard({ transactions, budgets, currentMonth, profile }: Props) {
+  const [monthlySavingsGoal] = useState(() => {
+    if (typeof window === "undefined") return 0
+    const raw = window.localStorage.getItem("kakeibo-savings-goal")
+    const parsed = Number(raw || 0)
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+  })
+
   const stats = useMemo(() => {
     const monthly = transactions.filter(t => t.date.startsWith(currentMonth))
     const income = monthly.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
@@ -171,6 +178,27 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           ))}
         </div>
       </div>
+
+      {monthlySavingsGoal > 0 && (
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-slate-300">🏦 貯金目標</h3>
+            <span className="text-xs text-slate-500">目標 {formatCurrency(monthlySavingsGoal)}</span>
+          </div>
+          <p className="text-sm text-slate-300 mb-2">
+            実績 {formatCurrency(stats.saving + stats.investment)}
+          </p>
+          <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-2 bg-blue-500"
+              style={{ width: `${Math.min(100, Math.round(((stats.saving + stats.investment) / monthlySavingsGoal) * 100))}%` }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            達成率 {Math.min(999, Math.round(((stats.saving + stats.investment) / monthlySavingsGoal) * 100))}%
+          </p>
+        </div>
+      )}
 
       {/* 赤字アラートと将来予測 */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 space-y-3">

@@ -14,6 +14,18 @@ export default function PresetSetup({ onComplete }: Props) {
   const [fixedRate, setFixedRate] = useState("35")
   const [variableRate, setVariableRate] = useState("25")
   const [savingsRate, setSavingsRate] = useState("20")
+  const [monthlySavingsGoal, setMonthlySavingsGoal] = useState("")
+  const [categoryAllocation, setCategoryAllocation] = useState<Record<string, string>>({
+    "住居": "35",
+    "食費": "20",
+    "水道光熱": "10",
+    "通信": "6",
+    "交通": "8",
+    "日用品": "8",
+    "娯楽": "8",
+    "教育": "3",
+    "その他": "2",
+  })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null)
 
@@ -21,12 +33,17 @@ export default function PresetSetup({ onComplete }: Props) {
     return [fixedRate, variableRate, savingsRate].reduce((sum, value) => sum + Number(value || 0), 0)
   }, [fixedRate, savingsRate, variableRate])
 
+  const categoryTotal = useMemo(() => {
+    return Object.values(categoryAllocation).reduce((sum, value) => sum + Number(value || 0), 0)
+  }, [categoryAllocation])
+
   function clampPercent(value: string): number {
     return Math.min(100, Math.max(0, Number(value || 0)))
   }
 
   async function handleCreateProfile() {
     const normalizedTakeHome = Number(takeHome || 0)
+    const normalizedSavingsGoal = Number(monthlySavingsGoal || 0)
     const allocationTargetFixedRate = clampPercent(fixedRate)
     const allocationTargetVariableRate = clampPercent(variableRate)
     const allocationTargetSavingsRate = clampPercent(savingsRate)
@@ -38,8 +55,18 @@ export default function PresetSetup({ onComplete }: Props) {
       return
     }
 
+    if (categoryTotal !== 100) {
+      setMessage({ type: "error", text: "カテゴリ別配分の合計は100%にしてください" })
+      return
+    }
+
     if (takeHome && (!Number.isFinite(normalizedTakeHome) || normalizedTakeHome <= 0)) {
       setMessage({ type: "error", text: "手取りは1以上の数値で入力してください" })
+      return
+    }
+
+    if (monthlySavingsGoal && (!Number.isFinite(normalizedSavingsGoal) || normalizedSavingsGoal < 0)) {
+      setMessage({ type: "error", text: "貯金目標は0以上の数値で入力してください" })
       return
     }
 
@@ -73,11 +100,57 @@ export default function PresetSetup({ onComplete }: Props) {
         return
       }
 
+      // カテゴリ別配分を今月予算へ反映
+      if (normalizedTakeHome > 0) {
+        const month = new Date().toISOString().slice(0, 7)
+        const expenseTarget = Math.max(0, Math.round((normalizedTakeHome * (allocationTargetFixedRate + allocationTargetVariableRate)) / 100))
+        const budgetRows = Object.entries(categoryAllocation).map(([category, ratio]) => ({
+          user_id: authData.user.id,
+          category,
+          month,
+          amount: Math.max(1, Math.round((expenseTarget * Number(ratio || 0)) / 100)),
+        }))
+
+        const { error: budgetError } = await supabase
+          .from("budgets")
+          .upsert(budgetRows, { onConflict: "user_id,category,month" })
+
+        if (budgetError) {
+          setMessage({ type: "error", text: "カテゴリ予算の保存に失敗しました: " + budgetError.message })
+          return
+        }
+      }
+
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kakeibo-savings-goal", String(Math.round(normalizedSavingsGoal || 0)))
+      }
+
       setMessage({ type: "success", text: "初期設定を保存しました" })
       onComplete(data)
     } finally {
       setLoading(false)
     }
+  }
+
+  function applyPreset(name: "balanced" | "defense" | "growth") {
+    if (name === "balanced") {
+      setFixedRate("35")
+      setVariableRate("25")
+      setSavingsRate("20")
+      setCategoryAllocation({ "住居": "35", "食費": "20", "水道光熱": "10", "通信": "6", "交通": "8", "日用品": "8", "娯楽": "8", "教育": "3", "その他": "2" })
+      return
+    }
+    if (name === "defense") {
+      setFixedRate("33")
+      setVariableRate("20")
+      setSavingsRate("30")
+      setCategoryAllocation({ "住居": "38", "食費": "18", "水道光熱": "10", "通信": "6", "交通": "8", "日用品": "8", "娯楽": "5", "教育": "3", "その他": "4" })
+      return
+    }
+    setFixedRate("30")
+    setVariableRate("25")
+    setSavingsRate("30")
+    setCategoryAllocation({ "住居": "32", "食費": "18", "水道光熱": "9", "通信": "6", "交通": "8", "日用品": "7", "娯楽": "10", "教育": "6", "その他": "4" })
   }
 
   return (
@@ -113,6 +186,28 @@ export default function PresetSetup({ onComplete }: Props) {
           placeholder="今月の手取り（任意）"
           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
         />
+
+        <input
+          type="number"
+          min={0}
+          inputMode="numeric"
+          value={monthlySavingsGoal}
+          onChange={e => setMonthlySavingsGoal(e.target.value)}
+          placeholder="毎月の貯金目標（円）"
+          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+        />
+
+        <div className="grid grid-cols-3 gap-2">
+          <button type="button" onClick={() => applyPreset("balanced")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+            バランス
+          </button>
+          <button type="button" onClick={() => applyPreset("defense")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+            守り重視
+          </button>
+          <button type="button" onClick={() => applyPreset("growth")} className="py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-violet-500">
+            成長重視
+          </button>
+        </div>
 
         <div className="grid grid-cols-3 gap-2">
           <label className="text-xs text-slate-400">
@@ -154,9 +249,31 @@ export default function PresetSetup({ onComplete }: Props) {
           配分合計: {rateTotal}%
         </p>
 
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">カテゴリ別配分（支出予算の内訳）</p>
+          <div className="grid grid-cols-3 gap-2">
+            {Object.entries(categoryAllocation).map(([category, ratio]) => (
+              <label key={category} className="text-[11px] text-slate-400">
+                {category}
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={ratio}
+                  onChange={e => setCategoryAllocation(prev => ({ ...prev, [category]: e.target.value }))}
+                  className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-violet-500"
+                />
+              </label>
+            ))}
+          </div>
+          <p className={`text-xs ${categoryTotal === 100 ? "text-slate-400" : "text-red-300"}`}>
+            カテゴリ合計: {categoryTotal}%
+          </p>
+        </div>
+
         <button
           onClick={handleCreateProfile}
-          disabled={loading || rateTotal > 100}
+          disabled={loading || rateTotal > 100 || categoryTotal !== 100}
           className="w-full py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-xl font-bold"
         >
           {loading ? "作成中..." : "開始する"}

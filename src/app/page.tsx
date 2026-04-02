@@ -596,6 +596,15 @@ export default function Home() {
   const [dataLoading, setDataLoading] = useState(false)
   const [needsSetup, setNeedsSetup] = useState(false)
   const [showAuthView, setShowAuthView] = useState(false)
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark"
+    const saved = window.localStorage.getItem("kakeibo-theme")
+    return saved === "light" || saved === "dark" ? saved : "dark"
+  })
+
+  function toggleTheme() {
+    setTheme(prev => (prev === "dark" ? "light" : "dark"))
+  }
 
   const syncSessionToHome = useCallback(async (nextUser?: User | null) => {
     if (nextUser) {
@@ -690,6 +699,12 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    document.documentElement.setAttribute("data-theme", theme)
+    window.localStorage.setItem("kakeibo-theme", theme)
+  }, [theme])
+
   // データ取得
   const loadData = useCallback(async () => {
     if (!user) return
@@ -768,25 +783,67 @@ export default function Home() {
   // ─── Render ───────────────────────────────────────────────────────────────
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <p className="text-slate-400 animate-pulse">読み込み中...</p>
-      </div>
+      <>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+        >
+          {theme === "dark" ? "ライト" : "ダーク"}
+        </button>
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+          <p className="text-slate-400 animate-pulse">読み込み中...</p>
+        </div>
+      </>
     )
   }
 
   if (!user) {
     if (!showAuthView) {
-      return <WelcomeView onStartAuth={() => setShowAuthView(true)} />
+      return (
+        <>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+          >
+            {theme === "dark" ? "ライト" : "ダーク"}
+          </button>
+          <WelcomeView onStartAuth={() => setShowAuthView(true)} />
+        </>
+      )
     }
-    return <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} />
+    return (
+      <>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+        >
+          {theme === "dark" ? "ライト" : "ダーク"}
+        </button>
+        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} />
+      </>
+    )
   }
 
   if (needsSetup) {
-    return <PresetSetup onComplete={(nextProfile) => {
-      setProfile(nextProfile)
-      setNeedsSetup(false)
-      setShowAuthView(false)
-    }} />
+    return (
+      <>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+        >
+          {theme === "dark" ? "ライト" : "ダーク"}
+        </button>
+        <PresetSetup onComplete={(nextProfile) => {
+          setProfile(nextProfile)
+          setNeedsSetup(false)
+          setShowAuthView(false)
+        }} />
+      </>
+    )
   }
 
   const [year, month] = currentMonth.split("-").map(Number)
@@ -796,6 +853,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950">
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+      >
+        {theme === "dark" ? "ライト" : "ダーク"}
+      </button>
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-slate-800 no-print">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">

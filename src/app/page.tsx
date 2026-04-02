@@ -144,12 +144,12 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
   )
 }
 
-function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void }) {
+function AuthView({ onAuth, onBack, initialMessage }: { onAuth: (nextUser?: User | null) => Promise<void> | void; onBack?: () => void; initialMessage?: { type: "success" | "error"; text: string } | null }) {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [signupMessage, setSignupMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [signupMessage, setSignupMessage] = useState<{ type: "success" | "error"; text: string } | null>(initialMessage ?? null)
 
   async function handlePasswordLogin() {
     await handleSubmit()
@@ -597,6 +597,7 @@ export default function Home() {
   const [needsSetup, setNeedsSetup] = useState(false)
   const [showAuthView, setShowAuthView] = useState(false)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
+  const [authNotice, setAuthNotice] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window === "undefined") return "dark"
     const saved = window.localStorage.getItem("kakeibo-theme")
@@ -611,12 +612,21 @@ export default function Home() {
     if (nextUser) {
       setUser(nextUser)
       setShowAuthView(false)
+      setAuthNotice(null)
       return
     }
 
     const { data: { session } } = await createClient().auth.getSession()
-    setUser(session?.user ?? null)
-    setShowAuthView(false)
+    if (session?.user) {
+      setUser(session.user)
+      setShowAuthView(false)
+      setAuthNotice(null)
+      return
+    }
+
+    setUser(null)
+    setShowAuthView(true)
+    setAuthNotice({ type: "error", text: "ログイン状態を確認できませんでした。もう一度ログインしてください。" })
   }, [])
 
   // 月切替
@@ -669,6 +679,7 @@ export default function Home() {
   // 認証チェック
   useEffect(() => {
     const supabase = createClient()
+    let pendingAuthErrorMessage: string | null = null
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
@@ -678,16 +689,27 @@ export default function Home() {
       const displayError = authError || oauthErrorDescription || oauthError
 
       if (displayError) {
-        alert(decodeURIComponent(displayError))
+        pendingAuthErrorMessage = toFriendlyAuthErrorMessage(decodeURIComponent(displayError))
         const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`
         window.history.replaceState({}, "", cleanUrl)
       }
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        setShowAuthView(true)
+        setAuthNotice({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
+      }
+
+      if (!session?.user && pendingAuthErrorMessage) {
+        setShowAuthView(true)
+        setAuthNotice({ type: "error", text: pendingAuthErrorMessage })
+      }
+
       setUser(session?.user ?? null)
       if (session?.user) {
         setShowAuthView(false)
+        setAuthNotice(null)
       }
       setAuthLoading(false)
     })
@@ -823,7 +845,7 @@ export default function Home() {
         >
           {theme === "dark" ? "ライト" : "ダーク"}
         </button>
-        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} />
+        <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} initialMessage={authNotice} />
       </>
     )
   }

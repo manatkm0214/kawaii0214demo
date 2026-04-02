@@ -233,6 +233,7 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
   }
 
   async function handleLineLogin() {
+    setSignupMessage(null)
     setLoading(true)
     const callbackUrl = getAuthCallbackUrl()
     const { data, error } = await createClient().auth.signInWithOAuth({
@@ -243,7 +244,14 @@ function AuthView({ onAuth, onBack }: { onAuth: (nextUser?: User | null) => Prom
       },
     })
 
-    if (error || !data?.url) {
+    if (error) {
+      setSignupMessage({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
+      setLoading(false)
+      return
+    }
+
+    if (!data?.url) {
+      setSignupMessage({ type: "error", text: "LINEログインを開始できませんでした。メールリンクログインもお試しください" })
       setLoading(false)
       return
     }
@@ -774,7 +782,11 @@ export default function Home() {
   }
 
   if (needsSetup) {
-    return <PresetSetup onComplete={() => { setNeedsSetup(false); loadData() }} />
+    return <PresetSetup onComplete={(nextProfile) => {
+      setProfile(nextProfile)
+      setNeedsSetup(false)
+      setShowAuthView(false)
+    }} />
   }
 
   const [year, month] = currentMonth.split("-").map(Number)
@@ -841,6 +853,7 @@ export default function Home() {
                   recentTransactions={transactions}
                   onSuccess={tx => {
                     setTransactions(prev => [tx, ...prev])
+                    setCurrentMonth(tx.date.slice(0, 7))
                     setNavPage("dashboard")
                   }}
                 />

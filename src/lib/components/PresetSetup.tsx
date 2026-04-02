@@ -52,6 +52,9 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
     const saved = window.localStorage.getItem("kakeibo-accent")
     return saved === "defense" || saved === "growth" || saved === "balanced" ? saved : "balanced"
   })
+  const [monthlyBalanceLevel, setMonthlyBalanceLevel] = useState<"plus" | "zero" | "minus">("zero")
+  const [bufferLevel, setBufferLevel] = useState<"low" | "mid" | "high">("mid")
+  const [inflationPressure, setInflationPressure] = useState<"low" | "mid" | "high">("mid")
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null)
 
@@ -170,6 +173,9 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   function applyPreset(name: "balanced" | "defense" | "growth") {
     if (name === "balanced") {
       applyAccent("balanced")
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kakeibo-strategy-mode", "standard")
+      }
       setFixedRate("35")
       setVariableRate("25")
       setSavingsRate("20")
@@ -178,6 +184,9 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
     }
     if (name === "defense") {
       applyAccent("defense")
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kakeibo-strategy-mode", "inflation")
+      }
       setFixedRate("33")
       setVariableRate("20")
       setSavingsRate("30")
@@ -185,10 +194,51 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
       return
     }
     applyAccent("growth")
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kakeibo-strategy-mode", "deficit")
+    }
     setFixedRate("30")
     setVariableRate("25")
     setSavingsRate("30")
     setCategoryAllocation({ "住居": "32", "食費": "18", "水道光熱": "9", "通信": "6", "交通": "8", "日用品": "7", "娯楽": "10", "教育": "6", "その他": "4" })
+  }
+
+  function applyCustomMode() {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kakeibo-strategy-mode", "custom")
+    }
+    setMessage({ type: "success", text: "カスタムモードを選択しました。下の配分を自由に調整して保存できます。" })
+  }
+
+  function autoSelectModeBy3Questions() {
+    const deficitScore = monthlyBalanceLevel === "minus" ? 2 : monthlyBalanceLevel === "zero" ? 1 : 0
+    const bufferScore = bufferLevel === "low" ? 2 : bufferLevel === "mid" ? 1 : 0
+    const inflationScore = inflationPressure === "high" ? 2 : inflationPressure === "mid" ? 1 : 0
+    const total = deficitScore + bufferScore + inflationScore
+
+    if (monthlyBalanceLevel === "minus" || total >= 5) {
+      applyPreset("growth")
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kakeibo-strategy-mode", "deficit")
+      }
+      setMessage({ type: "success", text: "診断結果: 赤字改善/成長重視 を自動選択しました。" })
+      return
+    }
+
+    if (inflationPressure === "high" || total >= 3) {
+      applyPreset("defense")
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("kakeibo-strategy-mode", "inflation")
+      }
+      setMessage({ type: "success", text: "診断結果: 物価高対策/守り重視 を自動選択しました。" })
+      return
+    }
+
+    applyPreset("balanced")
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("kakeibo-strategy-mode", "standard")
+    }
+    setMessage({ type: "success", text: "診断結果: 経済標準/バランス を自動選択しました。" })
   }
 
   return (
@@ -207,6 +257,55 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
           )}
         </div>
         <p className="text-sm text-slate-400">表示名と手取りの目標配分を決めると、ダッシュボードにすぐ反映されます。</p>
+
+        <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 space-y-2">
+          <p className="text-xs font-semibold text-slate-300">質問3つで自動判定</p>
+          <div className="grid grid-cols-1 gap-2 text-xs">
+            <label className="text-slate-400">
+              1. 直近の月次収支は？
+              <select
+                value={monthlyBalanceLevel}
+                onChange={(e) => setMonthlyBalanceLevel(e.target.value as "plus" | "zero" | "minus")}
+                className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2"
+              >
+                <option value="plus">黒字</option>
+                <option value="zero">ほぼトントン</option>
+                <option value="minus">赤字</option>
+              </select>
+            </label>
+            <label className="text-slate-400">
+              2. 生活防衛資金（現金）は？
+              <select
+                value={bufferLevel}
+                onChange={(e) => setBufferLevel(e.target.value as "low" | "mid" | "high")}
+                className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2"
+              >
+                <option value="low">1か月未満</option>
+                <option value="mid">1〜3か月</option>
+                <option value="high">3か月以上</option>
+              </select>
+            </label>
+            <label className="text-slate-400">
+              3. 物価高の負担感は？
+              <select
+                value={inflationPressure}
+                onChange={(e) => setInflationPressure(e.target.value as "low" | "mid" | "high")}
+                className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2"
+              >
+                <option value="low">低い</option>
+                <option value="mid">やや高い</option>
+                <option value="high">高い</option>
+              </select>
+            </label>
+          </div>
+          <button
+            type="button"
+            onClick={autoSelectModeBy3Questions}
+            className="w-full py-2 text-xs rounded-lg bg-blue-700 hover:bg-blue-600"
+          >
+            3問で最適モードを自動選択
+          </button>
+        </div>
 
         {message && (
           <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
@@ -299,6 +398,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
             赤字改善/成長重視
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={applyCustomMode}
+          className="w-full py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl hover:border-cyan-500 text-cyan-300"
+        >
+          カスタムモード（配分を自由入力）
+        </button>
 
         <p className="text-[11px] text-slate-500">
           余裕あり: 経済標準/バランス ・ 余裕が薄い: 物価高対策/守り重視 ・ 余裕がない: 赤字改善/成長重視

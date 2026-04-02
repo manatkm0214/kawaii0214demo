@@ -1,7 +1,7 @@
 "use client"
 
 import { Transaction, Budget, Profile, formatCurrency } from "@/lib/utils"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 interface Props {
   transactions: Transaction[]
@@ -25,7 +25,18 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
     const parsed = Number(raw || 0)
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
   })
-  const [strategyMode, setStrategyMode] = useState<"standard" | "inflation" | "deficit">("standard")
+  const [strategyMode, setStrategyMode] = useState<"standard" | "inflation" | "deficit" | "custom">(() => {
+    if (typeof window === "undefined") return "standard"
+    const saved = window.localStorage.getItem("kakeibo-strategy-mode")
+    return saved === "inflation" || saved === "deficit" || saved === "custom" || saved === "standard"
+      ? saved
+      : "standard"
+  })
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    window.localStorage.setItem("kakeibo-strategy-mode", strategyMode)
+  }, [strategyMode])
 
   const stats = useMemo(() => {
     const monthly = transactions.filter(t => t.date.startsWith(currentMonth))
@@ -149,6 +160,18 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
   }, [currentMonth, transactions])
 
   const policyTargets = useMemo(() => {
+    if (strategyMode === "custom") {
+      const fixed = profile?.allocation_target_fixed_rate ?? 35
+      const variable = profile?.allocation_target_variable_rate ?? 25
+      const savings = profile?.allocation_target_savings_rate ?? 20
+      return {
+        title: "カスタムモード",
+        fixed,
+        variable,
+        savings,
+        notes: "あなたが設定した配分目標を基準に改善ナビを表示",
+      }
+    }
     if (strategyMode === "inflation") {
       return {
         title: "物価高対策モード",
@@ -174,7 +197,7 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
       savings: 20,
       notes: "手取りの範囲で持続可能性を重視した標準配分",
     }
-  }, [strategyMode])
+  }, [profile?.allocation_target_fixed_rate, profile?.allocation_target_savings_rate, profile?.allocation_target_variable_rate, strategyMode])
 
   const improvementNav = useMemo(() => {
     const actions: string[] = []
@@ -289,7 +312,7 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           <span className="text-xs text-slate-500">支出トレンド {expenseTrend.changeRate >= 0 ? `+${expenseTrend.changeRate}` : expenseTrend.changeRate}%</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <button
             type="button"
             onClick={() => setStrategyMode("standard")}
@@ -311,10 +334,17 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
           >
             赤字改善/成長重視
           </button>
+          <button
+            type="button"
+            onClick={() => setStrategyMode("custom")}
+            className={`text-[11px] py-2 rounded-lg border transition-all ${strategyMode === "custom" ? "bg-cyan-700 border-cyan-500 text-white" : "border-slate-700 text-slate-300"}`}
+          >
+            カスタム
+          </button>
         </div>
 
         <p className="text-[11px] text-slate-500">
-          余裕ありは「経済標準」、余裕が薄いときは「物価高対策」、赤字が続くときは「赤字改善」を選択。
+          余裕ありは「経済標準」、余裕が薄いときは「物価高対策」、赤字が続くときは「赤字改善」。個別事情がある場合は「カスタム」。
         </p>
 
         <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300 space-y-1">

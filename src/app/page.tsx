@@ -159,6 +159,8 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
   const [lineAuthUrl, setLineAuthUrl] = useState<string | null>(null)
   const [lineQrUrl, setLineQrUrl] = useState<string | null>(null)
   const [showLineQr, setShowLineQr] = useState(false)
+  const [loginQrImageUrl, setLoginQrImageUrl] = useState<string | null>(null)
+  const [showLoginQr, setShowLoginQr] = useState(false)
   const lineLoginEnabled = process.env.NEXT_PUBLIC_ENABLE_LINE_LOGIN === "true"
 
   useEffect(() => {
@@ -310,6 +312,21 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
     setPostSignupResendEmail(null)
     setEmail("")
     setSignupMessage({ type: "success", text: "別のメールアドレスで新規登録できます。メールアドレスを入力して登録してください。" })
+  }
+
+  function handleShowLoginQr() {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail) {
+      setSignupMessage({ type: "error", text: "メールアドレスを入力してからQRコードを表示してください" })
+      return
+    }
+
+    const origin = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "")
+    const loginUrl = `${origin}/?login_email=${encodeURIComponent(normalizedEmail)}`
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&ecc=M&data=${encodeURIComponent(loginUrl)}`
+    setLoginQrImageUrl(qrUrl)
+    setShowLoginQr(true)
+    setSignupMessage({ type: "success", text: "スマホのカメラでQRを読み取るとこのアプリが開き、メールアドレスが自動入力されます。そのままワンタイムコードでログインできます。" })
   }
 
   async function handleSendOtpCode() {
@@ -727,6 +744,39 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
               )}
             </div>
           )}
+          {isLogin && (
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleShowLoginQr}
+                className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2"
+              >
+                QRコードでスマホにログイン（LINE不要）
+              </button>
+              {showLoginQr && loginQrImageUrl && (
+                <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 space-y-2">
+                  <p className="text-xs text-slate-300 text-center">スマホのカメラで読み取り</p>
+                  <Image
+                    src={loginQrImageUrl}
+                    alt="スマホログイン用QR"
+                    width={180}
+                    height={180}
+                    unoptimized
+                    className="mx-auto w-44 h-44 rounded-lg bg-white p-2"
+                  />
+                  <p className="text-[10px] text-slate-400 text-center">読み取り後、アプリ上でワンタイムコードでログインできます</p>
+                  <button
+                    type="button"
+                    onClick={() => { setShowLoginQr(false); setLoginQrImageUrl(null) }}
+                    className="w-full text-[11px] text-slate-400 hover:text-white underline underline-offset-2"
+                  >
+                    閉じる
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {isLogin && lineLoginEnabled && (
             <button
               type="button"
@@ -908,6 +958,7 @@ export default function Home() {
     let pendingAuthErrorMessage: string | null = null
     let pendingLineOauth = false
     let pendingLineEmail = ""
+    let pendingLoginEmail = ""
 
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
@@ -916,6 +967,7 @@ export default function Home() {
       const oauthError = params.get("error")
       const lineOauth = params.get("line_oauth")
       const lineEmail = params.get("line_email")
+      const loginEmail = params.get("login_email")
       const displayError = authError || oauthErrorDescription || oauthError
 
       if (displayError) {
@@ -927,6 +979,12 @@ export default function Home() {
       if (lineOauth === "ok") {
         pendingLineOauth = true
         pendingLineEmail = lineEmail ? decodeURIComponent(lineEmail) : ""
+        const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`
+        window.history.replaceState({}, "", cleanUrl)
+      }
+
+      if (loginEmail) {
+        pendingLoginEmail = decodeURIComponent(loginEmail)
         const cleanUrl = `${window.location.pathname}${window.location.hash || ""}`
         window.history.replaceState({}, "", cleanUrl)
       }
@@ -951,6 +1009,11 @@ export default function Home() {
         } else {
           setAuthNotice({ type: "error", text: "LINE認証は完了しましたが、メール情報を取得できませんでした。メールログインをご利用ください。" })
         }
+      }
+
+      if (!session?.user && pendingLoginEmail) {
+        setAuthPrefillEmail(pendingLoginEmail)
+        setShowAuthView(true)
       }
 
       setUser(session?.user ?? null)

@@ -21,6 +21,7 @@ export default function ContactPage() {
   const [form, setForm] = useState<ContactForm>(initialForm)
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   function updateField<K extends keyof ContactForm>(key: K, value: ContactForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -30,10 +31,11 @@ export default function ContactPage() {
     e.preventDefault()
 
     if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
-      alert("すべての項目を入力してください")
+      setErrorMsg("すべての項目を入力してください")
       return
     }
 
+    setErrorMsg(null)
     setSubmitting(true)
 
     try {
@@ -48,14 +50,14 @@ export default function ContactPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data?.error || "送信に失敗しました")
+        setErrorMsg(data?.error || "送信に失敗しました。時間をおいて再試行してください")
         return
       }
 
       setDone(true)
       setForm(initialForm)
     } catch {
-      alert("通信エラーが発生しました。時間をおいて再試行してください")
+      setErrorMsg("通信エラーが発生しました。時間をおいて再試行してください")
     } finally {
       setSubmitting(false)
     }
@@ -68,6 +70,12 @@ export default function ContactPage() {
           <h1 className="text-2xl font-bold">お問い合わせフォーム</h1>
           <p className="text-sm text-slate-400 mt-2">不具合報告・要望・ご質問を受け付けています。</p>
         </div>
+
+        {errorMsg && (
+          <div className="bg-red-900/50 border border-red-700/60 rounded-xl px-4 py-3 text-sm text-red-200">
+            {errorMsg}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="bg-slate-800/70 border border-slate-700 rounded-2xl p-6 space-y-4">
           <label className="block text-sm">

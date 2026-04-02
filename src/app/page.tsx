@@ -243,15 +243,8 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
       },
     })
 
-    if (error) {
+    if (error || !data?.url) {
       setLoading(false)
-      alert("LINEログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
-      return
-    }
-
-    if (!data?.url) {
-      setLoading(false)
-      alert("LINEログインURLの取得に失敗しました")
       return
     }
 

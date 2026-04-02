@@ -11,6 +11,12 @@ interface Props {
   mode?: "create" | "edit"
 }
 
+const MONEY_UNITS = [
+  { label: "円", factor: 1 },
+  { label: "千円", factor: 1000 },
+  { label: "万円", factor: 10000 },
+] as const
+
 export default function PresetSetup({ onComplete, initialProfile = null, onCancel, mode = "create" }: Props) {
   const [displayName, setDisplayName] = useState(initialProfile?.display_name ?? "")
   const [takeHome, setTakeHome] = useState(() => {
@@ -22,6 +28,8 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   const [fixedRate, setFixedRate] = useState(String(initialProfile?.allocation_target_fixed_rate ?? 35))
   const [variableRate, setVariableRate] = useState(String(initialProfile?.allocation_target_variable_rate ?? 25))
   const [savingsRate, setSavingsRate] = useState(String(initialProfile?.allocation_target_savings_rate ?? 20))
+  const [takeHomeUnit, setTakeHomeUnit] = useState(1)
+  const [savingsGoalUnit, setSavingsGoalUnit] = useState(1)
   const [monthlySavingsGoal, setMonthlySavingsGoal] = useState(() => {
     if (typeof window === "undefined") return ""
     const raw = window.localStorage.getItem("kakeibo-savings-goal")
@@ -67,8 +75,8 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   }
 
   async function handleCreateProfile() {
-    const normalizedTakeHome = Number(takeHome || 0)
-    const normalizedSavingsGoal = Number(monthlySavingsGoal || 0)
+    const normalizedTakeHome = Number(takeHome || 0) * takeHomeUnit
+    const normalizedSavingsGoal = Number(monthlySavingsGoal || 0) * savingsGoalUnit
     const allocationTargetFixedRate = clampPercent(fixedRate)
     const allocationTargetVariableRate = clampPercent(variableRate)
     const allocationTargetSavingsRate = clampPercent(savingsRate)
@@ -218,25 +226,67 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
           className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
         />
 
-        <input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          value={takeHome}
-          onChange={e => setTakeHome(e.target.value)}
-          placeholder="今月の手取り（任意）"
-          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
-        />
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">今月の手取り（任意）</p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={takeHome}
+              onChange={e => setTakeHome(e.target.value)}
+              placeholder="金額"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+            />
+            <div className="flex gap-1">
+              {MONEY_UNITS.map((u) => (
+                <button
+                  key={u.label}
+                  type="button"
+                  onClick={() => setTakeHomeUnit(u.factor)}
+                  className={`px-3 py-3 rounded-xl text-xs border transition-all ${
+                    takeHomeUnit === u.factor
+                      ? "bg-violet-600 border-violet-500 text-white"
+                      : "bg-slate-900 border-slate-700 text-slate-300"
+                  }`}
+                >
+                  {u.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-        <input
-          type="number"
-          min={0}
-          inputMode="numeric"
-          value={monthlySavingsGoal}
-          onChange={e => setMonthlySavingsGoal(e.target.value)}
-          placeholder="毎月の貯金目標（円）"
-          className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
-        />
+        <div className="space-y-2">
+          <p className="text-xs text-slate-400">毎月の貯金目標</p>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={0}
+              inputMode="numeric"
+              value={monthlySavingsGoal}
+              onChange={e => setMonthlySavingsGoal(e.target.value)}
+              placeholder="金額"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+            />
+            <div className="flex gap-1">
+              {MONEY_UNITS.map((u) => (
+                <button
+                  key={u.label}
+                  type="button"
+                  onClick={() => setSavingsGoalUnit(u.factor)}
+                  className={`px-3 py-3 rounded-xl text-xs border transition-all ${
+                    savingsGoalUnit === u.factor
+                      ? "bg-violet-600 border-violet-500 text-white"
+                      : "bg-slate-900 border-slate-700 text-slate-300"
+                  }`}
+                >
+                  {u.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-3 gap-2">
           <button type="button" onClick={() => applyPreset("balanced")} className={`py-2 text-xs bg-slate-900 border rounded-xl ${accentPreset === "balanced" ? "border-violet-500 text-violet-300" : "border-slate-700 hover:border-violet-500"}`}>

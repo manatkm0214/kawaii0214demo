@@ -55,6 +55,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   const [monthlyBalanceLevel, setMonthlyBalanceLevel] = useState<"plus" | "zero" | "minus">("zero")
   const [bufferLevel, setBufferLevel] = useState<"low" | "mid" | "high">("mid")
   const [inflationPressure, setInflationPressure] = useState<"low" | "mid" | "high">("mid")
+  const [diagnosisDetail, setDiagnosisDetail] = useState<{
+    mode: "standard" | "inflation" | "deficit"
+    total: number
+    balanceScore: number
+    bufferScore: number
+    inflationScore: number
+    reason: string
+  } | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "error" | "success"; text: string } | null>(null)
 
@@ -204,6 +212,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
   }
 
   function applyCustomMode() {
+    setDiagnosisDetail(null)
     if (typeof window !== "undefined") {
       window.localStorage.setItem("kakeibo-strategy-mode", "custom")
     }
@@ -221,6 +230,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
       if (typeof window !== "undefined") {
         window.localStorage.setItem("kakeibo-strategy-mode", "deficit")
       }
+      setDiagnosisDetail({
+        mode: "deficit",
+        total,
+        balanceScore: deficitScore,
+        bufferScore,
+        inflationScore,
+        reason: "赤字または高リスク判定（合計5点以上）のため、赤字改善を推奨",
+      })
       setMessage({ type: "success", text: "診断結果: 赤字改善/成長重視 を自動選択しました。" })
       return
     }
@@ -230,6 +247,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
       if (typeof window !== "undefined") {
         window.localStorage.setItem("kakeibo-strategy-mode", "inflation")
       }
+      setDiagnosisDetail({
+        mode: "inflation",
+        total,
+        balanceScore: deficitScore,
+        bufferScore,
+        inflationScore,
+        reason: "物価高圧力が高い、または中リスク判定（合計3点以上）のため、守り重視を推奨",
+      })
       setMessage({ type: "success", text: "診断結果: 物価高対策/守り重視 を自動選択しました。" })
       return
     }
@@ -238,6 +263,14 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
     if (typeof window !== "undefined") {
       window.localStorage.setItem("kakeibo-strategy-mode", "standard")
     }
+    setDiagnosisDetail({
+      mode: "standard",
+      total,
+      balanceScore: deficitScore,
+      bufferScore,
+      inflationScore,
+      reason: "低リスク判定（合計2点以下）のため、経済標準を推奨",
+    })
     setMessage({ type: "success", text: "診断結果: 経済標準/バランス を自動選択しました。" })
   }
 
@@ -305,6 +338,16 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
           >
             3問で最適モードを自動選択
           </button>
+
+          {diagnosisDetail && (
+            <div className="rounded-lg border border-blue-700/50 bg-blue-900/20 p-3 text-xs text-blue-100 space-y-1">
+              <p className="font-semibold">診断根拠（スコア内訳）</p>
+              <p>月次収支: {diagnosisDetail.balanceScore}点 / 防衛資金: {diagnosisDetail.bufferScore}点 / 物価高負担: {diagnosisDetail.inflationScore}点</p>
+              <p>合計: {diagnosisDetail.total}点</p>
+              <p>判定: {diagnosisDetail.mode === "standard" ? "経済標準" : diagnosisDetail.mode === "inflation" ? "物価高対策" : "赤字改善"}</p>
+              <p className="text-blue-200">理由: {diagnosisDetail.reason}</p>
+            </div>
+          )}
         </div>
 
         {message && (

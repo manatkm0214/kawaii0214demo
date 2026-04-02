@@ -602,25 +602,10 @@ export default function Home() {
     const saved = window.localStorage.getItem("kakeibo-theme")
     return saved === "light" || saved === "dark" ? saved : "dark"
   })
-  const [accent, setAccent] = useState<"balanced" | "defense" | "growth">(() => {
-    if (typeof window === "undefined") return "balanced"
-    const saved = window.localStorage.getItem("kakeibo-accent")
-    return saved === "defense" || saved === "growth" || saved === "balanced" ? saved : "balanced"
-  })
 
   function toggleTheme() {
     setTheme(prev => (prev === "dark" ? "light" : "dark"))
   }
-
-  function cycleAccent() {
-    setAccent(prev => (prev === "balanced" ? "defense" : prev === "defense" ? "growth" : "balanced"))
-  }
-
-  const accentLabel = accent === "balanced"
-    ? "経済標準/バランス"
-    : accent === "defense"
-      ? "物価高対策/守り重視"
-      : "赤字改善/成長重視"
 
   const syncSessionToHome = useCallback(async (nextUser?: User | null) => {
     if (nextUser) {
@@ -721,12 +706,6 @@ export default function Home() {
     window.localStorage.setItem("kakeibo-theme", theme)
   }, [theme])
 
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    document.documentElement.setAttribute("data-accent", accent)
-    window.localStorage.setItem("kakeibo-accent", accent)
-  }, [accent])
-
   // データ取得
   const loadData = useCallback(async () => {
     if (!user) return
@@ -813,13 +792,6 @@ export default function Home() {
         >
           {theme === "dark" ? "ライト" : "ダーク"}
         </button>
-        <button
-          type="button"
-          onClick={cycleAccent}
-          className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-        >
-          色:{accentLabel}
-        </button>
         <div className="min-h-screen bg-slate-950 flex items-center justify-center">
           <p className="text-slate-400 animate-pulse">読み込み中...</p>
         </div>
@@ -838,13 +810,6 @@ export default function Home() {
           >
             {theme === "dark" ? "ライト" : "ダーク"}
           </button>
-          <button
-            type="button"
-            onClick={cycleAccent}
-            className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-          >
-            色:{accentLabel}
-          </button>
           <WelcomeView onStartAuth={() => setShowAuthView(true)} />
         </>
       )
@@ -857,13 +822,6 @@ export default function Home() {
           className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
           {theme === "dark" ? "ライト" : "ダーク"}
-        </button>
-        <button
-          type="button"
-          onClick={cycleAccent}
-          className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-        >
-          色:{accentLabel}
         </button>
         <AuthView onAuth={syncSessionToHome} onBack={() => setShowAuthView(false)} />
       </>
@@ -879,13 +837,6 @@ export default function Home() {
           className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
           {theme === "dark" ? "ライト" : "ダーク"}
-        </button>
-        <button
-          type="button"
-          onClick={cycleAccent}
-          className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-        >
-          色:{accentLabel}
         </button>
         <PresetSetup mode="create" onComplete={(nextProfile) => {
           setProfile(nextProfile)
@@ -905,13 +856,6 @@ export default function Home() {
           className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
           {theme === "dark" ? "ライト" : "ダーク"}
-        </button>
-        <button
-          type="button"
-          onClick={cycleAccent}
-          className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-        >
-          色:{accentLabel}
         </button>
         <PresetSetup
           mode="edit"
@@ -939,13 +883,6 @@ export default function Home() {
         className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
       >
         {theme === "dark" ? "ライト" : "ダーク"}
-      </button>
-      <button
-        type="button"
-        onClick={cycleAccent}
-        className="fixed top-14 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
-      >
-        色:{accentLabel}
       </button>
       {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur border-b border-slate-800 no-print">

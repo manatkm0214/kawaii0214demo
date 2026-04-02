@@ -133,6 +133,10 @@ function WelcomeView({ onStartAuth }: { onStartAuth: () => void }) {
             <span>·</span>
             {' '}
             <Link href="/terms" className="hover:text-slate-300 underline underline-offset-2">利用規約</Link>
+            {' '}
+            <span>·</span>
+            {' '}
+            <Link href="/contact" className="hover:text-slate-300 underline underline-offset-2">お問い合わせ</Link>
           </div>
         </div>
       </div>
@@ -544,6 +548,12 @@ function AuthView({ onAuth, onBack }: { onAuth: () => void; onBack?: () => void 
             {' '}
             <Link href="/terms" className="hover:text-slate-300 underline underline-offset-2">
               利用規約
+            </Link>
+            {' '}
+            <span>·</span>
+            {' '}
+            <Link href="/contact" className="hover:text-slate-300 underline underline-offset-2">
+              お問い合わせ
             </Link>
           </p>
         </div>

@@ -75,6 +75,27 @@ function getAuthCallbackUrl(): string {
   return "/auth/callback"
 }
 
+function getPasswordResetUrl(): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname
+    const isLocalHost = host === "localhost" || host === "127.0.0.1"
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+
+    if (isLocalHost && siteUrl) {
+      return `${siteUrl.replace(/\/$/, "")}/auth/reset-password`
+    }
+
+    return `${window.location.origin}/auth/reset-password`
+  }
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (siteUrl) {
+    return `${siteUrl.replace(/\/$/, "")}/auth/reset-password`
+  }
+
+  return "/auth/reset-password"
+}
+
 function buildLoginPasswordCandidates(rawPassword: string): string[] {
   const candidates = [
     rawPassword,
@@ -106,7 +127,7 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
     }
 
     setLoading(true)
-    const callbackUrl = getAuthCallbackUrl()
+    const callbackUrl = getPasswordResetUrl()
     const { error } = await createClient().auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: callbackUrl,
     })
@@ -117,7 +138,7 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
       return
     }
 
-    alert("パスワード再設定メールを送信しました。\nGmailの受信トレイに無い場合は 迷惑メール と プロモーション を確認し、数分待って再読込してください。")
+    alert("パスワード再設定メールを送信しました。\nメール内リンクから新しいパスワードを設定できます。\nGmailの受信トレイに無い場合は 迷惑メール と プロモーション を確認し、数分待って再読込してください。")
   }
 
   async function handleResendConfirmationEmail() {
@@ -161,6 +182,7 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
       email: normalizedEmail,
       options: {
         emailRedirectTo: callbackUrl,
+        shouldCreateUser: false,
       },
     })
     setLoading(false)

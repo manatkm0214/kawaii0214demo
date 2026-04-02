@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import type { User } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
-import { signUpWithAutoConfirm, signInWithPassword } from "@/lib/supabase/actions"
 import { Transaction, Budget, Profile, NavPage, formatCurrency } from "@/lib/utils"
 import BottomNav from "@/lib/components/BottomNav"
 import Dashboard from "@/lib/components/Dashboard"
@@ -13,6 +12,71 @@ import AIAnalysis from "@/lib/components/AIAnalysis"
 import AnnualReport from "@/lib/components/AnnualReport"
 import PresetSetup from "@/lib/components/PresetSetup"
 
+function validatePassword(pwd: string) {
+  const hasLetters = /[a-zA-Z]/.test(pwd)
+  const hasNumbers = /[0-9]/.test(pwd)
+  const isLongEnough = pwd.length >= 8
+  return { hasLetters, hasNumbers, isLongEnough }
+}
+
+function isPasswordValid(pwd: string): boolean {
+  const { hasLetters, hasNumbers, isLongEnough } = validatePassword(pwd)
+  return hasLetters && hasNumbers && isLongEnough
+}
+
+function toFriendlyAuthErrorMessage(raw: string): string {
+  const message = raw.toLowerCase()
+
+  if (message.includes("invalid login credentials")) {
+    return "メールアドレスまたはパスワードが間違っています"
+  }
+  if (message.includes("email not confirmed")) {
+    return "メール認証が完了していません。受信メールをご確認ください"
+  }
+  if (message.includes("too many requests") || message.includes("over_email_send_rate_limit")) {
+    return "試行回数が多すぎます。少し待ってから再試行してください"
+  }
+  if (message.includes("network") || message.includes("fetch")) {
+    return "通信エラーです。ネットワーク接続を確認してください"
+  }
+  if (message.includes("invalid api key") || message.includes("invalid_api_key")) {
+    return "認証設定に問題があります。管理者にお問い合わせください"
+  }
+  if (message.includes("jwt") || message.includes("token")) {
+    return "セッションエラーが発生しました。ページを再読み込みして再試行してください"
+  }
+  if (message.includes("provider") && message.includes("disabled")) {
+    return "Googleログインが無効です。管理者に有効化を依頼してください"
+  }
+  if (message.includes("redirect_to is not allowed") || message.includes("redirect url") || message.includes("redirect_uri_mismatch")) {
+    return "認証リダイレクトURL設定が一致していません。管理者に設定確認を依頼してください"
+  }
+
+  return raw
+}
+
+function getAuthCallbackUrl(): string {
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/auth/callback`
+  }
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+  if (siteUrl) {
+    return `${siteUrl.replace(/\/$/, "")}/auth/callback`
+  }
+  return "/auth/callback"
+}
+
+function buildLoginPasswordCandidates(rawPassword: string): string[] {
+  const candidates = [
+    rawPassword,
+    rawPassword.normalize("NFKC"),
+    rawPassword.trim(),
+    rawPassword.normalize("NFKC").trim(),
+  ]
+
+  return [...new Set(candidates)]
+}
+
 // ─── Auth View ──────────────────────────────────────────────────────────────
 function AuthView({ onAuth }: { onAuth: () => void }) {
   const [isLogin, setIsLogin] = useState(true)
@@ -20,21 +84,117 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  // パスワードバリデーション
-  function validatePassword(pwd: string) {
-    const hasLetters = /[a-zA-Z]/.test(pwd)
-    const hasNumbers = /[0-9]/.test(pwd)
-    const isLongEnough = pwd.length >= 8
-    return { hasLetters, hasNumbers, isLongEnough }
+  async function handlePasswordLogin() {
+    await handleSubmit()
   }
 
-  function isPasswordValid(pwd: string): boolean {
-    const { hasLetters, hasNumbers, isLongEnough } = validatePassword(pwd)
-    return hasLetters && hasNumbers && isLongEnough
+  async function handleForgotPassword() {
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (!normalizedEmail) {
+      alert("パスワード再設定メール送信のため、メールアドレスを入力してください")
+      return
+    }
+
+    setLoading(true)
+    const callbackUrl = getAuthCallbackUrl()
+    const { error } = await createClient().auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: callbackUrl,
+    })
+    setLoading(false)
+
+    if (error) {
+      alert("再設定メール送信失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    alert("パスワード再設定メールを送信しました。\nGmailの受信トレイに無い場合は 迷惑メール と プロモーション を確認し、数分待って再読込してください。")
+  }
+
+  async function handleResendConfirmationEmail() {
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (!normalizedEmail) {
+      alert("確認メール再送のため、メールアドレスを入力してください")
+      return
+    }
+
+    setLoading(true)
+    const callbackUrl = getAuthCallbackUrl()
+    const { error } = await createClient().auth.resend({
+      type: "signup",
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: callbackUrl,
+      },
+    })
+    setLoading(false)
+
+    if (error) {
+      alert("確認メール再送失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    alert("確認メールを再送しました。\nGmailの受信トレイに無い場合は 迷惑メール と プロモーション を確認してください。")
+  }
+
+  async function handleMagicLinkLogin() {
+    const normalizedEmail = email.trim().toLowerCase()
+
+    if (!normalizedEmail) {
+      alert("メールリンク送信のため、メールアドレスを入力してください")
+      return
+    }
+
+    setLoading(true)
+    const callbackUrl = getAuthCallbackUrl()
+    const { error } = await createClient().auth.signInWithOtp({
+      email: normalizedEmail,
+      options: {
+        emailRedirectTo: callbackUrl,
+      },
+    })
+    setLoading(false)
+
+    if (error) {
+      alert("メールリンク送信失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    alert("ログイン用メールリンクを送信しました。Gmailの受信トレイ/迷惑メール/プロモーションを確認してください。")
+  }
+
+  async function handleGoogleLogin() {
+    setLoading(true)
+    const callbackUrl = getAuthCallbackUrl()
+    const { data, error } = await createClient().auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: callbackUrl,
+        skipBrowserRedirect: true,
+      },
+    })
+
+    if (error) {
+      setLoading(false)
+      alert("Googleログイン失敗: " + toFriendlyAuthErrorMessage(error.message))
+      return
+    }
+
+    if (!data?.url) {
+      setLoading(false)
+      alert("GoogleログインURLの取得に失敗しました")
+      return
+    }
+
+    window.location.assign(data.url)
   }
 
   async function handleSubmit() {
-    if (!email || !password) { alert("メールアドレスとパスワードを入力してください"); return }
+    const normalizedEmail = email.trim().toLowerCase()
+    const supabase = createClient()
+
+    if (!normalizedEmail || !password) { alert("メールアドレスとパスワードを入力してください"); return }
     if (!isLogin && !isPasswordValid(password)) { 
       alert("パスワードは以下を満たす必要があります：\n・8文字以上\n・英字を含む (A-Z, a-z)\n・数字を含む (0-9)"); 
       return 
@@ -42,27 +202,60 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
     setLoading(true)
     
     if (isLogin) {
-      const { error } = await signInWithPassword(email, password)
+      let loginError: string | null = null
+      const passwordCandidates = buildLoginPasswordCandidates(password)
+
+      for (const candidate of passwordCandidates) {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: candidate,
+        })
+
+        if (!error) {
+          loginError = null
+          break
+        }
+
+        loginError = error.message
+        if (!error.message.toLowerCase().includes("invalid login credentials")) {
+          break
+        }
+      }
+
       setLoading(false)
-      if (error) {
-        const message = error.includes("Invalid login credentials") 
-          ? "メールアドレスまたはパスワードが間違っています"
-          : error
-        alert("ログイン失敗: " + message); 
+      if (loginError) {
+        const friendly = toFriendlyAuthErrorMessage(loginError)
+        alert("ログイン失敗: " + friendly)
+        if (friendly.includes("メールアドレスまたはパスワードが間違っています")) {
+          if (window.confirm("パスワード認証で入れないため、メールリンクでログインしますか？")) {
+            await handleMagicLinkLogin()
+          }
+        }
+        if (friendly.includes("メール認証が完了していません")) {
+          if (window.confirm("確認メールを再送しますか？")) {
+            await handleResendConfirmationEmail()
+          }
+        }
         return 
       }
       onAuth()
     } else {
-      const { error } = await signUpWithAutoConfirm(email, password)
+      const { error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          emailRedirectTo: getAuthCallbackUrl(),
+        },
+      })
       setLoading(false)
       if (error) {
-        let message = error || "不明なエラーが発生しました"
+        let message = error.message || "不明なエラーが発生しました"
         if (message.includes("Invalid API key") || message.includes("invalid_api_key")) message = "Supabaseの設定に問題があります。管理者にお問い合わせください。"
         if (message.includes("already registered") || message.includes("already exists")) message = "このメールアドレスは既に登録されています"
         if (message.includes("Password should")) message = "パスワードは8文字以上で、英字と数字を含む必要があります"
         if (message.includes("invalid email")) message = "有効なメールアドレスを入力してください"
         if (message.includes("validation failed")) message = "入力内容を確認してください。特にパスワードは英字と数字を含む8文字以上が必要です"
-        alert("登録失敗: " + message)
+        alert("登録失敗: " + toFriendlyAuthErrorMessage(message))
         return
       }
       alert("登録完了！ログインしてください")
@@ -109,7 +302,7 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
               placeholder="パスワード"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleSubmit()}
+              onKeyDown={e => e.key === "Enter" && handlePasswordLogin()}
               className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
             />
             {!isLogin && password && (
@@ -135,12 +328,52 @@ function AuthView({ onAuth }: { onAuth: () => void }) {
             )}
           </div>
           <button
-            onClick={handleSubmit}
+            onClick={handlePasswordLogin}
             disabled={loading || (!isLogin && !isPasswordValid(password))}
             className="w-full py-3 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold transition-all"
           >
-            {loading ? "処理中..." : isLogin ? "ログイン" : "登録する"}
+            {loading ? "処理中..." : isLogin ? "パスワードでログイン" : "登録する"}
           </button>
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              パスワードを忘れた場合
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleResendConfirmationEmail}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              確認メールを再送
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleMagicLinkLogin}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              メールリンクでログイン
+            </button>
+          )}
+          {isLogin && (
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full py-2 text-xs text-slate-300 hover:text-white underline underline-offset-2 disabled:opacity-50"
+            >
+              Googleでログイン
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -177,6 +410,32 @@ export default function Home() {
   function goToday() {
     const now = new Date()
     setCurrentMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)
+  }
+
+  async function handlePasswordChange() {
+    const newPassword = window.prompt("新しいパスワードを入力してください（8文字以上・英字と数字を含む）")
+    if (newPassword === null) return
+
+    if (!isPasswordValid(newPassword)) {
+      alert("パスワードは以下を満たす必要があります：\n・8文字以上\n・英字を含む (A-Z, a-z)\n・数字を含む (0-9)")
+      return
+    }
+
+    const confirmPassword = window.prompt("確認のため、新しいパスワードをもう一度入力してください")
+    if (confirmPassword === null) return
+
+    if (newPassword !== confirmPassword) {
+      alert("確認用パスワードが一致しません")
+      return
+    }
+
+    const { error } = await createClient().auth.updateUser({ password: newPassword })
+    if (error) {
+      alert("パスワード変更失敗: " + error.message)
+      return
+    }
+
+    alert("パスワードを変更しました")
   }
 
   // 認証チェック
@@ -231,6 +490,33 @@ export default function Home() {
     const a = document.createElement("a")
     a.href = url; a.download = `家計簿_${currentMonth}.csv`; a.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function handleShare() {
+    const [year, month] = currentMonth.split("-").map(Number)
+    const monthPrefix = `${year}-${String(month).padStart(2, "0")}`
+    const monthly = transactions.filter(t => t.date.startsWith(monthPrefix))
+    const income = monthly.filter(t => t.type === "income").reduce((sum, t) => sum + t.amount, 0)
+    const expense = monthly.filter(t => t.type === "expense").reduce((sum, t) => sum + t.amount, 0)
+    const balance = income - expense
+
+    const shareText = `家計簿 ${year}年${month}月\n収入: ${formatCurrency(income)}\n支出: ${formatCurrency(expense)}\n収支: ${formatCurrency(balance)}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "家計簿サマリー",
+          text: shareText,
+          url: window.location.href,
+        })
+        return
+      }
+
+      await navigator.clipboard.writeText(`${shareText}\n${window.location.href}`)
+      alert("共有テキストをクリップボードにコピーしました")
+    } catch {
+      alert("共有に失敗しました")
+    }
   }
 
   async function generateFixedCosts() {
@@ -294,9 +580,11 @@ export default function Home() {
             {navPage === "dashboard" && (
               <>
                 <button onClick={generateFixedCosts} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="固定費を来月分コピー">🔁</button>
+                <button onClick={handleShare} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="共有">📤</button>
                 <button onClick={exportCSV} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="CSV出力">📥</button>
               </>
             )}
+            <button onClick={handlePasswordChange} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">PW変更</button>
             <button onClick={handleSignOut} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-red-600/30 transition-colors">ログアウト</button>
           </div>
         </div>

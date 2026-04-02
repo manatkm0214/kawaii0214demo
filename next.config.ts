@@ -1,5 +1,10 @@
-const nextConfig = {
-  /* config options here */
-};
+import path from "path"
+import type { NextConfig } from "next"
 
-module.exports = nextConfig;
+const nextConfig: NextConfig = {
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
+}
+
+export default nextConfig

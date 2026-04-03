@@ -274,6 +274,9 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
 
   const { level, color, bar } = safeLevel(stats.savingRate)
 
+  const defenseMinimum = Math.round(stats.expense * 3)
+  const defenseTarget = Math.round(stats.expense * 6)
+
   const forecastSavings = useMemo(() => {
     const monthlySavingsActual = stats.saving + stats.investment
     const projectedMonthlySavings = forecast.projectedSaving + forecast.projectedInvestment
@@ -562,15 +565,18 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 space-y-3">
         <h3 className="text-sm font-semibold text-slate-300">詳細指標</h3>
         {[
-          { label: "貯蓄率", value: `${stats.savingRate}%`, good: stats.savingRate >= 20 },
-          { label: "固定費率", value: `${stats.fixedRate}%`, good: stats.fixedRate <= 50 },
-          { label: "浪費率", value: `${stats.wasteRate}%`, good: stats.wasteRate <= 30 },
-          { label: "防衛資金（6ヶ月分）", value: formatCurrency(stats.defenseFund), good: true },
-          { label: "固定費合計", value: formatCurrency(stats.fixed), good: true },
-          { label: "投資額", value: formatCurrency(stats.investment), good: true },
+          { label: "貯蓄率", value: `${stats.savingRate}%`, good: stats.savingRate >= 20, benchmark: "目安: 20%以上" },
+          { label: "固定費率", value: `${stats.fixedRate}%`, good: stats.fixedRate <= 50, benchmark: "目安: 50%以下" },
+          { label: "浪費率", value: `${stats.wasteRate}%`, good: stats.wasteRate <= 30, benchmark: "目安: 30%以下" },
+          { label: "防衛資金（見込み）", value: formatCurrency(stats.defenseFund), good: stats.defenseFund >= defenseMinimum, benchmark: `目安: ${formatCurrency(defenseMinimum)}〜${formatCurrency(defenseTarget)}` },
+          { label: "固定費合計", value: formatCurrency(stats.fixed), good: true, benchmark: "目安: 前月比で維持・微減" },
+          { label: "投資額", value: formatCurrency(stats.investment), good: true, benchmark: "目安: 収入の10〜20%" },
         ].map(item => (
-          <div key={item.label} className="flex justify-between items-center">
-            <span className="text-xs text-slate-400">{item.label}</span>
+          <div key={item.label} className="flex justify-between items-start gap-3">
+            <div>
+              <span className="text-xs text-slate-300">{item.label}</span>
+              <p className="text-[11px] text-slate-500 mt-0.5">{item.benchmark}</p>
+            </div>
             <span className={`text-sm font-semibold ${item.good ? "text-slate-200" : "text-orange-400"}`}>
               {item.value}
             </span>

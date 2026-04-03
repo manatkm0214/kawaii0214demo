@@ -1075,6 +1075,57 @@ export default function Home() {
     }
   }
 
+  async function handleShareTransaction(tx: Transaction) {
+    const signedAmount = `${tx.type === "expense" ? "-" : "+"}${formatCurrency(tx.amount)}`
+    const txText = [
+      "家計簿 取引メモ",
+      `日付: ${tx.date}`,
+      `種別: ${tx.type}`,
+      `カテゴリ: ${tx.category}`,
+      `金額: ${signedAmount}`,
+      `支払方法: ${tx.payment_method}`,
+      `メモ: ${tx.memo || "-"}`,
+    ].join("\n")
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "家計簿 取引",
+          text: txText,
+        })
+        return
+      }
+
+      await navigator.clipboard.writeText(txText)
+      alert("取引内容をクリップボードにコピーしました")
+    } catch {
+      alert("共有に失敗しました")
+    }
+  }
+
+  async function handleDeleteTransaction(tx: Transaction) {
+    const ok = window.confirm(`この取引を削除しますか？\n${tx.date} ${tx.category} ${formatCurrency(tx.amount)}`)
+    if (!ok) return
+    if (!user?.id) {
+      alert("ユーザー情報を確認できません。再ログインしてください。")
+      return
+    }
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", tx.id)
+      .eq("user_id", user.id)
+
+    if (error) {
+      alert("削除に失敗しました: " + error.message)
+      return
+    }
+
+    setTransactions((prev) => prev.filter((item) => item.id !== tx.id))
+  }
+
   async function generateFixedCosts() {
     const res = await fetch("/api/fixed-costs", { method: "POST" })
     const data = await res.json()
@@ -1290,14 +1341,32 @@ export default function Home() {
                           {t.memo && <span className="text-slate-400"> · {t.memo}</span>}
                           {t.is_fixed && <span className="ml-1 text-violet-300 font-semibold">固定</span>}
                         </div>
-                        <span className={
-                          t.type === "income" ? "text-emerald-400 font-semibold"
-                          : t.type === "saving" ? "text-blue-400 font-semibold"
-                          : t.type === "investment" ? "text-violet-400 font-semibold"
-                          : "text-red-400 font-semibold"
-                        }>
-                          {t.type === "expense" ? "-" : "+"}{formatCurrency(t.amount)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={
+                            t.type === "income" ? "text-emerald-400 font-semibold"
+                            : t.type === "saving" ? "text-blue-400 font-semibold"
+                            : t.type === "investment" ? "text-violet-400 font-semibold"
+                            : "text-red-400 font-semibold"
+                          }>
+                            {t.type === "expense" ? "-" : "+"}{formatCurrency(t.amount)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleShareTransaction(t)}
+                            className="px-1.5 py-1 rounded-md border border-slate-600 text-slate-300 hover:text-white hover:border-slate-400"
+                            title="この取引を共有"
+                          >
+                            共有
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTransaction(t)}
+                            className="px-1.5 py-1 rounded-md border border-red-700/50 text-red-300 hover:text-red-200 hover:border-red-500"
+                            title="この取引を削除"
+                          >
+                            削除
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>

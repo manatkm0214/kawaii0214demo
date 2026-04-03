@@ -19,6 +19,16 @@ function isPasswordValid(pwd: string): boolean {
   return pwd.normalize("NFKC").trim().length >= 8
 }
 
+function normalizeAuthIdentifier(raw: string): string {
+  const normalized = raw.normalize("NFKC").trim().toLowerCase()
+  if (!normalized) return ""
+  if (normalized.includes("@")) return normalized
+
+  const safe = normalized.replace(/[^a-z0-9._-]/g, "")
+  const fallbackLocal = safe || `user${Date.now()}`
+  return `${fallbackLocal}@kakeibo.local`
+}
+
 function toServerCompatiblePassword(raw: string): string {
   let next = raw.normalize("NFKC").trim()
   if (!/[a-z]/.test(next)) next += "a"
@@ -299,7 +309,7 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
   }
 
   async function handleForgotPassword() {
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = normalizeAuthIdentifier(email)
 
     if (!normalizedEmail) {
       setSignupMessage({ type: "error", text: "メールアドレスを入力してからパスワード再設定リンクを押してください" })
@@ -325,7 +335,7 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
   }
 
   async function handleResendConfirmationEmail() {
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = normalizeAuthIdentifier(email)
 
     if (!normalizedEmail) {
       setSignupMessage({ type: "error", text: "メールアドレスを入力してから確認メール再送を押してください" })
@@ -441,7 +451,7 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
   }
 
   async function handleSubmit() {
-    const normalizedEmail = email.trim().toLowerCase()
+    const normalizedEmail = normalizeAuthIdentifier(email)
     const normalizedPassword = password.normalize("NFKC").trim()
     const supabase = createClient()
 
@@ -668,12 +678,15 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
           )}
 
           <input
-            type="email"
-            placeholder="メールアドレス"
+            type="text"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="メールアドレス or 任意ID"
             value={email}
             onChange={e => setEmail(e.target.value)}
             className="entry-input w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-400"
           />
+          <p className="text-[11px] text-slate-500 -mt-2">@なし入力もOK（内部でIDとして処理）</p>
           <div>
             <input
               type="password"

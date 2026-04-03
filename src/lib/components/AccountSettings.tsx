@@ -170,13 +170,13 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 space-y-4">
+      <div className="w-full max-w-sm bg-slate-900/95 border border-slate-600 rounded-2xl p-6 space-y-4 shadow-2xl shadow-slate-950/50">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">アカウント設定</h2>
+          <h2 className="text-xl font-bold text-slate-50">アカウント設定</h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs text-slate-300 hover:text-white underline underline-offset-2"
+            className="text-xs text-slate-200 hover:text-white underline underline-offset-2"
           >
             閉じる
           </button>
@@ -185,39 +185,39 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
         {message && (
           <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
             message.type === "success"
-              ? "bg-emerald-900/50 border border-emerald-700/60 text-emerald-200"
-              : "bg-red-900/50 border border-red-700/60 text-red-200"
+              ? "bg-emerald-950 border border-emerald-500/60 text-emerald-100"
+              : "bg-red-950 border border-red-500/60 text-red-100"
           }`}>
             {message.text}
           </div>
         )}
 
-        <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-3 space-y-2">
-          <p className="text-xs text-slate-400">メールアドレス</p>
-          <p className="text-sm text-slate-200 break-all">{user.email ?? "未設定"}</p>
+        <div className="rounded-xl border border-slate-600 bg-slate-800 p-3 space-y-2">
+          <p className="text-xs text-slate-300">メールアドレス</p>
+          <p className="text-sm text-slate-50 break-all">{user.email ?? "未設定"}</p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs text-slate-400">表示名</label>
+          <label className="text-xs font-medium text-slate-200">表示名</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="表示名"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+            className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
           />
           <button
             type="button"
             onClick={handleSaveProfile}
             disabled={savingProfile}
-            className="w-full py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium disabled:opacity-50"
           >
             {savingProfile ? "保存中..." : "アカウント情報を保存"}
           </button>
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs text-slate-400">今月の手取り</p>
+          <p className="text-xs font-medium text-slate-200">今月の手取り</p>
           <div className="flex gap-2">
             <input
               type="number"
@@ -226,7 +226,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
               value={takeHome}
               onChange={(e) => setTakeHome(e.target.value)}
               placeholder="金額"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+              className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
             />
             <div className="flex gap-1">
               {MONEY_UNITS.map((u) => (
@@ -234,7 +234,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
                   key={u.label}
                   type="button"
                   onClick={() => switchTakeHomeUnit(u.factor as 1 | 1000 | 10000)}
-                  className={`px-3 py-3 rounded-xl text-xs border ${takeHomeUnit === u.factor ? "bg-violet-600 border-violet-500 text-white" : "bg-slate-900 border-slate-700 text-slate-300"}`}
+                  className={`px-3 py-3 rounded-xl text-xs border ${takeHomeUnit === u.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
                 >
                   {u.label}
                 </button>
@@ -244,7 +244,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs text-slate-400">毎月の貯金目標</p>
+          <p className="text-xs font-medium text-slate-200">毎月の貯金目標</p>
           <div className="flex gap-2">
             <input
               type="number"
@@ -253,7 +253,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
               value={savingsGoal}
               onChange={(e) => setSavingsGoal(e.target.value)}
               placeholder="金額"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+              className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
             />
             <div className="flex gap-1">
               {MONEY_UNITS.map((u) => (
@@ -261,7 +261,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
                   key={u.label}
                   type="button"
                   onClick={() => switchSavingsGoalUnit(u.factor as 1 | 1000 | 10000)}
-                  className={`px-3 py-3 rounded-xl text-xs border ${savingsGoalUnit === u.factor ? "bg-violet-600 border-violet-500 text-white" : "bg-slate-900 border-slate-700 text-slate-300"}`}
+                  className={`px-3 py-3 rounded-xl text-xs border ${savingsGoalUnit === u.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
                 >
                   {u.label}
                 </button>
@@ -270,28 +270,28 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
           </div>
         </div>
 
-        <div className="border-t border-slate-700 pt-4 space-y-2">
-          <p className="text-xs text-slate-400">パスワード変更</p>
+        <div className="border-t border-slate-600 pt-4 space-y-2">
+          <p className="text-xs font-medium text-slate-200">パスワード変更</p>
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder="新しいパスワード（8文字以上）"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+            className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
           />
           <input
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="確認用パスワード"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 focus:outline-none focus:border-violet-500"
+            className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
           />
-          <p className="text-[11px] text-slate-500">現在 {passwordLen} 文字</p>
+          <p className="text-[11px] text-slate-400">現在 {passwordLen} 文字</p>
           <button
             type="button"
             onClick={handleChangePassword}
             disabled={changingPassword}
-            className="w-full py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50"
+            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold disabled:opacity-50"
           >
             {changingPassword ? "変更中..." : "パスワードを変更"}
           </button>

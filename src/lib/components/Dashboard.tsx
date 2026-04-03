@@ -496,6 +496,17 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
             {categoryAllocationView.slice(0, 9).map((row) => {
               const diff = row.actualPct - row.targetPct
               const over = diff > 0
+              // 固定費・変動費・貯蓄カテゴリ名に一致する場合は手取り基準金額も計算
+              let takeHomeTarget = null
+              if (allocation.takeHome > 0) {
+                if (row.category.includes("固定")) {
+                  takeHomeTarget = Math.round(allocation.takeHome * allocation.fixed.target / 100)
+                } else if (row.category.includes("変動")) {
+                  takeHomeTarget = Math.round(allocation.takeHome * allocation.variable.target / 100)
+                } else if (row.category.includes("貯") || row.category.includes("投資")) {
+                  takeHomeTarget = Math.round(allocation.takeHome * allocation.savings.target / 100)
+                }
+              }
               return (
                 <div key={row.category} className="rounded-xl border border-slate-700 bg-slate-900/40 p-3">
                   <div className="flex items-center justify-between text-xs">
@@ -508,7 +519,13 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
                     <div className="h-1.5 bg-violet-500" style={{ width: `${Math.min(row.targetPct, 100)}%` }} />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-1">
-                    目標 {formatCurrency(row.targetAmount)} ・ 実績 {formatCurrency(row.actualAmount)}{over ? `（+${diff}%超過）` : ""}
+                    目標 {formatCurrency(row.targetAmount)}
+                    {takeHomeTarget !== null && (
+                      <>
+                        <span className="ml-2 text-slate-500">（手取り基準: {formatCurrency(takeHomeTarget)}）</span>
+                      </>
+                    )}
+                    ・ 実績 {formatCurrency(row.actualAmount)}{over ? `（+${diff}%超過）` : ""}
                   </p>
                 </div>
               )

@@ -25,17 +25,19 @@ function safeLevel(savingRate: number): { level: string; color: string; bar: num
   return { level: "D", color: "text-red-400", bar: 20 }
 }
 
+function readSavingsGoalFromStorage(): number {
+  if (typeof window === "undefined") return 0
+  const raw = window.localStorage.getItem("kakeibo-savings-goal")
+  const parsed = Number(raw || 0)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+}
+
 export default function Dashboard({ transactions, budgets, currentMonth, profile, onOpenSetup }: Props) {
   const [highlightAfterSave, setHighlightAfterSave] = useState(() => {
     if (typeof window === "undefined") return false
     return window.sessionStorage.getItem("kakeibo-just-saved") === "1"
   })
-  const [monthlySavingsGoal] = useState(() => {
-    if (typeof window === "undefined") return 0
-    const raw = window.localStorage.getItem("kakeibo-savings-goal")
-    const parsed = Number(raw || 0)
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
-  })
+  const [monthlySavingsGoal, setMonthlySavingsGoal] = useState(() => readSavingsGoalFromStorage())
   const [strategyMode, setStrategyMode] = useState<"standard" | "inflation" | "deficit" | "custom">(() => {
     if (typeof window === "undefined") return "standard"
     const saved = window.localStorage.getItem("kakeibo-strategy-mode")
@@ -69,6 +71,25 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
     if (typeof window === "undefined") return
     window.localStorage.setItem("kakeibo-defense-basis", defenseBasis)
   }, [defenseBasis])
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const syncSavingsGoal = () => {
+      setMonthlySavingsGoal(readSavingsGoalFromStorage())
+    }
+
+    syncSavingsGoal()
+    window.addEventListener("storage", syncSavingsGoal)
+    window.addEventListener("kakeibo-goals-updated", syncSavingsGoal as EventListener)
+    window.addEventListener("focus", syncSavingsGoal)
+
+    return () => {
+      window.removeEventListener("storage", syncSavingsGoal)
+      window.removeEventListener("kakeibo-goals-updated", syncSavingsGoal as EventListener)
+      window.removeEventListener("focus", syncSavingsGoal)
+    }
+  }, [])
 
   useEffect(() => {
     if (typeof window === "undefined" || !highlightAfterSave) return

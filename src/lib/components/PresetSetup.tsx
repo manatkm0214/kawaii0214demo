@@ -227,6 +227,7 @@ export default function PresetSetup({ onComplete, initialProfile = null, onCance
         window.localStorage.setItem("kakeibo-savings-goal", String(Math.round(normalizedSavingsGoal || 0)))
         window.localStorage.setItem("kakeibo-accent", accentPreset)
         document.documentElement.setAttribute("data-accent", accentPreset)
+        window.dispatchEvent(new Event("kakeibo-goals-updated"))
       }
 
       setMessage({ type: "success", text: "初期設定を保存しました" })

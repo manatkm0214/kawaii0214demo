@@ -119,6 +119,7 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
 
       if (typeof window !== "undefined") {
         window.localStorage.setItem("kakeibo-savings-goal", String(Math.round(normalizedSavingsGoal || 0)))
+        window.dispatchEvent(new Event("kakeibo-goals-updated"))
       }
 
       onProfileUpdated(data)

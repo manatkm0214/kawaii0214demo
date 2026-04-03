@@ -13,6 +13,7 @@ import Charts from "@/lib/components/Charts"
 import AIAnalysis from "@/lib/components/AIAnalysis"
 import AnnualReport from "@/lib/components/AnnualReport"
 import PresetSetup from "@/lib/components/PresetSetup"
+import AccountSettings from "@/lib/components/AccountSettings"
 
 function isPasswordValid(pwd: string): boolean {
   return pwd.normalize("NFKC").trim().length >= 8
@@ -39,6 +40,9 @@ function toFriendlyAuthErrorMessage(raw: string): string {
   }
   if (message.includes("invalid api key") || message.includes("invalid_api_key")) {
     return "認証設定に問題があります。管理者にお問い合わせください"
+  }
+  if (message.includes("password should contain at least one character of each")) {
+    return "現在のサーバー設定では、8文字以上かつ『小文字・大文字・数字・記号』をすべて含む必要があります（例: Abc12345!）"
   }
   if (
     message.includes("token") &&
@@ -501,7 +505,7 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
         let message = error.message || "不明なエラーが発生しました"
         if (message.includes("Invalid API key") || message.includes("invalid_api_key")) message = "Supabaseの設定に問題があります。管理者にお問い合わせください。"
         if (message.includes("Password should")) {
-          message = `パスワードは8文字以上で設定してください。\n詳細: ${error.message}`
+          message = "現在のサーバー設定では、8文字以上かつ『小文字・大文字・数字・記号』をすべて含む必要があります（例: Abc12345!）"
         }
         if (message.includes("invalid email")) message = "有効なメールアドレスを入力してください"
         if (message.includes("validation failed")) message = "入力内容を確認してください。パスワードは8文字以上で入力してください"
@@ -799,6 +803,7 @@ export default function Home() {
   const [needsSetup, setNeedsSetup] = useState(false)
   const [showAuthView, setShowAuthView] = useState(false)
   const [showProfileSettings, setShowProfileSettings] = useState(false)
+  const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [authNotice, setAuthNotice] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [authPrefillEmail, setAuthPrefillEmail] = useState("")
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -853,56 +858,6 @@ export default function Home() {
   function goToday() {
     const now = new Date()
     setCurrentMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`)
-  }
-
-  async function handlePasswordChange() {
-    const newPasswordRaw = window.prompt("新しいパスワードを入力してください（8文字以上）")
-    if (newPasswordRaw === null) return
-    const newPassword = newPasswordRaw.normalize("NFKC").trim()
-
-    if (!newPassword) {
-      alert("新しいパスワードを入力してください")
-      return
-    }
-
-    if (!isPasswordValid(newPassword)) {
-      alert("パスワードは8文字以上で入力してください")
-      return
-    }
-
-    const confirmPasswordRaw = window.prompt("確認のため、新しいパスワードをもう一度入力してください")
-    if (confirmPasswordRaw === null) return
-    const confirmPassword = confirmPasswordRaw.normalize("NFKC").trim()
-
-    if (!confirmPassword) {
-      alert("確認用パスワードを入力してください")
-      return
-    }
-
-    if (newPassword !== confirmPassword) {
-      alert("確認用パスワードが一致しません")
-      return
-    }
-
-    const supabase = createClient()
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session?.user) {
-      alert("セッションが切れています。再ログインしてからもう一度お試しください。ログインできない場合は「パスワードを忘れた」から再設定してください。")
-      return
-    }
-
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) {
-      const friendly = toFriendlyAuthErrorMessage(error.message)
-      if (friendly.includes("メールアドレスまたはパスワードが間違っています") || friendly.includes("セッションエラー")) {
-        alert("パスワード変更失敗: " + friendly + "\nログインし直すか、「パスワードを忘れた」から再設定してください。")
-      } else {
-        alert("パスワード変更失敗: " + friendly)
-      }
-      return
-    }
-
-    alert("パスワードを変更しました。次回から新しいパスワードでログインできます。")
   }
 
   // 認証チェック
@@ -1190,6 +1145,29 @@ export default function Home() {
     )
   }
 
+  if (showAccountSettings) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
+        >
+          {theme === "dark" ? "ライト" : "ダーク"}
+        </button>
+        <AccountSettings
+          user={user}
+          profile={profile}
+          onClose={() => setShowAccountSettings(false)}
+          onProfileUpdated={(nextProfile) => {
+            setProfile(nextProfile)
+            loadData()
+          }}
+        />
+      </>
+    )
+  }
+
   const [year, month] = currentMonth.split("-").map(Number)
   const monthLabel = `${year}年${month}月`
   const now = new Date()
@@ -1238,7 +1216,7 @@ export default function Home() {
                 <button onClick={exportCSV} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors" title="CSV出力">📥</button>
               </>
             )}
-            <button onClick={handlePasswordChange} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">PW変更</button>
+            <button onClick={() => setShowAccountSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">アカウント設定</button>
             <button onClick={() => setShowProfileSettings(true)} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">配分目標/初期設定</button>
             <button onClick={handleSignOut} className="text-xs px-2 py-1.5 bg-slate-800 rounded-lg text-slate-300 hover:text-white hover:bg-red-600/30 transition-colors">ログアウト</button>
           </div>

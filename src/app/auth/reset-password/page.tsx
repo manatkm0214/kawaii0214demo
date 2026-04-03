@@ -122,6 +122,11 @@ export default function ResetPasswordPage() {
     setLoading(false)
 
     if (error) {
+      const raw = error.message.toLowerCase()
+      if (raw.includes("password should contain at least one character of each")) {
+        alert("パスワード更新失敗: 現在のサーバー設定では『小文字・大文字・数字・記号』をすべて含む必要があります（例: Abc12345!）")
+        return
+      }
       alert("パスワード更新失敗: " + error.message)
       return
     }

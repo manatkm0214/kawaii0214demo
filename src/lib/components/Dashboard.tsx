@@ -459,16 +459,23 @@ export default function Dashboard({ transactions, budgets, currentMonth, profile
       </div>
 
       {(stats.budgetProgress.length === 0 || !profile?.allocation_take_home) && (
-        <div className="bg-amber-900/20 border border-amber-700/40 rounded-2xl p-4">
-          <p className="text-sm text-amber-200 font-semibold">初期設定が未完了です</p>
-          <p className="text-xs text-amber-100/90 mt-1">
-            配分プリセットとカテゴリ配分を設定すると、予算ボードに自動反映されます。
-          </p>
+        <div className="bg-amber-950 border border-amber-500/70 rounded-2xl p-4 shadow-lg shadow-amber-950/30">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-sm text-amber-50 font-bold">初期設定が未完了です</p>
+              <p className="text-xs text-amber-100 mt-1 leading-relaxed">
+                手取り・配分目標・カテゴリ配分が未設定のため、ボード表示が不完全です。設定を保存するとこの画面にすぐ反映されます。
+              </p>
+            </div>
+            <span className="rounded-full bg-amber-400/15 px-2 py-1 text-[11px] font-semibold text-amber-100 border border-amber-400/30">
+              要設定
+            </span>
+          </div>
           {onOpenSetup && (
             <button
               type="button"
               onClick={onOpenSetup}
-              className="mt-3 px-3 py-2 rounded-xl text-xs bg-amber-600 hover:bg-amber-500 text-white"
+              className="mt-3 w-full px-3 py-2.5 rounded-xl text-sm bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold"
             >
               初期設定を開く
             </button>

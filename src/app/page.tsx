@@ -641,10 +641,11 @@ function AuthView({ onAuth, onBack, initialMessage, initialEmail }: { onAuth: (n
           {signupMessage && (
             <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
               signupMessage.type === "success"
-                ? "bg-emerald-900/50 border border-emerald-700/60 text-emerald-200"
-                : "bg-red-900/50 border border-red-700/60 text-red-200"
+                ? "bg-emerald-950 border border-emerald-500/70 text-emerald-50 shadow-lg shadow-emerald-950/30"
+                : "bg-red-950 border border-red-500/70 text-red-50 shadow-lg shadow-red-950/30"
             }`}>
-              {signupMessage.text}
+              <p className="font-semibold mb-1">{signupMessage.type === "success" ? "完了メッセージ" : "エラーメッセージ"}</p>
+              <p>{signupMessage.text}</p>
             </div>
           )}
 

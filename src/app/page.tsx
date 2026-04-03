@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import type { User } from "@supabase/supabase-js"
@@ -37,6 +37,29 @@ function toServerCompatiblePassword(raw: string): string {
   if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(next)) next += "!"
   if (next.length < 8) next = next.padEnd(8, "x")
   return next
+}
+
+function readStoredTheme(): "dark" | "light" {
+  if (typeof window === "undefined") return "dark"
+  const saved = window.localStorage.getItem("kakeibo-theme")
+  return saved === "light" || saved === "dark" ? saved : "dark"
+}
+
+function subscribeThemeChange(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {}
+
+  const handleChange = () => onStoreChange()
+  window.addEventListener("storage", handleChange)
+  window.addEventListener("kakeibo-theme-updated", handleChange)
+
+  return () => {
+    window.removeEventListener("storage", handleChange)
+    window.removeEventListener("kakeibo-theme-updated", handleChange)
+  }
+}
+
+function subscribeNoop(): () => void {
+  return () => {}
 }
 
 function toFriendlyAuthErrorMessage(raw: string): string {
@@ -835,14 +858,15 @@ export default function Home() {
   const [showAccountSettings, setShowAccountSettings] = useState(false)
   const [authNotice, setAuthNotice] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [authPrefillEmail, setAuthPrefillEmail] = useState("")
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "dark"
-    const saved = window.localStorage.getItem("kakeibo-theme")
-    return saved === "light" || saved === "dark" ? saved : "dark"
-  })
+  const theme = useSyncExternalStore(subscribeThemeChange, readStoredTheme, () => "dark")
+  const hasHydrated = useSyncExternalStore(subscribeNoop, () => true, () => false)
 
   function toggleTheme() {
-    setTheme(prev => (prev === "dark" ? "light" : "dark"))
+    if (typeof window === "undefined") return
+    const nextTheme = theme === "dark" ? "light" : "dark"
+    document.documentElement.setAttribute("data-theme", nextTheme)
+    window.localStorage.setItem("kakeibo-theme", nextTheme)
+    window.dispatchEvent(new Event("kakeibo-theme-updated"))
   }
 
   const syncSessionToHome = useCallback(async (nextUser?: User | null) => {
@@ -999,7 +1023,6 @@ export default function Home() {
   useEffect(() => {
     if (typeof window === "undefined") return
     document.documentElement.setAttribute("data-theme", theme)
-    window.localStorage.setItem("kakeibo-theme", theme)
   }, [theme])
 
   // データ取得
@@ -1143,7 +1166,7 @@ export default function Home() {
           onClick={toggleTheme}
           className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
         >
-          {theme === "dark" ? "ライト" : "ダーク"}
+          {hasHydrated ? (theme === "dark" ? "ライト" : "ダーク") : "テーマ"}
         </button>
         <div className="min-h-screen bg-slate-950 flex items-center justify-center">
           <p className="text-slate-400 animate-pulse">読み込み中...</p>
@@ -1161,7 +1184,7 @@ export default function Home() {
             onClick={toggleTheme}
             className="fixed top-3 right-3 z-50 text-xs px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-200"
           >
-            {theme === "dark" ? "ライト" : "ダーク"}
+            {hasHydrated ? (theme === "dark" ? "ライト" : "ダーク") : "テーマ"}
           </button>
           <WelcomeView onStartAuth={() => setShowAuthView(true)} />
         </>

@@ -65,14 +65,16 @@ export default function Home() {
   }
 
   // AuthViewからmodeを受け取る
-  const syncSessionToHome = useCallback(async (mode?: 'login' | 'register') => {
+  const syncSessionToHome = useCallback(async (mode?: 'login' | 'register', email?: string, password?: string) => {
     const supabase = createClient();
+    const useEmail = email || authPrefillEmail;
+    const usePassword = password || "";
+    if (!useEmail) {
+      setAuthNotice({ type: "error", text: "メールアドレスを入力してください" });
+      return;
+    }
     if (mode === "register") {
-      // 新規登録
-      const { data, error } = await supabase.auth.signUp({
-        email: authPrefillEmail,
-        password: "",
-      });
+      const { data, error } = await supabase.auth.signUp({ email: useEmail, password: usePassword });
       if (error || !data.user) {
         setAuthNotice({ type: "error", text: toFriendlyAuthErrorMessage(error?.message || "新規登録に失敗しました") });
         return;
@@ -81,13 +83,8 @@ export default function Home() {
       setShowAuthView(false);
       setAuthNotice(null);
       setAuthPrefillEmail("");
-      return;
     } else {
-      // ログイン
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: authPrefillEmail,
-        password: "",
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: useEmail, password: usePassword });
       if (error || !data.user) {
         setAuthNotice({ type: "error", text: toFriendlyAuthErrorMessage(error?.message || "ログインに失敗しました") });
         return;
@@ -96,7 +93,6 @@ export default function Home() {
       setShowAuthView(false);
       setAuthNotice(null);
       setAuthPrefillEmail("");
-      return;
     }
   }, [authPrefillEmail]);
 
@@ -176,7 +172,7 @@ export default function Home() {
       }
     }
 
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
         setShowAuthView(true)
         setAuthNotice({ type: "error", text: toFriendlyAuthErrorMessage(error.message) })
@@ -188,12 +184,21 @@ export default function Home() {
       }
 
       if (!session?.user && pendingLineOauth) {
-        setShowAuthView(true)
         if (pendingLineEmail) {
-          setAuthPrefillEmail(pendingLineEmail)
-          setAuthNotice({ type: "success", text: "LINE本人確認が完了しました。メールのPINコード認証でログインを完了してください。" })
+          // LINEで取得したメールにOTPを自動送信してマジックリンクログイン
+          const { error: otpError } = await supabase.auth.signInWithOtp({
+            email: pendingLineEmail,
+            options: { shouldCreateUser: true },
+          })
+          setShowAuthView(true)
+          if (otpError) {
+            setAuthNotice({ type: "error", text: `メール送信に失敗しました: ${otpError.message}` })
+          } else {
+            setAuthNotice({ type: "success", text: `✅ ${pendingLineEmail} にログインリンクを送信しました。メールを開いてリンクをタップしてください。` })
+          }
         } else {
-          setAuthNotice({ type: "error", text: "LINE認証は完了しましたが、メール情報を取得できませんでした。メールログインをご利用ください。" })
+          setShowAuthView(true)
+          setAuthNotice({ type: "error", text: "LINE認証は完了しましたが、メールアドレスを取得できませんでした。" })
         }
       }
 

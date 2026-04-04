@@ -4,7 +4,7 @@ import { useCharacterImage } from "../hooks/useCharacterImage";
 import { useBgTheme } from "../hooks/useBgTheme";
 
 interface AuthViewProps {
-  onAuth: (mode?: 'login' | 'register') => void;
+  onAuth: (mode?: 'login' | 'register', email?: string, password?: string) => void;
   onBack: () => void;
   initialMessage?: { type: "success" | "error"; text: string } | null;
   initialEmail?: string;
@@ -117,7 +117,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onAuth, onBack, initialMessage, ini
         <div className="flex flex-col gap-2 w-full mb-4">
           <button
             type="button"
-            onClick={() => onAuth(mode)}
+            onClick={() => onAuth(mode, email, password)}
             className="w-full px-4 py-2 bg-linear-to-r from-pink-400 to-violet-400 text-white font-bold rounded-xl shadow hover:from-pink-500 hover:to-violet-500 transition"
           >
             <FaEnvelope className="inline mr-2" />メールで{mode === "login" ? "ログイン" : "新規登録"}

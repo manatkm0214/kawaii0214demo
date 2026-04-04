@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef } from "react";
 import { useCharacterImage } from "../../lib/hooks/useCharacterImage";
+import Image from "next/image";
 
 export default function SettingsPage() {
   const { characterUrl, characterName, setCharacterUrl, setCharacterName, clearCharacter } = useCharacterImage();
@@ -89,10 +90,13 @@ export default function SettingsPage() {
 
           {displayUrl ? (
             <div className="animate-float z-10">
-              <img
+              <Image
                 src={displayUrl}
                 alt={displayName || "キャラクター"}
+                width={112}
+                height={112}
                 className="w-28 h-28 rounded-full object-cover border-4 border-pink-300 dark:border-violet-400 shadow-xl"
+                unoptimized // 外部URLの場合は必要
               />
             </div>
           ) : (

@@ -24,7 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var bg=localStorage.getItem('kakeibo-custom-bg');if(bg)document.documentElement.style.setProperty('--background',bg);var theme=localStorage.getItem('kakeibo-theme')||'light';document.documentElement.setAttribute('data-theme',theme);}catch(e){document.documentElement.setAttribute('data-theme','light');}})()`,
+            __html: `(function(){try{var bg=localStorage.getItem('kakeibo-custom-bg');if(bg)document.documentElement.style.setProperty('--background',bg);var theme=localStorage.getItem('kakeibo-theme')||'light';document.documentElement.setAttribute('data-theme',theme);if(theme==='dark')document.documentElement.classList.add('dark');}catch(e){document.documentElement.setAttribute('data-theme','light');}})()`,
           }}
         />
       </head>

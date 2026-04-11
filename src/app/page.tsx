@@ -311,6 +311,7 @@ export default function Home() {
     if (typeof window === "undefined") return;
     window.localStorage.setItem("kakeibo-theme", theme);
     document.documentElement.setAttribute("data-theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   useEffect(() => {

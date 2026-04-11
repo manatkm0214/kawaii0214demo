@@ -385,95 +385,171 @@ export default function WelcomeView({ onStartAuth, onStartGuest }: WelcomeViewPr
 
   return (
     <div
-      className="design-light-shell hero-stage relative min-h-[82vh] overflow-hidden rounded-[36px] px-6 py-8 md:px-8"
+      className="relative min-h-[88vh] overflow-hidden rounded-[40px] px-6 py-10 md:px-10"
       style={{
-        background: "radial-gradient(ellipse at 20% 0%, #fff0f8 0%, #fce7f3 28%, #ede9fe 62%, #dbeafe 100%)",
-        border: "1.5px solid rgba(244,114,182,0.35)",
-        boxShadow: "0 30px 90px rgba(236,72,153,0.18), 0 0 0 4px rgba(252,211,77,0.08)",
+        background:
+          "radial-gradient(ellipse at 10% 0%, rgba(255,192,220,0.55) 0%, transparent 42%)," +
+          "radial-gradient(ellipse at 90% 0%, rgba(196,181,253,0.45) 0%, transparent 38%)," +
+          "radial-gradient(ellipse at 50% 100%, rgba(125,211,252,0.35) 0%, transparent 44%)," +
+          "linear-gradient(160deg, #fff8fd 0%, #fce7f3 22%, #ede9fe 52%, #dbeafe 78%, #f0fdf4 100%)",
+        border: "1.5px solid rgba(244,114,182,0.3)",
+        boxShadow:
+          "0 0 0 1px rgba(255,255,255,0.8) inset," +
+          "0 40px 100px -30px rgba(236,72,153,0.22)," +
+          "0 20px 60px -20px rgba(139,92,246,0.18)",
       }}
     >
-      <div className="sparkle-field" aria-hidden />
+      {/* クリスタルフレーム装飾 */}
+      <div className="pointer-events-none absolute inset-0 rounded-[40px]" aria-hidden>
+        {/* 二重内枠 */}
+        <div className="absolute inset-4 rounded-[32px]" style={{ border: "1px solid rgba(244,114,182,0.15)" }} />
+        <div className="absolute inset-8 rounded-[26px]" style={{ border: "1px solid rgba(196,181,253,0.12)" }} />
 
-      {/* お嬢様フレーム装飾 */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-5 rounded-[28px]" style={{ border: "1px solid rgba(244,114,182,0.18)" }} />
-        <div className="absolute inset-9 rounded-3xl" style={{ border: "1px solid rgba(252,211,77,0.13)" }} />
-        <div className="absolute left-4  top-4    text-xl animate-float-slow" style={{ color: "rgba(244,114,182,0.6)" }}>✿</div>
-        <div className="absolute right-4 top-4    text-xl animate-float-slow" style={{ color: "rgba(252,211,77,0.7)", animationDelay: "0.4s" }}>✿</div>
-        <div className="absolute left-4  bottom-4 text-xl animate-float-slow" style={{ color: "rgba(167,139,250,0.6)", animationDelay: "0.8s" }}>✿</div>
-        <div className="absolute right-4 bottom-4 text-xl animate-float-slow" style={{ color: "rgba(244,114,182,0.5)", animationDelay: "1.2s" }}>✿</div>
-        <div className="absolute left-[8%]  top-[10%] text-4xl animate-float-slow" style={{ color: "rgba(249,168,212,0.8)" }}>★</div>
-        <div className="absolute right-[10%] top-[14%] text-3xl animate-float-slow" style={{ color: "rgba(216,180,254,0.8)", animationDelay: "0.6s" }}>✦</div>
-        <div className="absolute left-[46%]  top-[8%]  text-2xl animate-float-slow" style={{ color: "rgba(252,211,77,0.8)", animationDelay: "0.3s" }}>✶</div>
-        <div className="absolute left-[28%]  top-[4%]  text-xl animate-float-slow" style={{ animationDelay: "0.5s" }}>🌸</div>
-        <div className="absolute right-[26%] top-[6%]  text-xl animate-float-slow" style={{ animationDelay: "1s" }}>🌸</div>
+        {/* コーナー宝石 */}
+        {[
+          { pos: "top-3 left-3", color: "#f9a8d4", delay: "0s" },
+          { pos: "top-3 right-3", color: "#c4b5fd", delay: "0.5s" },
+          { pos: "bottom-3 left-3", color: "#93c5fd", delay: "1s" },
+          { pos: "bottom-3 right-3", color: "#f9a8d4", delay: "1.5s" },
+        ].map(({ pos, color, delay }) => (
+          <div key={pos} className={`absolute ${pos} animate-float-slow`} style={{ animationDelay: delay }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M11 2L13.5 8.5L20 11L13.5 13.5L11 20L8.5 13.5L2 11L8.5 8.5Z" fill={color} opacity="0.85" />
+              <path d="M11 5L12.5 9.5L17 11L12.5 12.5L11 17L9.5 12.5L5 11L9.5 9.5Z" fill="white" opacity="0.5" />
+            </svg>
+          </div>
+        ))}
+
+        {/* フローティングスパークル */}
+        {[
+          { pos: "left-[7%] top-[12%]", char: "✦", color: "rgba(249,168,212,0.9)", size: "text-3xl", delay: "0s" },
+          { pos: "right-[9%] top-[16%]", char: "✦", color: "rgba(196,181,253,0.9)", size: "text-2xl", delay: "0.7s" },
+          { pos: "left-[44%] top-[6%]", char: "✶", color: "rgba(252,211,77,0.85)", size: "text-xl", delay: "0.3s" },
+          { pos: "left-[22%] top-[5%]", char: "🌸", size: "text-lg", delay: "0.5s", color: "" },
+          { pos: "right-[24%] top-[7%]", char: "🌸", size: "text-lg", delay: "1.1s", color: "" },
+          { pos: "left-[3%] top-[50%]", char: "💎", size: "text-base", delay: "0.9s", color: "" },
+          { pos: "right-[3%] top-[45%]", char: "💎", size: "text-base", delay: "0.4s", color: "" },
+        ].map(({ pos, char, color, size, delay }) => (
+          <div
+            key={pos}
+            className={`absolute ${pos} ${size} animate-float-slow select-none`}
+            style={{ color: color || undefined, animationDelay: delay }}
+          >
+            {char}
+          </div>
+        ))}
+
+        {/* プリズム光線 */}
+        <div
+          className="absolute -top-10 left-[30%] h-64 w-1 rotate-[20deg] blur-sm"
+          style={{ background: "linear-gradient(180deg,rgba(249,168,212,0.5),transparent)" }}
+        />
+        <div
+          className="absolute -top-10 left-[60%] h-56 w-0.5 rotate-[-15deg] blur-sm"
+          style={{ background: "linear-gradient(180deg,rgba(196,181,253,0.4),transparent)" }}
+        />
+        <div
+          className="absolute -top-10 left-[50%] h-72 w-0.5 blur-sm"
+          style={{ background: "linear-gradient(180deg,rgba(125,211,252,0.35),transparent)" }}
+        />
       </div>
 
       {/* メインコンテンツ */}
-      <div className="relative z-10 grid items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-5 text-center lg:text-left">
+      <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="space-y-6 text-center lg:text-left">
 
-          <p className="hero-badge inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.32em]">
-            👑 {t("お嬢様アイドルへようこそ", "Welcome — Princess Idol")}
-          </p>
+          {/* バッジ */}
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.36em]"
+            style={{
+              background: "linear-gradient(135deg,rgba(255,255,255,0.95),rgba(253,242,248,0.9))",
+              border: "1px solid rgba(244,114,182,0.35)",
+              boxShadow: "0 8px 24px -8px rgba(236,72,153,0.28), inset 0 1px 0 rgba(255,255,255,0.9)",
+              color: "#9d174d",
+            }}
+          >
+            <span className="text-sm">👑</span>
+            {t("お姫様アイドル家計ボード", "Princess Idol Budget Board")}
+          </div>
 
+          {/* タイトル */}
           <div>
             <h1
-              className="hero-title text-4xl font-black tracking-tight md:text-5xl"
-              style={{ textShadow: "0 2px 12px rgba(236,72,153,0.22)" }}
+              className="font-black tracking-[-0.04em]"
+              style={{
+                fontSize: "clamp(2.8rem,8vw,4.5rem)",
+                background: "linear-gradient(135deg,#be185d 0%,#7c3aed 45%,#0891b2 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                filter: "drop-shadow(0 2px 8px rgba(190,24,93,0.18))",
+              }}
             >
               Balance
             </h1>
-            <p className="mt-1 text-sm font-semibold tracking-[0.18em] uppercase" style={{ color: "#be185d", opacity: 0.7 }}>
-              ✦ {t("家計簿 × アイドル", "Household × Idol")}
+            <p
+              className="mt-1.5 text-sm font-bold tracking-[0.22em] uppercase"
+              style={{ color: "#be185d", opacity: 0.75 }}
+            >
+              ✦ {t("きらきらアイドル家計簿", "Idol Household Budget")} ✦
             </p>
-            <p className="mt-4 max-w-2xl text-base font-medium leading-7 md:text-lg" style={{ color: "#4a044e" }}>
+            <p
+              className="mt-5 max-w-xl text-base leading-[1.9] md:text-lg"
+              style={{ color: "#4a044e", fontWeight: 500 }}
+            >
               {t(
-                "かわいく始めて、あとから背景もキャラクターも自分のデザインに変えられます。",
-                "Start cute — change the background and characters to your own design later.",
+                "カラフルな庭園と湖、ピアノやバイオリン、お花畑を重ねた、毎日使いたくなるきらきらアイドル家計ボード。",
+                "A sparkling idol budget board blending a colorful garden, lake, piano, violin and flower field.",
               )}
             </p>
           </div>
 
-          <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          {/* フィーチャーカード */}
+          <div className="grid gap-3 sm:grid-cols-3">
             {[
-              { icon: "✨", text: t("入力とボード切替を1か所に", "Input & boards in one place") },
-              { icon: "💎", text: t("目標・安全度をまとめて確認", "Goals & safety at a glance") },
-              { icon: "🌟", text: t("印刷・共有・英語切替も対応", "Print, share & bilingual") },
+              { icon: "✨", ja: "入力＆ボード", en: "Input & Board" },
+              { icon: "💎", ja: "目標・安全度", en: "Goals & Safety" },
+              { icon: "🌟", ja: "共有・英語対応", en: "Share & Bilingual" },
             ].map((item) => (
               <div
-                key={item.text}
-                className="rounded-3xl px-4 py-3.5 text-sm font-bold"
+                key={item.ja}
+                className="group relative overflow-hidden rounded-3xl px-4 py-4 text-center text-sm font-bold transition-transform duration-300 hover:-translate-y-1"
                 style={{
+                  background:
+                    "linear-gradient(145deg,rgba(255,255,255,0.97),rgba(253,242,248,0.93),rgba(237,233,254,0.9))",
+                  border: "1.5px solid rgba(244,114,182,0.22)",
+                  boxShadow:
+                    "0 8px 24px -10px rgba(236,72,153,0.2)," +
+                    "inset 0 1px 0 rgba(255,255,255,0.95)",
                   color: "#831843",
-                  background: "linear-gradient(135deg,rgba(255,255,255,0.96),rgba(253,242,248,0.92))",
-                  border: "1.5px solid rgba(244,114,182,0.28)",
-                  boxShadow: "0 6px 18px -8px rgba(236,72,153,0.2)",
                 }}
               >
-                <span className="mr-2 text-base">{item.icon}</span>{item.text}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: "radial-gradient(circle at 50% 0%,rgba(244,114,182,0.08),transparent 60%)" }}
+                />
+                <div className="text-xl mb-1">{item.icon}</div>
+                <div>{t(item.ja, item.en)}</div>
               </div>
             ))}
           </div>
 
-          {/* スタートの流れ（スクロール風） */}
+          {/* スタートフロー */}
           <div
-            className="relative overflow-hidden rounded-3xl px-5 py-4 text-sm"
+            className="relative overflow-hidden rounded-[24px] px-5 py-4"
             style={{
-              background: "linear-gradient(135deg,#fffbf2 0%,#fff5f9 50%,#f5f0ff 100%)",
-              border: "1.5px solid rgba(252,211,77,0.5)",
-              boxShadow: "0 8px 24px -8px rgba(244,114,182,0.15), inset 0 1px 0 rgba(255,255,255,0.9)",
+              background: "linear-gradient(135deg,rgba(255,251,242,0.98),rgba(255,245,250,0.96),rgba(245,240,255,0.95))",
+              border: "1.5px solid rgba(252,211,77,0.45)",
+              boxShadow: "0 10px 28px -10px rgba(244,114,182,0.14), inset 0 1px 0 rgba(255,255,255,0.95)",
             }}
           >
-            <div className="absolute right-3 top-2 text-xl opacity-40">🌹</div>
-            <div className="absolute left-3 bottom-2 text-lg opacity-30">🌸</div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em]" style={{ color: "#be185d" }}>
-              ✦ {t("スタートの流れ", "Start flow")}
+            <div className="absolute right-4 top-3 text-xl opacity-35 animate-float-slow">🌹</div>
+            <p className="text-xs font-black uppercase tracking-[0.3em]" style={{ color: "#be185d" }}>
+              ✦ {t("スタートの流れ", "How to start")}
             </p>
-            <p className="mt-2 font-medium leading-relaxed" style={{ color: "#6b21a8" }}>
+            <p className="mt-2 text-sm font-medium leading-relaxed" style={{ color: "#6b21a8" }}>
               {t(
-                "タイトル → 利用規約の確認 → デザイン設定 → ログインの順で進みます。",
-                "Title → Terms review → Design setup → Login.",
+                "タイトル → 利用規約 → デザイン設定 → ログインの順で進みます",
+                "Title → Terms → Design setup → Login",
               )}
             </p>
           </div>
@@ -483,16 +559,32 @@ export default function WelcomeView({ onStartAuth, onStartGuest }: WelcomeViewPr
             <button
               type="button"
               onClick={onStartAuth}
-              className="idol-cta rounded-full px-8 py-4 text-sm font-bold tracking-wide"
-              style={{ boxShadow: "0 14px 36px -8px rgba(236,72,153,0.5), 0 4px 12px rgba(236,72,153,0.2)" }}
+              className="relative overflow-hidden rounded-full px-10 py-4 text-sm font-black tracking-wide text-white transition-all duration-300 hover:-translate-y-0.5 hover:brightness-110 active:scale-95"
+              style={{
+                background: "linear-gradient(135deg,#ec4899 0%,#a855f7 50%,#38bdf8 100%)",
+                boxShadow:
+                  "0 16px 40px -10px rgba(168,85,247,0.55)," +
+                  "0 6px 16px rgba(236,72,153,0.3)," +
+                  "inset 0 1px 0 rgba(255,255,255,0.25)",
+              }}
             >
-              {t("✨ 次へ進む", "✨ Next")}
+              <span className="relative z-10">✨ {t("次へ進む", "Next")}</span>
+              <div
+                className="absolute inset-0 opacity-0 hover:opacity-100 transition-opacity"
+                style={{ background: "linear-gradient(120deg,rgba(255,255,255,0.18) 0%,transparent 50%)" }}
+              />
             </button>
             {onStartGuest && (
               <button
                 type="button"
                 onClick={onStartGuest}
-                className="idol-subcta rounded-full px-7 py-4 text-sm font-semibold transition"
+                className="rounded-full px-8 py-4 text-sm font-bold transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
+                style={{
+                  background: "linear-gradient(135deg,rgba(255,255,255,0.96),rgba(253,242,248,0.92))",
+                  border: "1.5px solid rgba(244,114,182,0.3)",
+                  boxShadow: "0 10px 28px -10px rgba(236,72,153,0.18)",
+                  color: "#9d174d",
+                }}
               >
                 {t("ゲストで試す", "Try as guest")}
               </button>
@@ -500,16 +592,25 @@ export default function WelcomeView({ onStartAuth, onStartGuest }: WelcomeViewPr
           </div>
         </div>
 
-        {/* キャラクター画像 */}
-        <div className="relative flex min-h-90 items-center justify-center">
-          <div className="absolute inset-8 rounded-full bg-pink-200/60 blur-3xl" />
-          <div className="absolute inset-4 rounded-full bg-violet-100/40 blur-2xl" />
+        {/* キャラクタービジュアル */}
+        <div className="relative flex min-h-[340px] items-center justify-center">
+          {/* 背景グロー */}
+          <div className="absolute inset-6 rounded-full blur-3xl" style={{ background: "radial-gradient(circle,rgba(249,168,212,0.55),rgba(196,181,253,0.35),transparent 70%)" }} />
+          <div className="absolute inset-12 rounded-full blur-2xl" style={{ background: "radial-gradient(circle,rgba(125,211,252,0.3),transparent)" }} />
+
+          {/* クリスタルカード */}
           <div
-            className="idol-glass relative rounded-4xl p-5"
+            className="relative z-10 rounded-[32px] p-5 transition-transform duration-500 hover:scale-[1.02]"
             style={{
-              border: "1.5px solid rgba(252,211,77,0.35)",
-              background: "linear-gradient(180deg,rgba(255,255,255,0.92),rgba(253,242,248,0.88))",
-              boxShadow: "0 26px 60px -36px rgba(236,72,153,0.3)",
+              background:
+                "linear-gradient(145deg,rgba(255,255,255,0.95),rgba(253,242,248,0.9),rgba(237,233,254,0.88))",
+              border: "1.5px solid rgba(252,211,77,0.3)",
+              boxShadow:
+                "0 30px 70px -30px rgba(236,72,153,0.35)," +
+                "0 0 0 1px rgba(255,255,255,0.8) inset," +
+                "inset 0 1px 0 rgba(255,255,255,0.95)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
             }}
           >
             {characterUrl ? (
@@ -519,93 +620,128 @@ export default function WelcomeView({ onStartAuth, onStartGuest }: WelcomeViewPr
                   alt={characterName || t("キャラクター画像", "Character image")}
                   width={260}
                   height={260}
-                  className="h-64 w-64 rounded-4xl object-cover"
+                  className="h-64 w-64 rounded-[24px] object-cover"
                   priority
                   unoptimized
                 />
-                <p className="text-xs font-bold tracking-widest" style={{ color: "#be185d" }}>
+                <p className="text-xs font-black tracking-widest" style={{ color: "#be185d" }}>
                   🌸 {characterName || t("マイキャラクター", "My character")}
                 </p>
               </div>
             ) : (
               <div
-                className="flex h-72 w-72 flex-col items-center justify-center rounded-[28px] text-center"
+                className="flex h-72 w-64 flex-col items-center justify-center rounded-[24px] text-center"
                 style={{
-                  background: "radial-gradient(circle at top,#fff8fc 0%,#fbcfe8 38%,#ddd6fe 72%,#bfdbfe 100%)",
-                  border: "1px solid rgba(244,114,182,0.25)",
-                  boxShadow: "0 24px 56px -28px rgba(236,72,153,0.32)",
+                  background:
+                    "radial-gradient(ellipse at top,#fff8fc 0%,#fbcfe8 30%,#ddd6fe 62%,#bfdbfe 100%)",
+                  border: "1px solid rgba(244,114,182,0.2)",
                 }}
               >
-                <div className="text-5xl">👑</div>
-                <p className="mt-3 text-xl font-black" style={{ color: "#9d174d" }}>
+                {/* クリスタル装飾 */}
+                <div className="relative mb-4">
+                  <div className="text-6xl animate-float-slow">👑</div>
+                  <div className="absolute -top-2 -right-3 text-xl animate-float-slow" style={{ animationDelay: "0.4s" }}>✦</div>
+                  <div className="absolute -top-1 -left-4 text-lg animate-float-slow" style={{ animationDelay: "0.8s", color: "#f9a8d4" }}>✶</div>
+                </div>
+                <p className="text-lg font-black leading-tight" style={{ color: "#9d174d" }}>
                   {t("かわいく始めよう", "Start with style")}
                 </p>
-                <p className="mt-2 px-8 text-xs font-medium leading-relaxed" style={{ color: "#6b21a8" }}>
-                  {t("あとで好きな画像に変えると背景演出にも使えます", "Change to your image later to use it as background art")}
+                <p className="mt-2 px-6 text-xs font-medium leading-relaxed" style={{ color: "#6b21a8" }}>
+                  {t("あとで画像を設定すると背景演出にも使えます", "Set an image later to use as background art")}
                 </p>
+                <div className="mt-4 flex gap-2 text-lg">
+                  <span className="animate-float-slow">🌸</span>
+                  <span className="animate-float-slow" style={{ animationDelay: "0.5s" }}>💎</span>
+                  <span className="animate-float-slow" style={{ animationDelay: "1s" }}>🌸</span>
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* アイドルステージ */}
-      <div className="relative z-10 mt-6 flex items-end justify-between px-0">
+      {/* ステージ下段：アイドル2人＋センター */}
+      <div className="relative z-10 mt-8">
+        {/* ステージライン */}
+        <div
+          className="mx-auto mb-6 h-px w-4/5 opacity-40"
+          style={{ background: "linear-gradient(90deg,transparent,rgba(244,114,182,0.6),rgba(196,181,253,0.6),transparent)" }}
+        />
 
-        {/* 男子アイドル */}
-        <div className="flex flex-col items-center gap-2 group">
-          <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-4">
+        <div className="flex items-end justify-between px-2">
+          {/* 男子アイドル */}
+          <div className="group flex flex-col items-center gap-2">
+            <div className="relative transition-all duration-500 ease-out group-hover:-translate-y-5 group-hover:scale-105">
+              <div
+                className="absolute -inset-8 rounded-full blur-3xl opacity-60 group-hover:opacity-90 transition-opacity"
+                style={{ background: "radial-gradient(circle,rgba(96,165,250,0.3),rgba(139,92,246,0.2),transparent 70%)" }}
+              />
+              <BoyIdol />
+            </div>
             <div
-              className="absolute -inset-6 rounded-full blur-3xl"
-              style={{ background: "radial-gradient(circle,rgba(96,165,250,0.25),transparent 70%)" }}
-            />
-            <BoyIdol />
+              className="rounded-full px-5 py-1.5 text-xs font-black tracking-widest"
+              style={{
+                background: "linear-gradient(135deg,rgba(30,58,139,0.92),rgba(88,28,135,0.96))",
+                color: "#bfdbfe",
+                border: "1px solid rgba(147,197,253,0.25)",
+                boxShadow: "0 8px 24px -8px rgba(37,99,235,0.5)",
+              }}
+            >
+              ♪ {t("王子アイドル", "Prince Idol")}
+            </div>
           </div>
-          <div
-            className="rounded-full px-4 py-1.5 text-xs font-bold tracking-wider"
-            style={{
-              background: "linear-gradient(135deg,rgba(30,58,139,0.9),rgba(15,23,42,0.95))",
-              color: "#bfdbfe",
-              border: "1px solid rgba(147,197,253,0.3)",
-              boxShadow: "0 8px 22px -8px rgba(37,99,235,0.5)",
-            }}
-          >
-            ♪ {t("男子アイドル", "Boy Idol")}
-          </div>
-        </div>
 
-        {/* 中央 */}
-        <div className="flex flex-col items-center gap-2 pb-6">
-          <div className="text-4xl animate-float-slow">👑</div>
-          <div className="flex gap-2 text-2xl">
-            <span className="animate-float-slow">🌸</span>
-            <span className="animate-float-slow text-amber-400" style={{ animationDelay: "0.5s" }}>✦</span>
-            <span className="animate-float-slow" style={{ animationDelay: "1s" }}>🌸</span>
+          {/* センター */}
+          <div className="flex flex-col items-center gap-3 pb-8">
+            <div className="relative">
+              <div className="text-5xl animate-float-slow drop-shadow-lg">👑</div>
+              <div
+                className="absolute inset-0 blur-xl opacity-60"
+                style={{ background: "radial-gradient(circle,rgba(252,211,77,0.6),transparent)" }}
+              />
+            </div>
+            <div className="flex gap-2.5 text-2xl">
+              {["🌸", "✦", "🌸"].map((ch, i) => (
+                <span
+                  key={i}
+                  className="animate-float-slow"
+                  style={{
+                    animationDelay: `${i * 0.5}s`,
+                    color: ch === "✦" ? "#f59e0b" : undefined,
+                  }}
+                >
+                  {ch}
+                </span>
+              ))}
+            </div>
+            <p
+              className="text-center text-[10px] font-black tracking-[0.28em] uppercase"
+              style={{ color: "#9d174d" }}
+            >
+              IDOL × KAKEIBO
+            </p>
           </div>
-          <p className="text-center text-xs font-black tracking-[0.22em]" style={{ color: "#9d174d" }}>
-            IDOL × KAKEIBO
-          </p>
-        </div>
 
-        {/* 女子アイドル */}
-        <div className="flex flex-col items-center gap-2 group">
-          <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-4">
+          {/* 女子アイドル */}
+          <div className="group flex flex-col items-center gap-2">
+            <div className="relative transition-all duration-500 ease-out group-hover:-translate-y-5 group-hover:scale-105">
+              <div
+                className="absolute -inset-8 rounded-full blur-3xl opacity-60 group-hover:opacity-90 transition-opacity"
+                style={{ background: "radial-gradient(circle,rgba(244,114,182,0.3),rgba(196,181,253,0.2),transparent 70%)" }}
+              />
+              <GirlIdol />
+            </div>
             <div
-              className="absolute -inset-6 rounded-full blur-3xl"
-              style={{ background: "radial-gradient(circle,rgba(244,114,182,0.25),transparent 70%)" }}
-            />
-            <GirlIdol />
-          </div>
-          <div
-            className="rounded-full px-4 py-1.5 text-xs font-bold tracking-wider"
-            style={{
-              background: "linear-gradient(135deg,rgba(157,23,77,0.9),rgba(88,28,135,0.95))",
-              color: "#fbcfe8",
-              border: "1px solid rgba(249,168,212,0.3)",
-              boxShadow: "0 8px 22px -8px rgba(236,72,153,0.5)",
-            }}
-          >
-            ♪ {t("女子アイドル", "Girl Idol")}
+              className="rounded-full px-5 py-1.5 text-xs font-black tracking-widest"
+              style={{
+                background: "linear-gradient(135deg,rgba(157,23,77,0.92),rgba(88,28,135,0.96))",
+                color: "#fbcfe8",
+                border: "1px solid rgba(249,168,212,0.25)",
+                boxShadow: "0 8px 24px -8px rgba(236,72,153,0.55)",
+              }}
+            >
+              ♪ {t("お姫様アイドル", "Princess Idol")}
+            </div>
           </div>
         </div>
       </div>

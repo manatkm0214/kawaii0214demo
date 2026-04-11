@@ -49,6 +49,7 @@ function applyTheme(theme: "dark" | "light") {
   if (typeof window === "undefined") return;
   window.localStorage.setItem("kakeibo-theme", theme);
   document.documentElement.setAttribute("data-theme", theme);
+  document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
 function applyBackground(id: string, value: string) {

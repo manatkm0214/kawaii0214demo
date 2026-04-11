@@ -1,192 +1,102 @@
-'use client'
+"use client";
 
+import Link from "next/link";
+import { useLang } from "@/lib/hooks/useLang";
+import { useBgTheme } from "@/lib/hooks/useBgTheme";
 
-import Link from 'next/link'
-import Image from 'next/image'
+const sections = {
+  ja: [
+    {
+      title: "1. サービスについて",
+      body: "Kakeibo Board は、家計の記録・見直し・共有を助けるためのサービスです。",
+    },
+    {
+      title: "2. アカウント利用",
+      body: "ユーザーは自身の責任でログイン情報を管理してください。不正利用が疑われる場合は、設定変更などを早めに行ってください。",
+    },
+    {
+      title: "3. AI提案",
+      body: "AIによる提案は参考情報です。支出、契約、そのほか重要な判断は最終的にご自身で行ってください。",
+    },
+    {
+      title: "4. 禁止事項",
+      body: "不正アクセス、他人の情報の悪用、サービス運営を妨げる行為は禁止します。",
+    },
+    {
+      title: "5. 更新について",
+      body: "本サービスおよび本規約は、必要に応じて更新されることがあります。",
+    },
+  ],
+  en: [
+    {
+      title: "1. About the service",
+      body: "Kakeibo Board is a service that helps you record, review, and share household finances.",
+    },
+    {
+      title: "2. Account use",
+      body: "Users are responsible for managing their own login information. If unauthorized access is suspected, please update your settings promptly.",
+    },
+    {
+      title: "3. AI features",
+      body: "AI suggestions are provided for reference only. Final decisions about spending, contracts, or other important matters remain the user's responsibility.",
+    },
+    {
+      title: "4. Prohibited actions",
+      body: "Unauthorized access, misuse of another person's information, and actions that interfere with the service are prohibited.",
+    },
+    {
+      title: "5. Updates",
+      body: "The service and these terms may be updated as needed.",
+    },
+  ],
+} as const;
 
-export default function TermsOfService() {
+export default function TermsPage() {
+  const lang = useLang();
+  useBgTheme();
+  const copy = sections[lang === "en" ? "en" : "ja"];
+
   return (
-    <div className="min-h-screen bg-slate-950 py-12 px-4">
-      <div className="max-w-4xl mx-auto bg-slate-900/60 border border-slate-700/50 rounded-2xl p-8">
-        <h1 className="text-4xl font-bold text-white mb-2">利用規約</h1>
-        <div className="flex items-center gap-6 mb-6">
-          <Image
-            src="/default-image.png"
-            alt="画像"
-            width={80}
-            height={80}
-            className="w-20 h-20 rounded-full border-4 border-pink-300 bg-white object-cover"
-            priority
-          />
-          <Image
-            src="/default-image.png"
-            alt="画像"
-            width={80}
-            height={80}
-            className="w-20 h-20 rounded-full border-4 border-blue-300 bg-white object-cover"
-            priority
-          />
-        </div>
-        <p className="text-slate-400 mb-8">最終更新: 2026年4月2日</p>
-
-        <div className="space-y-6 text-slate-300">
-          <div className="bg-slate-800/40 border border-slate-700 rounded-lg p-4 mb-4">
-            <h2 className="text-lg font-semibold text-white mb-2">📌 本アプリについて</h2>
-            <p className="text-sm text-slate-300 mb-3">
-              本アプリケーションは、家計管理をシンプルかつ効果的にするための家計簿アプリです。毎日の収支記録から月間・年間レポートの自動生成、Claude AIによる財務分析まで、あなたの家計を多角的に支援します。
-            </p>
-            <div className="text-sm text-slate-400 space-y-1">
-              <p>🎯 <span className="font-semibold">目的</span>: 家計の可視化と賢い家計管理</p>
-              <p>👥 <span className="font-semibold">対象</span>: 家計を管理したいすべての人</p>
-              <p>⚖️ <span className="font-semibold">方針</span>: ユーザーの利益を第一に誠実に運営</p>
-            </div>
-          </div>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">1. はじめに</h2>
-            <p>
-              本利用規約（以下「本規約」）は、ユーザーが本アプリケーション（以下「当アプリ」）を利用する際に適用される条件を定めています。当アプリの利用により、ユーザーは本規約に同意したものとみなされます。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">2. サービスの説明</h2>
-            <p>
-              当アプリは、以下のサービスを提供する家計管理アプリケーションです：
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>家計収支の記録および管理</li>
-              <li>予算設定および追跡</li>
-              <li>AI による財務分析およびアドバイス</li>
-              <li>月間・年間レポート生成</li>
-              <li>複数の認証方法でのアカウント管理</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">3. ユーザーの責任</h2>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>アカウント情報（メールアドレス、パスワードなど）の正確性と安全性を保つ責任</li>
-              <li>アカウントから発生するすべての活動に対する責任</li>
-              <li>不正アクセスを発見した場合の速やかな報告義務</li>
-              <li>本規約および適用法の遵守</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">4. 禁止事項</h2>
-            <p>ユーザーは以下の行為を禁止します：</p>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>当アプリまたは他のシステムへの不正アクセス</li>
-              <li>当アプリの機能を妨害または中断させる行為</li>
-              <li>他のユーザーの情報を無断で使用する行為</li>
-              <li>当アプリを使用した違法行為または有害な行為</li>
-              <li>マルウェア、ウイルス、スパムの配布</li>
-              <li>当アプリのリバースエンジニアリングまたは逆コンパイル</li>
-              <li>当アプリの内容の無断転用または複製</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">5. 知的財産権</h2>
-            <p>
-              当アプリのすべてのコンテンツ、デザイン、ロゴ、およびソフトウェアは、開発者またはその他の適切な所有者の知的財産です。ユーザーは当アプリの私的、非営利的な使用のためのみこれらを使用できます。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">6. AI分析機能の免責事項</h2>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>AI分析は参考情報であり、確実な財務アドバイスではありません</li>
-              <li>ユーザーは重大な財務決定の前に専門家の意見を求めるべきです</li>
-              <li>AI分析に基づく損失に対して当アプリは一切の責任を負いません</li>
-              <li>AI の生成内容の正確性を保証しません</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">7. サービスの変更および停止</h2>
-            <p>
-              当アプリは以下の権利を有します：
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>ユーザーへの事前通知の有無にかかわらずサービスを変更する権利</li>
-              <li>メンテナンスのためサービスを一時停止する権利</li>
-              <li>本規約違反の場合、アカウントを停止または削除する権利</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">8. 免責事項</h2>
-            <p>当アプリは以下の点について一切の責任を負いません：</p>
-            <ul className="list-disc list-inside space-y-2 ml-2">
-              <li>データの損失または破損</li>
-              <li>サービスの中断または遅延</li>
-              <li>第三者のサービス（OAuth認証、AI分析）の障害</li>
-              <li>ユーザーが当アプリを使用した結果生じたいかなる損害</li>
-              <li>当アプリの利用で得られる結果または出力</li>
-            </ul>
-            <p className="mt-4 font-semibold">
-              当アプリは「現状のまま」提供されます。明示または黙示を問わず、いかなる保証も提供されません。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">9. 責任の制限</h2>
-            <p>
-              いかなる場合においても、当アプリはユーザーまたは第三者に対して、当アプリの使用またはアクセス不能から生じるいかなる直接的、間接的、付随的、特別な、またはその他の損害および損失についても責任を取りません。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">10. アカウント削除</h2>
-            <p>
-              ユーザーはいつでもアカウントを削除する権利があります。アカウント削除後、すべてのデータは当アプリから削除されます。削除されたデータの復旧はできません。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">11. 外部リンク</h2>
-            <p>
-              当アプリが外部ウェブサイトへのリンクを含む場合、当アプリはこれらのサイトの内容に対して責任を負いません。外部サイトの利用は各サイトの利用規約に従うものとします。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">12. 規約の変更</h2>
-            <p>
-              当アプリは本規約を随時更新する権利を有します。変更は当アプリに投稿された時点で有効となります。継続的な使用は新しい規約への同意を意味します。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">13. 分離可能性</h2>
-            <p>
-              本規約の一部が無効または執行不可能と見なされた場合、その部分は削除され、残りの条項は全文有効のままとなります。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">14. 準拠法</h2>
-            <p>
-              本規約は日本法に準拠し、日本の法律に従って解釈されるものとします。
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-white mb-4">15. お問い合わせ</h2>
-            <p>
-              本規約に関するご質問またはご不明な点は、アプリ内のお問い合わせフォームからご連絡ください。
-            </p>
-          </section>
+    <div className="legal-stage min-h-screen px-4 py-12">
+      <div className="legal-panel sparkle-card mx-auto max-w-4xl rounded-[32px] p-6 md:p-10">
+        <div className="legal-card rounded-[28px] px-5 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.32em] text-fuchsia-200">
+            {lang === "en" ? "Terms of Service" : "利用規約"}
+          </p>
+          <h1 className="mt-3 text-3xl font-black text-white md:text-4xl">
+            {lang === "en" ? "Terms of Service" : "利用規約"}
+          </h1>
+          <p className="mt-3 text-sm leading-7 text-slate-200">
+            {lang === "en"
+              ? "This page explains the basic rules for using Kakeibo Board."
+              : "このページでは、Kakeibo Board を使ううえでの基本的なルールをまとめています。"}
+          </p>
+          <p className="mt-3 text-xs text-slate-400">
+            {lang === "en" ? "Last updated: April 6, 2026" : "最終更新日: 2026年4月6日"}
+          </p>
         </div>
 
-        <div className="mt-12 pt-8 border-t border-slate-700">
-          <Link href="/" className="inline-block px-6 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition">
-            ホームに戻る
+        <div className="mt-6 space-y-4">
+          {copy.map((section) => (
+            <section key={section.title} className="legal-card sparkle-card rounded-[24px] px-5 py-5">
+              <h2 className="text-xl font-bold text-white">{section.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-200">{section.body}</p>
+            </section>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link href="/privacy" className="legal-link-chip rounded-full px-5 py-2.5 text-sm font-semibold transition">
+            {lang === "en" ? "Privacy Policy" : "プライバシーポリシー"}
+          </Link>
+          <Link href="/" className="rounded-full bg-[linear-gradient(135deg,#f472b6_0%,#fb7185_50%,#38bdf8_100%)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_18px_34px_-20px_rgba(244,114,182,0.55)] transition hover:brightness-105">
+            {lang === "en" ? "Back to board" : "ボードに戻る"}
+          </Link>
+          <Link href="/" className="legal-link-chip rounded-full px-5 py-2.5 text-sm font-semibold transition">
+            {lang === "en" ? "Back to home" : "ホームへ戻る"}
           </Link>
         </div>
       </div>
     </div>
-  )
+  );
 }

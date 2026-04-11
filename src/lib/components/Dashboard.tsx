@@ -1,671 +1,820 @@
-"use client"
+﻿"use client";
 
-import { Transaction, Budget, Profile, formatCurrency } from "@/lib/utils"
-import { useEffect, useMemo, useState, createContext, useContext } from "react"
-import KidsDashboard from "./KidsDashboard"
-import PresetSetup from "./PresetSetup"
+import { useEffect, useMemo, useState } from "react";
+import Charts from "./Charts";
+import Calendar from "./Calendar";
+import GoalsAndDebt from "./GoalsAndDebt";
+import GenerationGoals from "./GenerationGoals";
+import AIAnalysis from "./AIAnalysis";
+import AIChat from "./AIChat";
+import AnnualReportFull from "./AnnualReportFull";
+import InputForm from "./InputForm";
+import SeniorDashboard from "./SeniorDashboard";
+import FoodLifestyleAssistant, { type LifestyleSuggestion } from "./FoodLifestyleAssistant";
+import NearbyShopGuide from "./NearbyShopGuide";
+import { KidsFinanceDashboard, type KidsFinanceState } from "./KidsDashboard";
+import { KidsExpenseForm, type KidsExpense } from "./KidsExpenseForm";
+import { KidsIncomeForm, type KidsIncome } from "./KidsIncomeForm";
+import { KidsSavingForm } from "./KidsSavingForm";
+import { KidsGoalForm } from "./KidsGoalForm";
+import type { KidsSavingsGoal } from "../types/kids-finance";
+import type { Budget, Profile, Transaction } from "@/lib/utils";
+import { formatCurrency, getCategoryLabel } from "@/lib/utils";
+import { useLang } from "@/lib/hooks/useLang";
 
-// 多言語ラベル
-const LANGUAGES = [
-  { code: "ja", label: "日本語" },
-  { code: "en", label: "English" },
-];
-const LABELS = {
+type ActivePage = "input" | "charts" | "calendar" | "goals" | "ai" | "annual" | "senior" | "kids";
+
+function AIPageView({
+  transactions,
+  budgets,
+  currentMonth,
+  onOpenInput,
+  lang,
+}: {
+  transactions: Transaction[];
+  budgets: Budget[];
+  currentMonth: string;
+  onOpenInput: () => void;
+  lang: "ja" | "en";
+}) {
+  return (
+    <div className="space-y-5">
+      <div className="rounded-[28px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-600">AI</p>
+        <h2 className="mt-1 text-lg font-black text-slate-900">
+          {lang === "en" ? "AI support" : "AIサポート"}
+        </h2>
+        <p className="mt-1 text-sm text-slate-600">
+          {lang === "en"
+            ? "Use analysis for structured feedback and chat for back-and-forth questions."
+            : "分析で全体像を見て、チャットで気になることをそのまま相談できます。"}
+        </p>
+      </div>
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <AIAnalysis transactions={transactions} currentMonth={currentMonth} onOpenInput={onOpenInput} />
+        <AIChat transactions={transactions} budgets={budgets} currentMonth={currentMonth} />
+      </div>
+    </div>
+  );
+}
+
+export const LABELS = {
   ja: {
     summary: "サマリー",
     goal: "目標",
-    child: "子供",
-    elder: "高齢者",
+    child: "こども",
+    elder: "シニア",
     loan: "ローン",
     customize: "カスタマイズ",
     print: "印刷",
     share: "共有",
-    category: {
-      housing: "住居", food: "食費", utilities: "水道光熱", transport: "交通", entertainment: "娯楽", other: "その他"
-    },
-    categoryAllocation: "カテゴリ配分（目標 vs 実績）",
-    budgetProgress: "予算進捗（カテゴリ別）",
-    detailMetrics: "📐 詳細指標",
-    forecast: "🔮 赤字・将来予測",
-    defense: "🛡 防衛資金目安",
-    improvement: "🧭 改善ナビ",
-    setup: "初期設定",
+    category: {},
+    categoryAllocation: "カテゴリごとの目安",
+    detailMetrics: "家計の目安",
+    forecast: "予測",
+    defense: "生活防衛資金",
+    improvement: "見直しポイント",
+    setup: "設定",
     notSet: "未設定",
     actual: "実績",
     target: "目標",
   },
   en: {
     summary: "Summary",
-    goal: "Goal",
+    goal: "Goals",
     child: "Kids",
     elder: "Senior",
     loan: "Loan",
     customize: "Customize",
     print: "Print",
     share: "Share",
-    category: {
-      housing: "Housing", food: "Food", utilities: "Utilities", transport: "Transport", entertainment: "Entertainment", other: "Other"
-    },
-    categoryAllocation: "Category Allocation (Target vs Actual)",
-    budgetProgress: "Budget Progress (by Category)",
-    detailMetrics: "📐 Detail Metrics",
-    forecast: "🔮 Deficit & Forecast",
-    defense: "🛡 Defense Fund Guide",
-    improvement: "🧭 Improvement Guide",
-    setup: "Setup",
-    notSet: "Unset",
+    category: {},
+    categoryAllocation: "Category guide",
+    detailMetrics: "Household highlights",
+    forecast: "Forecast",
+    defense: "Emergency fund",
+    improvement: "Things to improve",
+    setup: "Open settings",
+    notSet: "Not set",
     actual: "Actual",
     target: "Target",
   },
+} as const;
+
+const LEGACY_CATEGORY_LABELS: Record<string, { ja: string; en: string }> = {
+  Housing: { ja: "住まい", en: "Housing" },
+  Food: { ja: "食費", en: "Food" },
+  Utilities: { ja: "水道・光熱", en: "Utilities" },
+  Transport: { ja: "交通", en: "Transport" },
+  Daily: { ja: "日用品", en: "Daily goods" },
+  Leisure: { ja: "レジャー", en: "Leisure" },
+  Education: { ja: "教育", en: "Education" },
+  Health: { ja: "医療", en: "Medical" },
+  Other: { ja: "その他", en: "Other" },
+  "Beauty / clothes": { ja: "衣服・美容", en: "Clothes / beauty" },
+  "美容・衣服": { ja: "衣服・美容", en: "Clothes / beauty" },
+  "衣服・美容": { ja: "衣服・美容", en: "Clothes / beauty" },
+  "鄒主ｮｹ繝ｻ陦｣譛・": { ja: "衣服・美容", en: "Clothes / beauty" },
 };
 
-// 言語コンテキスト
-type LangType = "ja" | "en";
-const LangContext = createContext<{ lang: LangType; setLang: (l: LangType) => void }>({ lang: "ja", setLang: () => {} });
-export function useLang() { return useContext(LangContext); }
+const BUDGET_CATEGORY_ALIASES: Record<string, string[]> = {
+  "衣服・美容": ["衣服・美容", "美容・衣服", "Beauty / clothes", "鄒主ｮｹ繝ｻ陦｣譛・"],
+};
 
-export default function Dashboard({ transactions, budgets, currentMonth, profile }: {
-  transactions: Transaction[]
-  budgets: Budget[]
-  currentMonth: string
-  profile: Profile | null
-}) {
-  // グローバル言語state
-  const [lang, setLang] = useState<LangType>(() => {
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem("kakeibo-lang");
-      if (stored === "ja" || stored === "en") return stored;
-    }
-    return "ja";
-  });
-  useEffect(() => {
-    if (typeof window !== "undefined") window.localStorage.setItem("kakeibo-lang", lang);
-  }, [lang]);
-  const T = LABELS[lang as keyof typeof LABELS] || LABELS.ja;
-
-  // ─── ユーティリティ ───────────────────────────────────────────────────────
-  function readSavingsGoalFromStorage(): number {
-    if (typeof window === "undefined") return 0
-    const raw = window.localStorage.getItem("kakeibo-savings-goal")
-    const parsed = Number(raw || 0)
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
+function normalizeBudgetCategory(category: string) {
+  for (const [canonical, aliases] of Object.entries(BUDGET_CATEGORY_ALIASES)) {
+    if (aliases.includes(category)) return canonical;
   }
+  return category;
+}
 
-  // ─── State ───────────────────────────────────────────────────────────────
-  // ページ切り替えUI用 state
-  type DashboardPage = "summary" | "goal" | "loan" | "child" | "elder";
-  const [activePage, setActivePage] = useState<DashboardPage>("summary");
+function getBudgetCategoryLabel(category: string, lang: "ja" | "en") {
+  const normalizedCategory = normalizeBudgetCategory(category);
+  const legacy = LEGACY_CATEGORY_LABELS[normalizedCategory] ?? LEGACY_CATEGORY_LABELS[category];
+  if (legacy) return lang === "en" ? legacy.en : legacy.ja;
+  return getCategoryLabel(normalizedCategory, lang);
+}
 
-  // ページ切り替えボタン
-  const pageOptions = [
-    { type: "summary", label: T.summary },
-    { type: "goal", label: T.goal },
-    { type: "child", label: T.child },
-    { type: "elder", label: T.elder },
-    // { type: "loan", label: T.loan },
-  ];
-  const [highlightAfterSave, setHighlightAfterSave] = useState(() => {
-    if (typeof window === "undefined") return false
-    return window.sessionStorage.getItem("kakeibo-just-saved") === "1"
-  })
-  const [monthlySavingsGoal, setMonthlySavingsGoal] = useState(() => readSavingsGoalFromStorage())
-  const [strategyMode, setStrategyMode] = useState<"standard" | "inflation" | "deficit" | "custom">(() => {
-    if (typeof window === "undefined") return "standard"
-    const saved = window.localStorage.getItem("kakeibo-strategy-mode")
-    return saved === "inflation" || saved === "deficit" || saved === "custom" || saved === "standard"
-      ? saved
-      : "standard"
-  })
-  const [moneyUnit] = useState<1 | 1000 | 10000>(() => {
-    if (typeof window === "undefined") return 10000
-    const raw = Number(window.localStorage.getItem("kakeibo-money-unit") || 10000)
-    if (raw === 1 || raw === 1000 || raw === 10000) return raw
-    return 10000
-  })
-  const [defenseBasis, setDefenseBasis] = useState<"expense" | "fixed">(() => {
-    if (typeof window === "undefined") return "expense"
-    const saved = window.localStorage.getItem("kakeibo-defense-basis")
-    return saved === "fixed" ? "fixed" : "expense"
-  })
+function getBudgetActualAmount(category: string, categoryMap: Record<string, number>) {
+  const normalizedCategory = normalizeBudgetCategory(category);
+  if (normalizedCategory === "衣服・美容") {
+    return BUDGET_CATEGORY_ALIASES["衣服・美容"].reduce((sum, key) => sum + (categoryMap[key] ?? 0), 0);
+  }
+  return categoryMap[normalizedCategory] ?? categoryMap[category] ?? 0;
+}
 
-  // ─── 副作用 ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    window.localStorage.setItem("kakeibo-strategy-mode", strategyMode)
-  }, [strategyMode])
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    window.localStorage.setItem("kakeibo-money-unit", String(moneyUnit))
-  }, [moneyUnit])
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    window.localStorage.setItem("kakeibo-defense-basis", defenseBasis)
-  }, [defenseBasis])
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const syncSavingsGoal = () => setMonthlySavingsGoal(readSavingsGoalFromStorage())
-    syncSavingsGoal()
-    window.addEventListener("storage", syncSavingsGoal)
-    window.addEventListener("kakeibo-goals-updated", syncSavingsGoal as EventListener)
-    window.addEventListener("focus", syncSavingsGoal)
-    return () => {
-      window.removeEventListener("storage", syncSavingsGoal)
-      window.removeEventListener("kakeibo-goals-updated", syncSavingsGoal as EventListener)
-      window.removeEventListener("focus", syncSavingsGoal)
+function readSavingsGoalFromStorage(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = Number(window.localStorage.getItem("kakeibo-savings-goal") || 0);
+  return Number.isFinite(raw) ? raw : 0;
+}
+
+function readGoalNumberFromStorage(key: string): number {
+  if (typeof window === "undefined") return 0;
+  const raw = Number(window.localStorage.getItem(key) || 0);
+  return Number.isFinite(raw) ? raw : 0;
+}
+
+function getMonthSeries(currentMonth: string, count: number) {
+  const [year, month] = currentMonth.split("-").map(Number);
+  return Array.from({ length: count }).map((_, index) => {
+    const date = new Date(year, month - 1 - index, 1);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  });
+}
+
+export default function Dashboard({
+  transactions,
+  budgets,
+  currentMonth,
+  profile,
+}: {
+  transactions: Transaction[];
+  budgets: Budget[];
+  currentMonth: string;
+  profile?: Profile | null;
+}) {
+  const lang = useLang();
+  const [activePage, setActivePage] = useState<ActivePage>("input");
+  const [goalGeneration, setGoalGeneration] = useState<"general" | "kids" | "senior">("general");
+  const [sharedArea, setSharedArea] = useState("");
+  const [supportMode, setSupportMode] = useState<"save" | "standard" | "luxury">("standard");
+  const [lifestyleSuggestions, setLifestyleSuggestions] = useState<LifestyleSuggestion[]>([]);
+
+  const defaultSavingsGoal: KidsSavingsGoal = { title: "", targetAmount: 0, currentAmount: 0 };
+  const [kidsState, setKidsState] = useState<KidsFinanceState>(() => {
+    if (typeof window === "undefined") {
+      return { incomes: [], expenses: [], savings: 0, monthlyBudget: 0, savingsGoal: defaultSavingsGoal };
     }
-  }, [])
-  useEffect(() => {
-    if (typeof window === "undefined" || !highlightAfterSave) return
-    window.sessionStorage.removeItem("kakeibo-just-saved")
-    const id = window.setTimeout(() => setHighlightAfterSave(false), 500)
-    return () => window.clearTimeout(id)
-  }, [highlightAfterSave])
+    try {
+      const raw = window.localStorage.getItem("kakeibo-kids-state");
+      return raw
+        ? (JSON.parse(raw) as KidsFinanceState)
+        : { incomes: [], expenses: [], savings: 0, monthlyBudget: 0, savingsGoal: defaultSavingsGoal };
+    } catch {
+      return { incomes: [], expenses: [], savings: 0, monthlyBudget: 0, savingsGoal: defaultSavingsGoal };
+    }
+  });
 
-  // ─── 計算 ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("kakeibo-kids-state", JSON.stringify(kidsState));
+  }, [kidsState]);
+
   const stats = useMemo(() => {
-    const monthly = transactions.filter(t => t.date.startsWith(currentMonth))
-    const income = monthly.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
-    const expense = monthly.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0)
-    const saving = monthly.filter(t => t.type === "saving").reduce((s, t) => s + t.amount, 0)
-    const investment = monthly.filter(t => t.type === "investment").reduce((s, t) => s + t.amount, 0)
-    const fixed = monthly.filter(t => t.is_fixed && t.type === "expense").reduce((s, t) => s + t.amount, 0)
-    const balance = income - expense - saving - investment
-    const savingRate = income > 0 ? Math.round(((saving + investment) / income) * 100) : 0
-    const fixedRate = expense > 0 ? Math.round((fixed / expense) * 100) : 0
-    const wasteRate = income > 0 ? Math.round(((expense - fixed) / income) * 100) : 0
+    const monthly = transactions.filter((item) => item.date.startsWith(currentMonth));
+    const income = monthly.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0);
+    const expense = monthly.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0);
+    const saving = monthly.filter((item) => item.type === "saving").reduce((sum, item) => sum + item.amount, 0);
+    const investment = monthly.filter((item) => item.type === "investment").reduce((sum, item) => sum + item.amount, 0);
+    const fixed = monthly.filter((item) => item.type === "expense" && item.is_fixed).reduce((sum, item) => sum + item.amount, 0);
+    const waste = monthly
+      .filter((item) => item.type === "expense")
+      .filter((item) => {
+        const label = getCategoryLabel(item.category, "en");
+        return label === "Entertainment" || label === "Leisure" || label === "Hobby";
+      })
+      .reduce((sum, item) => sum + item.amount, 0);
+    const passiveIncome = monthly
+      .filter((item) => item.type === "income")
+      .filter((item) => {
+        const label = getCategoryLabel(item.category, "en");
+        return label === "Investment income" || label === "Pension" || label === "Extra income";
+      })
+      .reduce((sum, item) => sum + item.amount, 0);
+    const balance = income - expense - saving - investment;
+    const savingRate = income > 0 ? Math.round(((saving + investment) / income) * 100) : 0;
+    const fixedRate = expense > 0 ? Math.round((fixed / expense) * 100) : 0;
     const reserveStock = transactions
-      .filter(t => t.type === "saving" || t.type === "investment")
-      .reduce((sum, t) => sum + t.amount, 0)
-    const categoryMap: Record<string, number> = {}
-    monthly.filter(t => t.type === "expense").forEach(t => {
-      categoryMap[t.category] = (categoryMap[t.category] ?? 0) + t.amount
-    })
-    const budgetProgress = budgets.filter(b => b.month === currentMonth).map(b => {
-      const spent = monthly.filter(t => t.type === "expense" && t.category === b.category).reduce((s, t) => s + t.amount, 0)
-      return { ...b, spent, pct: Math.round((spent / b.amount) * 100) }
-    })
-    return { income, expense, saving, investment, balance, savingRate, fixedRate, wasteRate, reserveStock, fixed, categoryMap, budgetProgress }
-  }, [transactions, budgets, currentMonth])
+      .filter((item) => item.type === "saving" || item.type === "investment")
+      .reduce((sum, item) => sum + item.amount, 0);
+
+    const categoryMap: Record<string, number> = {};
+    monthly.filter((item) => item.type === "expense").forEach((item) => {
+      categoryMap[item.category] = (categoryMap[item.category] ?? 0) + item.amount;
+    });
+
+    const budgetProgress = budgets
+      .filter((item) => item.month === currentMonth)
+      .map((item) => {
+        const spent = monthly
+          .filter((tx) => tx.type === "expense" && tx.category === item.category)
+          .reduce((sum, tx) => sum + tx.amount, 0);
+        const pct = item.amount > 0 ? Math.round((spent / item.amount) * 100) : 0;
+        return { ...item, spent, pct };
+      });
+
+    return {
+      income,
+      expense,
+      saving,
+      investment,
+      fixed,
+      waste,
+      passiveIncome,
+      balance,
+      savingRate,
+      fixedRate,
+      reserveStock,
+      budgetProgress,
+      categoryMap,
+    };
+  }, [budgets, currentMonth, transactions]);
+
+  const detailMetrics = useMemo(
+    () => {
+      const totalSaved = stats.saving + stats.investment;
+      const investmentRate = stats.income > 0 ? Math.round((stats.investment / stats.income) * 100) : 0;
+      const emergencyMonths = stats.expense > 0 ? Number((stats.reserveStock / stats.expense).toFixed(1)) : 0;
+      const wasteRate = stats.expense > 0 ? Math.round((stats.waste / stats.expense) * 100) : 0;
+      const passiveIncomeRate = stats.expense > 0 ? Math.round((stats.passiveIncome / stats.expense) * 100) : 0;
+      const budgetTotal = stats.budgetProgress.reduce((sum, item) => sum + item.amount, 0);
+      const budgetUsageRate = budgetTotal > 0 ? Math.round((stats.expense / budgetTotal) * 100) : 0;
+      const savingEfficiency =
+        budgetTotal > 0
+          ? stats.expense <= 0
+            ? 0
+            : Math.max(-999, Math.min(999, Math.round(((budgetTotal - stats.expense) / budgetTotal) * 100)))
+          : 0;
+      const savingGoal = readGoalNumberFromStorage("kakeibo-gen-saving-goal") || readSavingsGoalFromStorage();
+      const payYourselfFirstProgress = savingGoal > 0 ? Math.round((stats.saving / savingGoal) * 100) : 0;
+      const defenseTarget = readGoalNumberFromStorage("kakeibo-gen-defense-goal") || Math.round(stats.expense * 6);
+      const defenseAchievement = defenseTarget > 0 ? Math.round((stats.reserveStock / defenseTarget) * 100) : 0;
+      const passiveIncomeGoal = readGoalNumberFromStorage("kakeibo-gen-passive-income-goal");
+      const recentBalances = getMonthSeries(currentMonth, 3).map((monthKey) => {
+        const monthly = transactions.filter((item) => item.date.startsWith(monthKey));
+        const income = monthly.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0);
+        const expense = monthly.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0);
+        const saved = monthly
+          .filter((item) => item.type === "saving" || item.type === "investment")
+          .reduce((sum, item) => sum + item.amount, 0);
+        return income - expense - saved;
+      });
+      const avgBalance =
+        recentBalances.length > 0
+          ? recentBalances.reduce((sum, value) => sum + value, 0) / recentBalances.length
+          : stats.balance;
+      const stabilityDeviation =
+        recentBalances.length > 1
+          ? Math.round(
+              Math.sqrt(
+                recentBalances.reduce((sum, value) => sum + (value - avgBalance) ** 2, 0) / recentBalances.length,
+              ),
+            )
+          : 0;
+
+      return [
+        {
+          label: lang === "en" ? "Savings rate" : "貯蓄率",
+          value: `${stats.savingRate}%`,
+          sub: lang === "en" ? "Classic benchmark: 20%+ is healthy" : "家計管理の定番目安は 20% 以上",
+          ok: stats.savingRate >= 20,
+        },
+        {
+          label: lang === "en" ? "Fixed-cost ratio" : "固定費比率",
+          value: `${stats.fixedRate}%`,
+          sub: lang === "en" ? "Lower fixed costs increase resilience" : "固定費を抑えるほど家計の柔軟性が増える",
+          ok: stats.fixedRate <= 60,
+        },
+        {
+          label: lang === "en" ? "Saving efficiency" : "節約率",
+          value: `${savingEfficiency}%`,
+          sub:
+            budgetTotal > 0
+              ? lang === "en"
+                ? stats.expense <= 0
+                  ? "Starts at 0% until spending begins"
+                  : "Reflected from allocation preset budget"
+                : stats.expense <= 0
+                  ? "支出が始まるまでは 0% スタート"
+                  : "配分プリセットの予算に対してどれだけ節約できたか"
+              : lang === "en"
+                ? "Starts at 0% until a preset budget is applied"
+                : "配分プリセット反映前は 0% から開始",
+          ok: budgetTotal === 0 ? true : stats.expense <= budgetTotal,
+        },
+        {
+          label: lang === "en" ? "Waste rate" : "浪費率",
+          value: `${wasteRate}%`,
+          sub: lang === "en" ? "Entertainment, leisure, and hobby share in total expenses" : "娯楽・レジャー・趣味が支出全体に占める割合",
+          ok: wasteRate <= 15,
+        },
+        {
+          label: lang === "en" ? "Advance saving achievement" : "先取貯金達成度",
+          value: savingGoal > 0 ? `${payYourselfFirstProgress}%` : (lang === "en" ? "No target" : "目標未設定"),
+          sub: lang === "en" ? "Progress against the preset pay-yourself-first goal" : "配分プリセットの先取貯金目標に対する達成度",
+          ok: savingGoal === 0 ? true : payYourselfFirstProgress >= 100,
+        },
+        {
+          label: lang === "en" ? "Emergency fund achievement" : "生活防衛資金達成度",
+          value: defenseTarget > 0 ? `${defenseAchievement}%` : (lang === "en" ? "No target" : "目標未設定"),
+          sub:
+            lang === "en"
+              ? `Preset-linked target: ${formatCurrency(defenseTarget)} / ${emergencyMonths} months`
+              : `配分プリセット連動目標: ${formatCurrency(defenseTarget)} / ${emergencyMonths}か月分`,
+          ok: defenseTarget === 0 ? true : defenseAchievement >= 100,
+        },
+        {
+          label: lang === "en" ? "Passive income rate" : "受動収入率",
+          value: `${passiveIncomeRate}%`,
+          sub:
+            passiveIncomeGoal > 0
+              ? lang === "en"
+                ? `Preset passive-income goal: ${formatCurrency(passiveIncomeGoal)}`
+                : `配分プリセットの受動収入目標: ${formatCurrency(passiveIncomeGoal)}`
+              : lang === "en"
+                ? "Passive income share against monthly expenses"
+                : "月間支出に対する受動収入の割合",
+          ok: passiveIncomeGoal > 0 ? stats.passiveIncome >= passiveIncomeGoal : passiveIncomeRate >= 10,
+        },
+        {
+          label: lang === "en" ? "Cashflow stability" : "収支安定性",
+          value: formatCurrency(stabilityDeviation),
+          sub: lang === "en" ? "3-month balance deviation, lower is steadier" : "直近3か月の差額ぶれ幅。小さいほど安定",
+          ok: stabilityDeviation <= 30000,
+        },
+        {
+          label: lang === "en" ? "Budget usage" : "予算消化率",
+          value: budgetTotal > 0 ? `${budgetUsageRate}%` : (lang === "en" ? "No budget" : "予算未設定"),
+          sub: lang === "en" ? "Keeping under 100% prevents overspending" : "100%以内なら予算内で推移",
+          ok: budgetTotal === 0 ? true : budgetUsageRate <= 100,
+        },
+        {
+          label: lang === "en" ? "Investment ratio" : "投資比率",
+          value: `${investmentRate}%`,
+          sub: lang === "en" ? "Asset-building share within income" : "収入のうち資産形成に回せた割合",
+          ok: investmentRate >= 10,
+        },
+        {
+          label: lang === "en" ? "Emergency reserve" : "現在の生活防衛資金",
+          value: formatCurrency(stats.reserveStock),
+          sub:
+            lang === "en"
+              ? `Current reserves. Saved + invested: ${formatCurrency(totalSaved)}`
+              : `今ある備え。貯蓄と投資の累計は ${formatCurrency(totalSaved)}`,
+          ok: stats.reserveStock >= readSavingsGoalFromStorage(),
+        },
+      ];
+    },
+    [
+      currentMonth,
+      lang,
+      stats.balance,
+      stats.budgetProgress,
+      stats.expense,
+      stats.fixedRate,
+      stats.income,
+      stats.investment,
+      stats.passiveIncome,
+      stats.reserveStock,
+      stats.saving,
+      stats.savingRate,
+      stats.waste,
+      transactions,
+    ],
+  );
 
   const forecast = useMemo(() => {
-    const [year, month] = currentMonth.split("-").map(Number)
-    const now = new Date()
-    const isCurrentMonth = now.getFullYear() === year && now.getMonth() + 1 === month
-    const daysInMonth = new Date(year, month, 0).getDate()
-    const daysElapsed = isCurrentMonth ? Math.max(1, now.getDate()) : daysInMonth
-    const projectedIncome = Math.round((stats.income / daysElapsed) * daysInMonth)
-    const projectedExpense = Math.round((stats.expense / daysElapsed) * daysInMonth)
-    const projectedSaving = Math.round((stats.saving / daysElapsed) * daysInMonth)
-    const projectedInvestment = Math.round((stats.investment / daysElapsed) * daysInMonth)
-    const projectedBalance = projectedIncome - projectedExpense - projectedSaving - projectedInvestment
-    const recentMonths = Array.from({ length: 3 }).map((_, i) => {
-      const d = new Date(year, month - 1 - i, 1)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    })
-    const targetMonths = isCurrentMonth ? recentMonths : [currentMonth, ...recentMonths.slice(0, 2)]
-    const monthlyBalances = targetMonths.map(m => {
-      const ml = transactions.filter(t => t.date.startsWith(m))
-      const inc = ml.filter(t => t.type === "income").reduce((s, t) => s + t.amount, 0)
-      const exp = ml.filter(t => t.type === "expense").reduce((s, t) => s + t.amount, 0)
-      const sav = ml.filter(t => t.type === "saving").reduce((s, t) => s + t.amount, 0)
-      const inv = ml.filter(t => t.type === "investment").reduce((s, t) => s + t.amount, 0)
-      return inc - exp - sav - inv
-    }).filter(v => Number.isFinite(v))
-    const avgMonthlyBalance = monthlyBalances.length > 0
-      ? Math.round(monthlyBalances.reduce((s, v) => s + v, 0) / monthlyBalances.length)
-      : stats.balance
-    return { daysElapsed, daysInMonth, projectedIncome, projectedExpense, projectedSaving, projectedInvestment, projectedBalance, avgMonthlyBalance, annualProjection: avgMonthlyBalance * 12 }
-  }, [currentMonth, stats.balance, stats.expense, stats.income, stats.investment, stats.saving, transactions])
+    const [year, month] = currentMonth.split("-").map(Number);
+    const now = new Date();
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const isCurrentMonth = now.getFullYear() === year && now.getMonth() + 1 === month;
+    const daysElapsed = isCurrentMonth ? Math.max(now.getDate(), 1) : daysInMonth;
+    const projectedIncome = Math.round((stats.income / daysElapsed) * daysInMonth);
+    const projectedExpense = Math.round((stats.expense / daysElapsed) * daysInMonth);
+    const projectedSaving = Math.round(((stats.saving + stats.investment) / daysElapsed) * daysInMonth);
+    const projectedBalance = projectedIncome - projectedExpense - projectedSaving;
 
-  const allocation = useMemo(() => {
-    const takeHome = profile?.allocation_take_home && profile.allocation_take_home > 0
-      ? profile.allocation_take_home
-      : stats.income
-    const targetFixed = profile?.allocation_target_fixed_rate ?? 35
-    const targetVariable = profile?.allocation_target_variable_rate ?? 25
-    const targetSavings = profile?.allocation_target_savings_rate ?? 20
-    const actualFixed = takeHome > 0 ? Math.round((stats.fixed / takeHome) * 100) : 0
-    const actualVariable = takeHome > 0 ? Math.round(((stats.expense - stats.fixed) / takeHome) * 100) : 0
-    const actualSavings = takeHome > 0 ? Math.round(((stats.saving + stats.investment) / takeHome) * 100) : 0
+    const recentBalances = getMonthSeries(currentMonth, 3).map((monthKey) => {
+      const monthly = transactions.filter((item) => item.date.startsWith(monthKey));
+      const income = monthly.filter((item) => item.type === "income").reduce((sum, item) => sum + item.amount, 0);
+      const expense = monthly.filter((item) => item.type === "expense").reduce((sum, item) => sum + item.amount, 0);
+      const saving = monthly
+        .filter((item) => item.type === "saving" || item.type === "investment")
+        .reduce((sum, item) => sum + item.amount, 0);
+      return income - expense - saving;
+    });
+
+    const averageBalance = recentBalances.length > 0
+      ? Math.round(recentBalances.reduce((sum, value) => sum + value, 0) / recentBalances.length)
+      : stats.balance;
+
     return {
-      takeHome,
-      fixed: { actual: actualFixed, target: targetFixed, ok: actualFixed <= targetFixed },
-      variable: { actual: actualVariable, target: targetVariable, ok: actualVariable <= targetVariable },
-      savings: { actual: actualSavings, target: targetSavings, ok: actualSavings >= targetSavings },
-    }
-  }, [profile, stats.expense, stats.fixed, stats.income, stats.investment, stats.saving])
-
-  const budgetMonth = useMemo(() => {
-    const inCurrent = budgets.some(b => b.month === currentMonth)
-    if (inCurrent) return currentMonth
-    const sorted = [...budgets].map(b => b.month).filter(Boolean).sort((a, b) => b.localeCompare(a))
-    return sorted[0] ?? null
-  }, [budgets, currentMonth])
+      projectedIncome,
+      projectedExpense,
+      projectedSaving,
+      projectedBalance,
+      annualProjection: averageBalance * 12,
+    };
+  }, [currentMonth, stats.balance, stats.expense, stats.income, stats.investment, stats.saving, transactions]);
 
   const categoryAllocationView = useMemo(() => {
-    if (!budgetMonth) return [] as Array<{ category: string; targetAmount: number; targetPct: number; actualAmount: number; actualPct: number }>
-    const targetBudgets = budgets.filter(b => b.month === budgetMonth)
-    const totalTarget = targetBudgets.reduce((s, b) => s + b.amount, 0)
-    return targetBudgets.map(b => {
-      const actualAmount = stats.categoryMap[b.category] ?? 0
+    const normalizedTargetMap = budgets
+      .filter((item) => item.month === currentMonth)
+      .reduce((map, item) => {
+        const normalizedCategory = normalizeBudgetCategory(item.category);
+        const current = map.get(normalizedCategory);
+        if (current) {
+          current.amount += item.amount;
+        } else {
+          map.set(normalizedCategory, { ...item, category: normalizedCategory });
+        }
+        return map;
+      }, new Map<string, Budget>());
+    const targets = Array.from(normalizedTargetMap.values());
+    const hasClothesBudget = targets.some((item) => item.category === "衣服・美容");
+    const clothesActual = BUDGET_CATEGORY_ALIASES["衣服・美容"].reduce((sum, key) => sum + (stats.categoryMap[key] ?? 0), 0);
+    const normalizedTargets = hasClothesBudget
+      ? targets
+      : clothesActual > 0
+        ? [...targets, { id: "virtual-clothes", user_id: "", category: "衣服・美容", amount: 0, month: currentMonth, created_at: "" }]
+        : targets;
+    const totalTarget = normalizedTargets.reduce((sum, item) => sum + item.amount, 0);
+    return normalizedTargets.map((item) => {
+      const actualAmount = getBudgetActualAmount(item.category, stats.categoryMap);
       return {
-        category: b.category,
-        targetAmount: b.amount,
-        targetPct: totalTarget > 0 ? Math.round((b.amount / totalTarget) * 100) : 0,
+        category: item.category,
+        targetAmount: item.amount,
+        targetPct: totalTarget > 0 ? Math.round((item.amount / totalTarget) * 100) : 0,
         actualAmount,
-        actualPct: stats.expense > 0 ? Math.round((actualAmount / stats.expense) * 100) : 0,
-      }
-    }).sort((a, b) => b.targetAmount - a.targetAmount)
-  }, [budgetMonth, budgets, stats.categoryMap, stats.expense])
+      };
+    });
+  }, [budgets, currentMonth, stats.categoryMap]);
 
-  const expenseTrend = useMemo(() => {
-    const [year, month] = currentMonth.split("-").map(Number)
-    const recentMonths = Array.from({ length: 3 }).map((_, i) => {
-      const d = new Date(year, month - 1 - i, 1)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    })
-    const monthlyExpenses = recentMonths.map(m =>
-      transactions.filter(t => t.date.startsWith(m) && t.type === "expense").reduce((s, t) => s + t.amount, 0)
-    )
-    const current = monthlyExpenses[0] ?? 0
-    const base = monthlyExpenses.slice(1)
-    const baseAvg = base.length > 0 ? base.reduce((s, v) => s + v, 0) / base.length : 0
-    const changeRate = baseAvg > 0 ? Math.round(((current - baseAvg) / baseAvg) * 100) : 0
-    return { changeRate, pressure: changeRate > 10 }
-  }, [currentMonth, transactions])
+  const defenseGoal = useMemo(() => {
+    const manualGoal = readSavingsGoalFromStorage();
+    if (manualGoal > 0) return manualGoal * 6;
+    return Math.max(stats.expense, stats.fixed || stats.expense) * 6;
+  }, [stats.expense, stats.fixed]);
 
-  const policyTargets = useMemo(() => {
-    if (strategyMode === "custom" && profile) return { title: "カスタムモード", fixed: profile.allocation_target_fixed_rate ?? 35, variable: profile.allocation_target_variable_rate ?? 25, savings: profile.allocation_target_savings_rate ?? 20, notes: "手取りの範囲で持続可能性を重視した標準配分" }
-    if (strategyMode === "inflation") return { title: "物価高対策モード", fixed: 33, variable: 22, savings: 25, notes: "生活必需を守りつつ、変動費を先に削減して実質可処分を守る配分" }
-    if (strategyMode === "deficit") return { title: "赤字改善モード", fixed: 30, variable: 20, savings: 30, notes: "固定費の見直しを優先し、先取り貯蓄で赤字再発を防ぐ配分" }
-    return { title: "経済標準モード", fixed: 35, variable: 25, savings: 20, notes: "あなたが設定した配分目標を基準に改善ナビを表示" }
-  }, [profile, strategyMode])
+  const defenseProgress = defenseGoal > 0 ? Math.min(100, Math.round((stats.reserveStock / defenseGoal) * 100)) : 0;
+  const safetyRating = useMemo(() => {
+    const reserveMonths = stats.expense > 0 ? stats.reserveStock / stats.expense : 0;
+    if (stats.balance >= 0 && stats.savingRate >= 20 && reserveMonths >= 3) {
+      return {
+        label: lang === "en" ? "Safe" : "安全",
+        note: lang === "en" ? "Your household pace is stable." : "家計の流れはかなり安定しています。",
+        tone: "text-emerald-300",
+      };
+    }
+    if (stats.balance >= 0 && stats.savingRate >= 10) {
+      return {
+        label: lang === "en" ? "Watch" : "注意",
+        note: lang === "en" ? "Stable, but keep watching fixed costs and reserves." : "大きくは崩れていませんが、固定費と備えは要チェックです。",
+        tone: "text-amber-300",
+      };
+    }
+    return {
+      label: lang === "en" ? "Risk" : "要改善",
+      note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
+      tone: "text-rose-300",
+    };
+  }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
-  const improvementNav = useMemo(() => {
-    const actions: string[] = []
-    if (allocation.fixed.actual > policyTargets.fixed) actions.push(`固定費が目標を ${allocation.fixed.actual - policyTargets.fixed}% 超過。通信・保険・サブスクを優先見直し。`)
-    if (allocation.variable.actual > policyTargets.variable) actions.push(`変動費が目標を ${allocation.variable.actual - policyTargets.variable}% 超過。食費・日用品は週予算上限を設定。`)
-    if (allocation.savings.actual < policyTargets.savings) actions.push(`貯蓄+投資が目標を ${policyTargets.savings - allocation.savings.actual}% 下回り。給料日に先取り設定を増額。`)
-    if (stats.balance < 0) actions.push(`今月は赤字 ${formatCurrency(Math.abs(stats.balance))}。来月まで固定費を少なくとも ${formatCurrency(Math.ceil(Math.abs(stats.balance) / 2))} 圧縮。`)
-    if (expenseTrend.pressure) actions.push(`直近支出が平均比 +${expenseTrend.changeRate}%。物価高圧力あり。代替ブランド・まとめ買いを実施。`)
-    if (actions.length === 0) actions.push("配分は健全圏です。余剰分は防衛資金6か月分の積み増しを優先。")
-    return actions
-  }, [allocation.fixed.actual, allocation.savings.actual, allocation.variable.actual, expenseTrend.changeRate, expenseTrend.pressure, policyTargets.fixed, policyTargets.savings, policyTargets.variable, stats.balance])
+  const lifeLevel = useMemo(() => {
+    const expenseRatio = stats.income > 0 ? stats.expense / stats.income : 0;
+    if (expenseRatio <= 0.55 && stats.savingRate >= 20) {
+      return {
+        label: lang === "en" ? "Comfortable" : "ゆとりあり",
+        note: lang === "en" ? "Lifestyle fits your take-home well." : "手取りに対して生活コストの余白があります。",
+      };
+    }
+    if (expenseRatio <= 0.8) {
+      return {
+        label: lang === "en" ? "Balanced" : "標準",
+        note: lang === "en" ? "Current lifestyle is manageable." : "今の生活レベルは概ね回せています。",
+      };
+    }
+    return {
+      label: lang === "en" ? "Stretched" : "背伸び気味",
+      note: lang === "en" ? "Lifestyle costs are pressing against take-home pay." : "生活コストが手取りをかなり圧迫しています。",
+    };
+  }, [lang, stats.expense, stats.income, stats.savingRate]);
 
+  const t = LABELS[lang];
 
-
-  // const { level, color, bar } = safeLevel(stats.savingRate)
-
-  const defenseFund = useMemo(() => {
-    if (stats.reserveStock > 0) return stats.reserveStock
-    if (monthlySavingsGoal > 0) return monthlySavingsGoal
-    return stats.saving + stats.investment
-  }, [monthlySavingsGoal, stats.investment, stats.reserveStock, stats.saving])
-
-  const expenseBaseline = useMemo(() => {
-    if (stats.expense > 0) return stats.expense
-    const [year, month] = currentMonth.split("-").map(Number)
-    const months = Array.from({ length: 3 }).map((_, i) => {
-      const d = new Date(year, month - 1 - i, 1)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-    })
-    const history = months.map(m => transactions.filter(t => t.type === "expense" && t.date.startsWith(m)).reduce((s, t) => s + t.amount, 0)).filter(v => v > 0)
-    if (history.length > 0) return Math.round(history.reduce((s, v) => s + v, 0) / history.length)
-    if ((profile?.allocation_take_home ?? 0) > 0) return Math.round((profile!.allocation_take_home as number) * 0.6)
-    return 100000
-  }, [currentMonth, profile, stats.expense, transactions])
-
-  const defenseMonthlyBase = defenseBasis === "fixed" ? (stats.fixed > 0 ? stats.fixed : Math.round(expenseBaseline * 0.5)) : expenseBaseline
-  const defenseMinimum = Math.round(defenseMonthlyBase * 3)
-  const defenseTarget = Math.round(defenseMonthlyBase * 6)
-  const defenseShortfall = Math.max(0, defenseTarget - defenseFund)
-  const defenseProgress = defenseTarget > 0 ? Math.min(100, Math.round((defenseFund / defenseTarget) * 100)) : 0
-
-
-
-  const forecastSavings = useMemo(() => {
-    const monthlySavingsActual = stats.saving + stats.investment
-    const projectedMonthlySavings = forecast.projectedSaving + forecast.projectedInvestment
-    const annualSavingsProjection = projectedMonthlySavings * 12
-    const deficitRiskCount = [stats.balance, forecast.projectedBalance, forecast.avgMonthlyBalance].filter(v => v < 0).length
-    const deficitRisk = deficitRiskCount >= 2 ? "high" : deficitRiskCount === 1 ? "mid" : "low"
-    return { monthlySavingsActual, projectedMonthlySavings, annualSavingsProjection, deficitRisk }
-  }, [forecast.avgMonthlyBalance, forecast.projectedBalance, forecast.projectedInvestment, forecast.projectedSaving, stats.balance, stats.investment, stats.saving])
-
-  const defenseEtaMonths = useMemo(() => {
-    if (defenseShortfall <= 0) return 0
-    const monthly = Math.max(0, forecastSavings.projectedMonthlySavings)
-    if (monthly <= 0) return null
-    return Math.ceil(defenseShortfall / monthly)
-  }, [defenseShortfall, forecastSavings.projectedMonthlySavings])
-
-  const defenseEtaDateLabel = useMemo(() => {
-    if (defenseEtaMonths == null || defenseEtaMonths <= 0) return null
-    const eta = new Date(new Date().getFullYear(), new Date().getMonth() + defenseEtaMonths, 1)
-    return `${eta.getFullYear()}年${eta.getMonth() + 1}月`
-  }, [defenseEtaMonths])
-
-  // ─── 基本4指標カード ─────────────────────────────────────────────────────
-
-
-  // ─── 詳細指標 ─────────────────────────────────────────────────────────────
-  const avgBudgetPct = stats.budgetProgress.length > 0
-    ? Math.round(stats.budgetProgress.reduce((a, b) => a + b.pct, 0) / stats.budgetProgress.length)
-    : null
-  const passiveIncomeRate = stats.income > 0 ? Math.round((stats.saving / stats.income) * 100) : 0
-  const hourlyWage = profile?.work_hours_month && profile.work_hours_month > 0
-    ? Math.round(stats.income / profile.work_hours_month)
-    : null
-
-  const detailMetrics = [
-    { label: "貯蓄率", value: `${stats.savingRate}%`, sub: "収入に占める貯金+投資", ok: stats.savingRate >= 20 },
-    { label: "固定費率", value: `${stats.fixedRate}%`, sub: "支出に占める固定費", ok: stats.fixedRate <= 40 },
-    { label: "浪費率", value: `${stats.wasteRate}%`, sub: "収入に占める変動費", ok: stats.wasteRate <= 30 },
-    { label: "予算進捗", value: avgBudgetPct != null ? `${avgBudgetPct}%` : "-", sub: "今月の予算消化率", ok: avgBudgetPct != null && avgBudgetPct <= 80 },
-    { label: "生活防衛（月数）", value: stats.expense > 0 ? `${(defenseFund / (stats.expense)).toFixed(1)}ヶ月` : "-", sub: "目安: 3〜6ヶ月分", ok: stats.expense > 0 && defenseFund / stats.expense >= 3 },
-    { label: "受動収入率", value: `${passiveIncomeRate}%`, sub: "収入に占める貯金（将来への布石）", ok: passiveIncomeRate >= 10 },
-    { label: "時給換算", value: hourlyWage != null ? `¥${hourlyWage.toLocaleString()}` : "-", sub: "収入÷月間労働時間", ok: hourlyWage != null && hourlyWage >= 1500 },
-    { label: "赤字危険度", value: stats.balance < 0 ? "高" : forecastSavings.deficitRisk === "mid" ? "中" : "低", sub: stats.balance < 0 ? `赤字 ${formatCurrency(Math.abs(stats.balance))}` : "収支安全圏", ok: stats.balance >= 0 },
-    { label: "節約達成度", value: `${stats.savingRate}%`, sub: "目標: 貯蓄率20%以上", ok: stats.savingRate >= 20 },
-  ]
-
-  // ─── JSX ─────────────────────────────────────────────────────────────────
   return (
-    <LangContext.Provider value={{ lang, setLang }}>
-    <div className="w-full">
-      {/* 言語切替ボタン（右上のみ） */}
-      <div className="flex gap-2 mb-2 justify-end">
-        {LANGUAGES.map(l => (
-          <button
-            key={l.code}
-            onClick={() => setLang(l.code as LangType)}
-            className={`px-2 py-1 rounded border text-xs ${lang === l.code ? "bg-violet-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"}`}
-          >
-            {l.label}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* ページ切り替えナビ */}
-        <div className="flex gap-2 mb-4">
-          {pageOptions.map(opt => (
-            <button
-              key={opt.type}
-              type="button"
-              className={`px-4 py-2 rounded-xl font-bold shadow transition ${activePage === opt.type ? "bg-violet-600 text-white" : "bg-slate-200 text-slate-700"}`}
-              onClick={() => setActivePage(opt.type as DashboardPage)}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-
-
-        {/* ══ 左カラム：サマリー＋ページ切り替え ══ */}
-        <div className="flex flex-col gap-2">
-
-          {/* 全ページ共通ボタンUI */}
-          <div className="flex gap-2 mb-4">
-            <a href="/customize" className="px-4 py-2 rounded-xl bg-pink-500 text-white font-bold shadow hover:bg-pink-600 transition">カスタマイズ</a>
-            <button type="button" className="px-4 py-2 rounded-xl bg-slate-500 text-white font-bold shadow hover:bg-slate-600 transition" onClick={() => window.print()}>印刷</button>
-            <button
-              type="button"
-              className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold shadow hover:bg-emerald-600 transition"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({ title: document.title, url: window.location.href });
-                } else {
-                  navigator.clipboard.writeText(window.location.href);
-                }
-              }}
-            >
-              共有
-            </button>
-          </div>
-
-          {/* サマリー内容 */}
-          {activePage === "summary" && (
-            <>
-              {/* サマリーカード：収入・支出・貯金・投資・収支 */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
-                <div className="flex flex-col items-center bg-emerald-900/60 rounded-xl p-3">
-                  <span className="text-xs text-emerald-200">収入</span>
-                  <span className="text-lg font-bold text-emerald-300">{formatCurrency(stats.income)}</span>
-                </div>
-                <div className="flex flex-col items-center bg-red-900/60 rounded-xl p-3">
-                  <span className="text-xs text-red-200">支出</span>
-                  <span className="text-lg font-bold text-red-300">{formatCurrency(stats.expense)}</span>
-                </div>
-                <div className="flex flex-col items-center bg-blue-900/60 rounded-xl p-3">
-                  <span className="text-xs text-blue-200">貯金</span>
-                  <span className="text-lg font-bold text-blue-300">{formatCurrency(stats.saving)}</span>
-                </div>
-                <div className="flex flex-col items-center bg-violet-900/60 rounded-xl p-3">
-                  <span className="text-xs text-violet-200">投資</span>
-                  <span className="text-lg font-bold text-violet-300">{formatCurrency(stats.investment)}</span>
-                </div>
-                <div className="flex flex-col items-center bg-slate-900/60 rounded-xl p-3">
-                  <span className="text-xs text-slate-200">収支</span>
-                  <span className={`text-lg font-bold ${stats.balance >= 0 ? "text-emerald-300" : "text-red-300"}`}>{formatCurrency(stats.balance)}</span>
-                </div>
-              </div>
-            </>
-          )}
-          {/* 子供ダッシュボード＋目標設定 */}
-          {activePage === "child" && (
-            <>
-              <KidsDashboard transactions={transactions} currentMonth={currentMonth} />
-              <div className="mt-4">
-                <PresetSetup onComplete={()=>{}} />
-              </div>
-            </>
-          )}
-          {/* 高齢者ダッシュボード＋目標設定 */}
-          {activePage === "elder" && (
-            <div className="mt-4">
-              <PresetSetup onComplete={()=>{}} />
-            </div>
-          )}
-
-          {/* 目標ページ仮実装 */}
-          {activePage === "goal" && (
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 text-center text-slate-300">
-              <h3 className="text-base font-bold mb-2">🎯 目標ページ</h3>
-              <p>ここに目標管理UIを実装できます。</p>
-            </div>
-          )}
-
-          {/* ローンページ仮実装 */}
-          {activePage === "loan" && (
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 text-center text-slate-300">
-              <h3 className="text-base font-bold mb-2">💸 ローンページ</h3>
-              <p>ここにローン管理UIを実装できます。</p>
-            </div>
-          )}
-
-          {/* 子供ページ仮実装 */}
-          {activePage === "child" && (
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 text-center text-slate-300">
-              <h3 className="text-base font-bold mb-2">👦 子供ページ</h3>
-              <p>ここに子供向けの家計簿や目標管理UIを実装できます。</p>
-            </div>
-          )}
-
-          {/* 高齢者ページ仮実装 */}
-          {activePage === "elder" && (
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 text-center text-slate-300">
-              <h3 className="text-base font-bold mb-2">🧓 高齢者ページ</h3>
-              <p>ここに高齢者向けの家計簿や目標管理UIを実装できます。</p>
-            </div>
-          )}
-        </div>
-
-        {/* ══ 中カラム：詳細指標・予算 ══ */}
-        <div className="flex flex-col gap-2">
-
-          {/* 詳細指標 */}
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
-            <h3 className="text-xs font-semibold text-slate-300 mb-2">📐 詳細指標</h3>
-            <div className="flex flex-col gap-1.5">
-              {detailMetrics.map(m => (
-                <div key={m.label} className="flex items-center justify-between gap-2 bg-slate-900/50 rounded-lg px-2 py-1.5">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-200">{m.label}</p>
-                    <p className="text-[10px] text-slate-500">{m.sub}</p>
-                  </div>
-                  <span className={`text-sm font-extrabold shrink-0 ${m.ok ? "text-emerald-400" : "text-orange-400"}`}>{m.value}</span>
+    <div className="dashboard-light-copy space-y-4">
+      <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-3">
+          <div className="metric-shell rounded-[28px] p-4">
+            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+              {[
+                { label: lang === "en" ? "Income" : "収入", value: formatCurrency(stats.income), tone: "text-emerald-300" },
+                { label: lang === "en" ? "Expense" : "支出", value: formatCurrency(stats.expense), tone: "text-orange-300" },
+                { label: lang === "en" ? "Saving" : "貯蓄", value: formatCurrency(stats.saving + stats.investment), tone: "text-cyan-300" },
+                { label: lang === "en" ? "Balance" : "差額", value: formatCurrency(stats.balance), tone: stats.balance >= 0 ? "text-white" : "text-rose-300" },
+              ].map((card) => (
+                <div key={card.label} className="metric-tile metric-tile-accent flex h-full min-h-[128px] flex-col justify-between rounded-3xl p-4">
+                  <p className="text-sm uppercase tracking-[0.18em] text-slate-300">{card.label}</p>
+                  <p className={`mt-3 text-xl font-semibold ${card.tone}`}>{card.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* カテゴリ配分 */}
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-xs font-semibold text-slate-300">{T.categoryAllocation}</h3>
-              <span className="text-[10px] text-slate-500">{budgetMonth ? `${budgetMonth}${lang === "ja" ? "基準" : ""}` : T.notSet}</span>
-            </div>
-            {categoryAllocationView.length === 0 ? (
-              <p className="text-xs text-slate-400">{lang === "ja" ? "カテゴリ配分が未設定です。初期設定で作成してください。" : "No category allocation set. Please create in setup."}</p>
-            ) : (
-              <div className="space-y-1">
-                {categoryAllocationView.slice(0, 9).map(row => (
-                  <div key={row.category} className="rounded-lg border border-slate-700 bg-slate-900/40 px-2 py-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300 font-semibold">{T.category[row.category as keyof typeof T.category] || row.category}</span>
-                      <span className="text-emerald-300 font-semibold">{T.target} {formatCurrency(row.targetAmount)}</span>
+          <div className="grid items-stretch gap-3 lg:grid-cols-2">
+            <div className="metric-shell h-full rounded-[28px] p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white">{t.detailMetrics}</h3>
+                <span className="text-sm text-slate-400">{currentMonth}</span>
+              </div>
+              <div className="mt-3 space-y-2">
+                {detailMetrics.map((metric) => (
+                  <div key={metric.label} className="metric-tile rounded-2xl px-3 py-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{metric.label}</p>
+                        <p className="mt-1 text-sm text-slate-300">{metric.sub}</p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-sm font-bold ${metric.ok ? "bg-emerald-400/15 text-emerald-200" : "bg-amber-400/15 text-amber-200"}`}>{metric.value}</span>
                     </div>
-                    <div className="mt-1 h-1 bg-slate-700 rounded-full overflow-hidden">
-                      <div className="h-1 bg-violet-500" style={{ width: `${Math.min(row.targetPct, 100)}%` }} />
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      {T.actual} <span className="text-white font-bold">{formatCurrency(row.actualAmount)}</span>
-                    </p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="metric-shell h-full rounded-[28px] p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-white">{t.forecast}</h3>
+                <span className="text-sm text-slate-400">{lang === "en" ? "Monthly projection" : "月次予測"}</span>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {[
+                  { label: lang === "en" ? "Projected income" : "収入見込み", value: formatCurrency(forecast.projectedIncome) },
+                  { label: lang === "en" ? "Projected expense" : "支出見込み", value: formatCurrency(forecast.projectedExpense) },
+                  { label: lang === "en" ? "Projected saving" : "貯蓄見込み", value: formatCurrency(forecast.projectedSaving) },
+                  { label: lang === "en" ? "Annual pace" : "年間ペース", value: formatCurrency(forecast.annualProjection) },
+                ].map((item) => (
+                  <div key={item.label} className="metric-tile rounded-2xl p-3">
+                    <p className="text-sm text-slate-300">{item.label}</p>
+                    <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+              <div className={`mt-3 rounded-2xl border px-3 py-3 ${forecast.projectedBalance >= 0 ? "border-emerald-800 bg-emerald-950" : "border-rose-800 bg-rose-950"}`}>
+                <p className="text-sm text-slate-400">{lang === "en" ? "Projected balance" : "差額見込み"}</p>
+                <p className={`mt-2 text-base font-semibold ${forecast.projectedBalance >= 0 ? "text-emerald-200" : "text-rose-200"}`}>{formatCurrency(forecast.projectedBalance)}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div className="space-y-3">
+          <div className="metric-shell h-full rounded-[28px] p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
+              <span className="text-sm text-slate-400">{defenseProgress}%</span>
+            </div>
+            <p className={`mt-3 text-base font-semibold ${safetyRating.tone}`}>{safetyRating.label}</p>
+            <p className="mt-1 text-sm text-slate-300">{safetyRating.note}</p>
+            <div className="metric-tile mt-4 rounded-2xl p-3">
+              <p className="text-sm text-slate-300">{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <p className="mt-1 text-sm font-semibold text-white">{lifeLevel.label}</p>
+              <p className="mt-1 text-sm text-slate-300">{lifeLevel.note}</p>
+            </div>
+            <div className="mt-4 h-3 rounded-full bg-slate-800">
+              <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
+            </div>
+            <p className="mt-3 text-sm text-slate-300">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p className="mt-1 text-sm text-slate-400">
+              {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
+            </p>
+
+            <div className="mt-6 flex items-center justify-between">
+              <h3 className="text-base font-bold text-white">{t.categoryAllocation}</h3>
+              <span className="text-sm text-slate-400">{lang === "en" ? "Targets from preset" : "プリセット反映"}</span>
+            </div>
+            {categoryAllocationView.length === 0 ? (
+              <p className="mt-4 text-sm text-slate-300">
+                {lang === "en"
+                  ? "No allocation preset yet. Apply a preset from the top button to reflect it here."
+                  : "まだ配分プリセットがありません。上のボタンからプリセットを反映するとここに表示されます。"}
+              </p>
+            ) : (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {categoryAllocationView.map((row) => {
+                  const pct = row.targetAmount > 0 ? Math.min(100, Math.round((row.actualAmount / row.targetAmount) * 100)) : 0;
+                  return (
+                    <div key={row.category} className="metric-tile rounded-2xl p-3">
+                      <div className="flex items-center justify-between gap-3 text-sm">
+                        <span className="font-medium text-slate-100">{getBudgetCategoryLabel(row.category, lang)}</span>
+                        <span className="rounded-full bg-cyan-400/15 px-2.5 py-1 text-cyan-200">{formatCurrency(row.targetAmount)}</span>
+                      </div>
+                      <div className="mt-2 h-2 rounded-full bg-slate-800">
+                        <div className={`h-2 rounded-full ${pct <= 100 ? "bg-cyan-400" : "bg-rose-400"}`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                      </div>
+                      <div className="mt-2 flex items-center justify-between text-sm text-slate-300">
+                        <span>{t.actual}: {formatCurrency(row.actualAmount)}</span>
+                        <span>{pct}%</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          {/* 予算進捗（カテゴリ別） */}
-          {stats.budgetProgress.length > 0 && (
-            <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2">
-              <h3 className="text-xs font-semibold text-slate-300 mb-2">📋 予算進捗（カテゴリ別）</h3>
-              <div className="space-y-1.5">
-                {stats.budgetProgress.map(b => (
-                  <div key={b.id}>
-                    <div className="flex justify-between text-xs mb-0.5">
-                      <span className="text-slate-400">{b.category}</span>
-                      <span className={b.pct >= 100 ? "text-red-400 font-bold" : b.pct >= 80 ? "text-orange-400" : "text-slate-300"}>
-                        {formatCurrency(b.spent)} / {formatCurrency(b.amount)} ({b.pct}%)
-                      </span>
-                    </div>
-                    <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                      <div className={`h-1.5 rounded-full ${b.pct >= 100 ? "bg-red-500" : b.pct >= 80 ? "bg-orange-400" : "bg-violet-500"}`}
-                        style={{ width: `${Math.min(b.pct, 100)}%` }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
+      </div>
 
-        {/* ══ 右カラム：予測・ナビ ══ */}
-        <div className="flex flex-col gap-2">
-
-          {/* 赤字・将来予測 */}
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 space-y-1">
-            <h3 className="text-xs font-semibold text-slate-300 mb-1">🔮 赤字・将来予測</h3>
-            <div className={`rounded-lg border px-2 py-1.5 ${stats.balance < 0 ? "border-red-500/40 bg-red-900/20" : "border-emerald-500/30 bg-emerald-900/20"}`}>
-              <p className="text-[10px] text-slate-400">今月実績</p>
-              <p className={`text-sm font-semibold ${stats.balance < 0 ? "text-red-300" : "text-emerald-300"}`}>
-                {stats.balance < 0 ? `赤字 ${formatCurrency(Math.abs(stats.balance))}` : `黒字 ${formatCurrency(stats.balance)}`}
+      <div className="space-y-3">
+        <div className="rounded-[24px] border border-slate-700 bg-slate-900 px-4 py-4">
+          <div className="flex flex-col gap-3">
+            <div>
+              <h3 className="text-base font-bold text-white">{lang === "en" ? "AI daily support" : "AI生活サポート"}</h3>
+              <p className="mt-1 text-sm text-slate-300">
+                {lang === "en"
+                  ? "Recipe ideas and nearby store guidance are grouped here so they are easier to scan on desktop."
+                  : "食事の提案と近くのお店案内をここにまとめて、パソコンでも見やすくしています。"}
               </p>
             </div>
-            <div className={`rounded-lg border px-2 py-1.5 ${forecast.projectedBalance < 0 ? "border-red-500/40 bg-red-900/20" : "border-blue-500/30 bg-blue-900/20"}`}>
-              <p className="text-[10px] text-slate-400">月末見込み（{forecast.daysElapsed}/{forecast.daysInMonth}日）</p>
-              <p className={`text-sm font-semibold ${forecast.projectedBalance < 0 ? "text-red-300" : "text-blue-300"}`}>
-                {forecast.projectedBalance < 0 ? `赤字見込み ${formatCurrency(Math.abs(forecast.projectedBalance))}` : `黒字見込み ${formatCurrency(forecast.projectedBalance)}`}
-              </p>
-            </div>
-            <div className={`rounded-lg border px-2 py-1.5 ${forecast.annualProjection < 0 ? "border-red-500/40 bg-red-900/20" : "border-violet-500/30 bg-violet-900/20"}`}>
-              <p className="text-[10px] text-slate-400">12か月予測（直近3か月平均）</p>
-              <p className={`text-sm font-semibold ${forecast.annualProjection < 0 ? "text-red-300" : "text-violet-300"}`}>
-                {forecast.annualProjection < 0 ? `年間赤字見込み ${formatCurrency(Math.abs(forecast.annualProjection))}` : `年間黒字見込み ${formatCurrency(forecast.annualProjection)}`}
-              </p>
-            </div>
-            <div className={`rounded-lg border px-2 py-1.5 ${forecastSavings.annualSavingsProjection <= 0 ? "border-red-500/40 bg-red-900/20" : "border-sky-500/30 bg-sky-900/20"}`}>
-              <p className="text-[10px] text-slate-400">将来貯金予測</p>
-              <p className={`text-sm font-semibold ${forecastSavings.annualSavingsProjection <= 0 ? "text-red-300" : "text-sky-300"}`}>
-                12か月 {formatCurrency(forecastSavings.annualSavingsProjection)}
-              </p>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                赤字リスク: <span className={forecastSavings.deficitRisk === "high" ? "text-red-300" : forecastSavings.deficitRisk === "mid" ? "text-amber-300" : "text-emerald-300"}>
-                  {forecastSavings.deficitRisk === "high" ? "高" : forecastSavings.deficitRisk === "mid" ? "中" : "低"}
-                </span>
-              </p>
-            </div>
-          </div>
-
-          {/* 防衛資金 */}
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 space-y-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-slate-300">🛡 防衛資金目安</h3>
-              <div className="flex gap-1">
-                {(["expense", "fixed"] as const).map(b => (
-                  <button key={b} type="button" onClick={() => setDefenseBasis(b)}
-                    className={`px-2 py-0.5 rounded text-[10px] border ${defenseBasis === b ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}>
-                    {b === "expense" ? "総支出" : "固定費"}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="text-[10px] text-slate-500">基準月額 {formatCurrency(defenseMonthlyBase)} ／ 最低 {formatCurrency(defenseMinimum)} ／ 推奨 {formatCurrency(defenseTarget)}</p>
-            <p className={`text-sm font-semibold ${defenseShortfall > 0 ? "text-amber-300" : "text-emerald-300"}`}>
-              現在 {formatCurrency(defenseFund)} ／ 不足 {formatCurrency(defenseShortfall)}
-            </p>
-            <p className="text-[10px] text-slate-400">到達見込み: {defenseEtaMonths === 0 ? "達成済み" : defenseEtaMonths == null ? "算出不可" : `約${defenseEtaMonths}か月（${defenseEtaDateLabel}）`}</p>
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-              <div className={`h-2 rounded-full ${defenseProgress >= 100 ? "bg-emerald-500" : "bg-amber-500"}`} style={{ width: `${defenseProgress}%` }} />
-            </div>
-          </div>
-
-          {/* 改善ナビ */}
-          <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 space-y-1">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-slate-300">🧭 改善ナビ</h3>
-              <span className="text-[10px] text-slate-500">支出トレンド {expenseTrend.changeRate >= 0 ? `+${expenseTrend.changeRate}` : expenseTrend.changeRate}%</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1">
+            <div className="flex flex-wrap gap-2">
               {([
-                { mode: "standard" as const, label: "経済標準" },
-                { mode: "inflation" as const, label: "物価高対策" },
-                { mode: "deficit" as const, label: "赤字改善" },
-                { mode: "custom" as const, label: "カスタム" },
-              ]).map(({ mode, label }) => (
-                <button key={mode} type="button" onClick={() => setStrategyMode(mode)}
-                  className={`text-[10px] py-1.5 rounded border transition-all ${strategyMode === mode ? "bg-violet-600 border-violet-500 text-white" : "border-slate-700 text-slate-300"}`}>
-                  {label}
+                { key: "save", label: lang === "en" ? "Save" : "節約" },
+                { key: "standard", label: lang === "en" ? "Balanced" : "標準" },
+                { key: "luxury", label: lang === "en" ? "Treat" : "ゆとり" },
+              ] as const).map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setSupportMode(option.key)}
+                  className={`rounded-full px-3 py-2 text-sm font-medium ${
+                    supportMode === option.key ? "bg-cyan-400 text-slate-950" : "bg-slate-950 text-slate-300"
+                  }`}
+                >
+                  {option.label}
                 </button>
               ))}
             </div>
-            <div className="rounded-lg border border-slate-700 bg-slate-900/40 px-2 py-1 text-xs space-y-0.5">
-              <p className="font-semibold text-slate-200">{policyTargets.title}</p>
-              <p className="text-[10px] text-slate-400">固定費 {policyTargets.fixed}% / 変動費 {policyTargets.variable}% / 貯蓄+投資 {policyTargets.savings}%</p>
-              <p className="text-[10px] text-slate-500">{policyTargets.notes}</p>
-            </div>
-            <div className="space-y-1">
-              {improvementNav.map((action, i) => (
-                <div key={action} className="rounded-lg border border-slate-700 bg-slate-900/40 px-2 py-1 text-xs text-slate-300">
-                  <span className="text-slate-500 mr-1">{i + 1}.</span>{action}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
+
+        <div className="grid items-stretch gap-4 xl:grid-cols-1">
+          <FoodLifestyleAssistant
+            transactions={transactions}
+            currentMonth={currentMonth}
+            area={sharedArea}
+            supportMode={supportMode}
+            onLifestyleSuggestionsChange={setLifestyleSuggestions}
+          />
+          <NearbyShopGuide
+            transactions={transactions}
+            currentMonth={currentMonth}
+            area={sharedArea}
+            onAreaChange={setSharedArea}
+            supportMode={supportMode}
+            lifestyleSuggestions={lifestyleSuggestions}
+          />
+        </div>
+      </div>
+
+      <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-1.5">
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { key: "input", label: lang === "en" ? "Input" : "入力" },
+            { key: "charts", label: lang === "en" ? "Board" : "ボード" },
+            { key: "calendar", label: lang === "en" ? "Calendar" : "カレンダー" },
+            { key: "goals", label: lang === "en" ? "Goals" : "目標" },
+            { key: "ai", label: lang === "en" ? "AI" : "AI" },
+            { key: "annual", label: lang === "en" ? "Annual" : "年次" },
+            { key: "senior", label: lang === "en" ? "Senior" : "シニア" },
+            { key: "kids", label: lang === "en" ? "Kids" : "こども" },
+          ] as const).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActivePage(tab.key)}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+                activePage === tab.key
+                  ? "bg-cyan-400 text-slate-950"
+                  : "bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-3 md:p-4">
+        {activePage === "input" && (
+          <InputForm
+            recentTransactions={transactions}
+            onSuccess={() => window.dispatchEvent(new Event("kakeibo-data-updated"))}
+          />
+        )}
+        {activePage === "charts" && <Charts transactions={transactions} currentMonth={currentMonth} />}
+        {activePage === "calendar" && <Calendar transactions={transactions} currentMonth={currentMonth} />}
+        {activePage === "goals" && (
+          <div className="space-y-5">
+            <GenerationGoals
+              key={[
+                currentMonth,
+                profile?.allocation_take_home ?? 0,
+                profile?.allocation_target_fixed_rate ?? 0,
+                profile?.allocation_target_variable_rate ?? 0,
+                profile?.allocation_target_savings_rate ?? 0,
+              ].join(":")}
+              transactions={transactions}
+              currentMonth={currentMonth}
+              profile={profile}
+              generation={goalGeneration}
+              onGenerationChange={setGoalGeneration}
+            />
+            {goalGeneration === "general" && <GoalsAndDebt transactions={transactions} currentMonth={currentMonth} />}
+          </div>
+        )}
+        {activePage === "ai" && (
+          <AIPageView
+            transactions={transactions}
+            budgets={budgets}
+            currentMonth={currentMonth}
+            onOpenInput={() => setActivePage("input")}
+            lang={lang}
+          />
+        )}
+        {activePage === "annual" && <AnnualReportFull transactions={transactions} currentMonth={currentMonth} />}
+        {activePage === "senior" && <SeniorDashboard />}
+        {activePage === "kids" && (
+          <div className="space-y-5">
+            <KidsFinanceDashboard state={kidsState} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
+                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids income" : "こどもの収入"}</h3>
+                <div className="mt-3">
+                  <KidsIncomeForm onAdd={(item: KidsIncome) => setKidsState((prev) => ({ ...prev, incomes: [...prev.incomes, item] }))} />
+                </div>
+              </div>
+              <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
+                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids expense" : "こどもの支出"}</h3>
+                <div className="mt-3">
+                  <KidsExpenseForm onAdd={(item: KidsExpense) => setKidsState((prev) => ({ ...prev, expenses: [...prev.expenses, item] }))} />
+                </div>
+              </div>
+              <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
+                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids savings" : "こどもの貯蓄"}</h3>
+                <div className="mt-3">
+                  <KidsSavingForm onAdd={(item) => setKidsState((prev) => ({ ...prev, savings: prev.savings + item.amount }))} />
+                </div>
+              </div>
+              <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
+                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids goal" : "こどもの目標"}</h3>
+                <div className="mt-3">
+                  <KidsGoalForm
+                    currentGoal={kidsState.savingsGoal}
+                    monthlyBudget={kidsState.monthlyBudget}
+                    onUpdateGoal={(goal) => setKidsState((prev) => ({ ...prev, savingsGoal: goal }))}
+                    onUpdateBudget={(budget) => setKidsState((prev) => ({ ...prev, monthlyBudget: budget }))}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
-    </LangContext.Provider>
-  )
+  );
 }

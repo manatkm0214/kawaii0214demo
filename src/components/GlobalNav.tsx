@@ -1,20 +1,25 @@
-import React from "react";
+import React from "react"
+
+const links = [
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/contact", label: "Contact" },
+]
 
 export default function GlobalNav() {
   return (
-    <nav className="fixed bottom-0 left-0 w-full flex justify-center gap-4 py-4 bg-white/80 dark:bg-slate-900/80 border-t border-emerald-300 z-50">
-      <button className="px-6 py-3 rounded-lg bg-emerald-400 text-white font-bold text-lg shadow active:scale-95 transition">カスタマイズ</button>
-      <button className="px-6 py-3 rounded-lg bg-slate-700 text-white font-bold text-lg shadow active:scale-95 transition">ダーク</button>
-      <button className="px-6 py-3 rounded-lg bg-yellow-400 text-white font-bold text-lg shadow active:scale-95 transition">ライト</button>
-      <button className="px-6 py-3 rounded-lg bg-pink-400 text-white font-bold text-lg shadow active:scale-95 transition">印刷</button>
-      <button className="px-6 py-3 rounded-lg bg-blue-400 text-white font-bold text-lg shadow active:scale-95 transition">共有</button>
-      <button className="px-6 py-3 rounded-lg bg-gray-400 text-white font-bold text-lg shadow active:scale-95 transition">ログアウト</button>
-      <button className="px-6 py-3 rounded-lg bg-red-500 text-white font-bold text-lg shadow active:scale-95 transition">会員退会</button>
-
-      {/* 追加: 規約・プライバシー・問い合わせ */}
-      <a href="/privacy" className="px-6 py-3 rounded-lg bg-slate-300 text-slate-800 font-bold text-lg shadow active:scale-95 transition">プライバシー</a>
-      <a href="/terms" className="px-6 py-3 rounded-lg bg-slate-300 text-slate-800 font-bold text-lg shadow active:scale-95 transition">利用規約</a>
-      <a href="/contact" className="px-6 py-3 rounded-lg bg-slate-300 text-slate-800 font-bold text-lg shadow active:scale-95 transition">お問い合わせ</a>
+    <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-slate-700 bg-slate-950 px-4 py-3">
+      <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-3">
+        {links.map((link) => (
+          <a
+            key={link.href}
+            href={link.href}
+            className="rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800"
+          >
+            {link.label}
+          </a>
+        ))}
+      </div>
     </nav>
-  );
+  )
 }

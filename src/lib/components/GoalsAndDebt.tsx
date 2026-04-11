@@ -2,6 +2,7 @@
 
 import { Transaction, formatCurrency } from "@/lib/utils"
 import { useState, useMemo, useCallback } from "react"
+import { useLang } from "@/lib/hooks/useLang"
 
 // ── 型定義 ──────────────────────────────────────────────────────────────────
 
@@ -121,6 +122,8 @@ function SinkingFundItem({ f, onAdd, onEdit, onDelete }: {
   onEdit: (f: SinkingFund) => void
   onDelete: (id: string) => void
 }) {
+  const lang = useLang()
+  const t = (ja: string, en: string) => lang === "en" ? en : ja
   const [addAmt, setAddAmt] = useState("")
   const pct = f.targetAmount > 0 ? Math.min(100, Math.round((f.currentAmount / f.targetAmount) * 100)) : 0
   const done = f.currentAmount >= f.targetAmount
@@ -136,28 +139,28 @@ function SinkingFundItem({ f, onAdd, onEdit, onDelete }: {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-200">{f.name}</span>
-              {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-700/40 text-emerald-300">達成！🎉</span>}
+              {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-700/40 text-emerald-300">{t("達成！🎉", "Done! 🎉")}</span>}
             </div>
             <p className="text-[10px] text-slate-500">目標: {f.targetDate.replace("-", "年")}月</p>
           </div>
         </div>
         <div className="flex gap-1 shrink-0">
-          <button type="button" onClick={() => onEdit(f)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">編集</button>
-          <button type="button" onClick={() => onDelete(f.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">削除</button>
+          <button type="button" onClick={() => onEdit(f)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">{t("編集", "Edit")}</button>
+          <button type="button" onClick={() => onDelete(f.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">{t("削除", "Delete")}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
         <div>
-          <p className="text-[10px] text-slate-500">目標</p>
+          <p className="text-[10px] text-slate-500">{t("目標", "Target")}</p>
           <p className="font-semibold text-emerald-400">{formatCurrency(f.targetAmount)}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-500">積立済み</p>
+          <p className="text-[10px] text-slate-500">{t("積立済み", "Saved")}</p>
           <p className={`font-semibold ${done ? "text-emerald-400" : "text-sky-400"}`}>{formatCurrency(f.currentAmount)}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-500">月々必要</p>
+          <p className="text-[10px] text-slate-500">{t("月々必要", "Monthly Need")}</p>
           <p className="font-semibold text-orange-400">{done ? "−" : formatCurrency(monthlyNeeded)}</p>
         </div>
       </div>
@@ -177,7 +180,7 @@ function SinkingFundItem({ f, onAdd, onEdit, onDelete }: {
       {!done && (
         <div className="flex gap-1">
           <input
-            type="number" placeholder="積立額を入力"
+            type="number" placeholder={t("積立額を入力", "Enter amount")}
             value={addAmt}
             onChange={e => setAddAmt(e.target.value)}
             className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-500"
@@ -186,7 +189,7 @@ function SinkingFundItem({ f, onAdd, onEdit, onDelete }: {
             type="button"
             onClick={() => { if (Number(addAmt) > 0) { onAdd(f.id, Number(addAmt)); setAddAmt("") } }}
             className="px-3 py-1 bg-violet-600 hover:bg-violet-500 rounded-lg text-xs transition-all"
-          >積立</button>
+          >{t("積立", "Save")}</button>
         </div>
       )}
       {f.memo && <p className="text-[10px] text-slate-500 mt-1">{f.memo}</p>}
@@ -203,6 +206,8 @@ function GoalItem({ g, ticketsAvailable, ticketValue, onAddManual, onUseTicket, 
   onEdit: (g: PersonalGoal) => void
   onDelete: (id: string) => void
 }) {
+  const lang = useLang()
+  const t = (ja: string, en: string) => lang === "en" ? en : ja
   const [addAmt, setAddAmt] = useState("")
   const pct = g.targetAmount > 0 ? Math.min(100, Math.round((g.currentAmount / g.targetAmount) * 100)) : 0
   const done = g.targetAmount > 0 && g.currentAmount >= g.targetAmount
@@ -215,24 +220,24 @@ function GoalItem({ g, ticketsAvailable, ticketValue, onAddManual, onUseTicket, 
           <div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-slate-200">{g.name}</span>
-              {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-pink-700/40 text-pink-300">達成！🌸</span>}
+              {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-pink-700/40 text-pink-300">{t("達成！🌸", "Done! 🌸")}</span>}
             </div>
             {g.memo && <p className="text-[10px] text-slate-500">{g.memo}</p>}
           </div>
         </div>
         <div className="flex gap-1 shrink-0">
-          <button type="button" onClick={() => onEdit(g)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">編集</button>
-          <button type="button" onClick={() => onDelete(g.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">削除</button>
+          <button type="button" onClick={() => onEdit(g)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">{t("編集", "Edit")}</button>
+          <button type="button" onClick={() => onDelete(g.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">{t("削除", "Delete")}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 mb-2 text-xs">
         <div>
-          <p className="text-[10px] text-slate-500">目標</p>
-          <p className="font-semibold text-pink-400">{g.targetAmount > 0 ? formatCurrency(g.targetAmount) : "未設定"}</p>
+          <p className="text-[10px] text-slate-500">{t("目標", "Target")}</p>
+          <p className="font-semibold text-pink-400">{g.targetAmount > 0 ? formatCurrency(g.targetAmount) : t("未設定", "Not set")}</p>
         </div>
         <div>
-          <p className="text-[10px] text-slate-500">貯まった</p>
+          <p className="text-[10px] text-slate-500">{t("貯まった", "Saved")}</p>
           <p className="font-semibold text-violet-400">{formatCurrency(g.currentAmount)}</p>
         </div>
       </div>
@@ -260,7 +265,7 @@ function GoalItem({ g, ticketsAvailable, ticketValue, onAddManual, onUseTicket, 
           </button>
         )}
         <input
-          type="number" placeholder="手動で追加"
+          type="number" placeholder={t("手動で追加", "Add manually")}
           value={addAmt}
           onChange={e => setAddAmt(e.target.value)}
           className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-violet-500"
@@ -269,7 +274,7 @@ function GoalItem({ g, ticketsAvailable, ticketValue, onAddManual, onUseTicket, 
           type="button"
           onClick={() => { if (Number(addAmt) > 0) { onAddManual(g.id, Number(addAmt)); setAddAmt("") } }}
           className="px-3 py-1 bg-pink-600/60 hover:bg-pink-500/80 rounded-lg text-xs transition-all"
-        >追加</button>
+        >{t("追加", "Add")}</button>
       </div>
     </div>
   )
@@ -285,6 +290,8 @@ interface Props {
 // ── メインコンポーネント ──────────────────────────────────────────────────────
 
 export default function GoalsAndDebt({ transactions }: Props) {
+  const lang = useLang()
+  const t = (ja: string, en: string) => lang === "en" ? en : ja
   const [tab, setTab] = useState<"debt" | "sinking" | "goals" | "virtue">("debt")
 
   // 借金・ローン
@@ -414,7 +421,10 @@ export default function GoalsAndDebt({ transactions }: Props) {
   }
 
   const DEBT_TYPE_LABEL: Record<Debt["type"], string> = {
-    loan: "ローン", mortgage: "住宅ローン", credit: "クレジット", other: "その他"
+    loan: t("ローン", "Loan"),
+    mortgage: t("住宅ローン", "Mortgage"),
+    credit: t("クレジット", "Credit"),
+    other: t("その他", "Other"),
   }
 
   const EMOJI_OPTIONS = ["⭐", "🎵", "🎤", "🎮", "✈️", "🏖️", "🎁", "💄", "👗", "📸", "🎨", "🐱", "🐶", "🍰", "💪", "📚", "🎯", "💎", "🌸", "🔥"]
@@ -426,10 +436,10 @@ export default function GoalsAndDebt({ transactions }: Props) {
       {/* タブ */}
       <div className="flex gap-1 bg-slate-800/60 p-1 rounded-xl border border-slate-700/50">
         {([
-          { key: "debt", label: "💳 ローン", fullLabel: "💳 借金・ローン" },
-          { key: "sinking", label: "🪣 積立", fullLabel: "🪣 先取積み立て" },
-          { key: "goals", label: "⭐ 目標", fullLabel: "⭐ 推し活・目標" },
-          { key: "virtue", label: "🙏 徳", fullLabel: "🙏 徳ポイント" },
+          { key: "debt", label: t("💳 ローン", "💳 Loans"), fullLabel: t("💳 借金・ローン", "💳 Loans & Debt") },
+          { key: "sinking", label: t("🪣 積立", "🪣 Savings"), fullLabel: t("🪣 先取積み立て", "🪣 Sinking Funds") },
+          { key: "goals", label: t("⭐ 目標", "⭐ Goals"), fullLabel: t("⭐ 推し活・目標", "⭐ Goals") },
+          { key: "virtue", label: t("🙏 徳", "🙏 Virtue"), fullLabel: t("🙏 徳ポイント", "🙏 Virtue Points") },
         ] as const).map(({ key, label, fullLabel }) => (
           <button
             key={key}
@@ -450,15 +460,15 @@ export default function GoalsAndDebt({ transactions }: Props) {
           {debts.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">総残高</p>
+                <p className="text-[10px] text-slate-400">{t("総残高", "Total Balance")}</p>
                 <p className="text-sm font-bold text-red-400">{formatCurrency(debts.reduce((s, d) => s + d.remainingAmount, 0))}</p>
               </div>
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">月々返済合計</p>
+                <p className="text-[10px] text-slate-400">{t("月々返済合計", "Monthly Payment")}</p>
                 <p className="text-sm font-bold text-orange-400">{formatCurrency(debts.reduce((s, d) => s + d.monthlyPayment, 0))}</p>
               </div>
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">完済数</p>
+                <p className="text-[10px] text-slate-400">{t("完済数", "Paid Off")}</p>
                 <p className="text-sm font-bold text-emerald-400">{debts.filter(d => d.remainingAmount <= 0).length} / {debts.length}</p>
               </div>
             </div>
@@ -477,14 +487,14 @@ export default function GoalsAndDebt({ transactions }: Props) {
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-slate-200">{d.name}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-400">{DEBT_TYPE_LABEL[d.type]}</span>
-                      {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-700/40 text-emerald-300">完済！🎉</span>}
+                      {done && <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-700/40 text-emerald-300">{t("完済！🎉", "Paid Off! 🎉")}</span>}
                     </div>
                     {d.memo && <p className="text-[10px] text-slate-500 mt-0.5">{d.memo}</p>}
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    {!done && <button type="button" onClick={() => payDebt(d.id)} className="px-2 py-1 text-[10px] bg-emerald-700/30 hover:bg-emerald-600/40 text-emerald-300 rounded-lg border border-emerald-700/40 transition-colors">返済</button>}
-                    <button type="button" onClick={() => editDebt(d)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">編集</button>
-                    <button type="button" onClick={() => deleteDebt(d.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">削除</button>
+                    {!done && <button type="button" onClick={() => payDebt(d.id)} className="px-2 py-1 text-[10px] bg-emerald-700/30 hover:bg-emerald-600/40 text-emerald-300 rounded-lg border border-emerald-700/40 transition-colors">{t("返済", "Pay")}</button>}
+                    <button type="button" onClick={() => editDebt(d)} className="px-2 py-1 text-[10px] bg-slate-700/40 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors">{t("編集", "Edit")}</button>
+                    <button type="button" onClick={() => deleteDebt(d.id)} className="px-2 py-1 text-[10px] text-red-400 hover:text-red-200 rounded-lg transition-colors">{t("削除", "Delete")}</button>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
@@ -524,7 +534,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
           {/* 追加フォーム */}
           {showDebtForm ? (
             <div className="bg-slate-800/60 border border-violet-700/40 rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-slate-200">{editDebtId ? "借金・ローンを編集" : "借金・ローンを追加"}</p>
+              <p className="text-xs font-semibold text-slate-200">{editDebtId ? t("借金・ローンを編集", "Edit Loan") : t("借金・ローンを追加", "Add Loan")}</p>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="text" placeholder="名前（例: 車ローン）"
@@ -535,10 +545,10 @@ export default function GoalsAndDebt({ transactions }: Props) {
                   value={debtForm.type} onChange={e => setDebtForm(f => ({ ...f, type: e.target.value as Debt["type"] }))}
                   className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500"
                 >
-                  <option value="loan">ローン</option>
-                  <option value="mortgage">住宅ローン</option>
-                  <option value="credit">クレジット</option>
-                  <option value="other">その他</option>
+                  <option value="loan">{t("ローン", "Loan")}</option>
+                  <option value="mortgage">{t("住宅ローン", "Mortgage")}</option>
+                  <option value="credit">{t("クレジット", "Credit")}</option>
+                  <option value="other">{t("その他", "Other")}</option>
                 </select>
                 <input
                   type="number" placeholder="年利 (%)"
@@ -568,14 +578,14 @@ export default function GoalsAndDebt({ transactions }: Props) {
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={submitDebt} disabled={!debtForm.name.trim()} className="flex-1 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 rounded-lg text-sm font-medium transition-all">
-                  {editDebtId ? "更新" : "追加"}
+                  {editDebtId ? t("更新", "Update") : t("追加", "Add")}
                 </button>
-                <button type="button" onClick={() => { setShowDebtForm(false); setEditDebtId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">キャンセル</button>
+                <button type="button" onClick={() => { setShowDebtForm(false); setEditDebtId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">{t("キャンセル", "Cancel")}</button>
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => setShowDebtForm(true)} className="w-full py-2 border border-dashed border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-300 rounded-xl text-sm transition-all">
-              ＋ 借金・ローンを追加
+              ＋ {t("借金・ローンを追加", "Add Loan")}
             </button>
           )}
         </div>
@@ -588,15 +598,15 @@ export default function GoalsAndDebt({ transactions }: Props) {
           {sinkingFunds.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">目標合計</p>
+                <p className="text-[10px] text-slate-400">{t("目標合計", "Total Target")}</p>
                 <p className="text-sm font-bold text-emerald-400">{formatCurrency(sinkingFunds.reduce((s, f) => s + f.targetAmount, 0))}</p>
               </div>
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">積立済み</p>
+                <p className="text-[10px] text-slate-400">{t("積立済み", "Saved")}</p>
                 <p className="text-sm font-bold text-sky-400">{formatCurrency(sinkingFunds.reduce((s, f) => s + f.currentAmount, 0))}</p>
               </div>
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-2 text-center">
-                <p className="text-[10px] text-slate-400">達成数</p>
+                <p className="text-[10px] text-slate-400">{t("達成数", "Achieved")}</p>
                 <p className="text-sm font-bold text-violet-400">{sinkingFunds.filter(f => f.currentAmount >= f.targetAmount).length} / {sinkingFunds.length}</p>
               </div>
             </div>
@@ -622,7 +632,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
 
           {showSinkingForm ? (
             <div className="bg-slate-800/60 border border-violet-700/40 rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-slate-200">{editSinkingId ? "先取積み立てを編集" : "先取積み立てを追加"}</p>
+              <p className="text-xs font-semibold text-slate-200">{editSinkingId ? t("先取積み立てを編集", "Edit Sinking Fund") : t("先取積み立てを追加", "Add Sinking Fund")}</p>
               <div className="flex gap-1 flex-wrap">
                 {SINKING_EMOJIS.map(e => (
                   <button key={e} type="button" onClick={() => setSinkingForm(f => ({ ...f, emoji: e }))}
@@ -675,14 +685,14 @@ export default function GoalsAndDebt({ transactions }: Props) {
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={submitSinking} disabled={!sinkingForm.name.trim()} className="flex-1 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 rounded-lg text-sm font-medium transition-all">
-                  {editSinkingId ? "更新" : "追加"}
+                  {editSinkingId ? t("更新", "Update") : t("追加", "Add")}
                 </button>
-                <button type="button" onClick={() => { setShowSinkingForm(false); setEditSinkingId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">キャンセル</button>
+                <button type="button" onClick={() => { setShowSinkingForm(false); setEditSinkingId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">{t("キャンセル", "Cancel")}</button>
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => setShowSinkingForm(true)} className="w-full py-2 border border-dashed border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-300 rounded-xl text-sm transition-all">
-              ＋ 先取積み立てを追加
+              ＋ {t("先取積み立てを追加", "Add Sinking Fund")}
             </button>
           )}
         </div>
@@ -698,18 +708,18 @@ export default function GoalsAndDebt({ transactions }: Props) {
               <div className="flex items-center gap-2">
                 <span className="text-xl">🎫</span>
                 <div>
-                  <p className="text-xs font-semibold text-slate-200">チケット残高</p>
-                  <p className="text-[10px] text-slate-400">徳ポイント100個ごとに1枚獲得</p>
+                  <p className="text-xs font-semibold text-slate-200">{t("チケット残高", "Ticket Balance")}</p>
+                  <p className="text-[10px] text-slate-400">{t("徳ポイント100個ごとに1枚獲得", "Earn 1 ticket per 100 virtue points")}</p>
                 </div>
               </div>
               <span className="text-2xl font-black text-violet-300">{ticketsAvailable}枚</span>
             </div>
             <div className="flex items-center gap-2 text-[10px] text-slate-400">
-              <span>獲得済み {ticketsEarned}枚</span>
+              <span>{t("獲得済み", "Earned")} {ticketsEarned}{t("枚", "")}</span>
               <span>・</span>
-              <span>使用済み {ticketsUsed}枚</span>
+              <span>{t("使用済み", "Used")} {ticketsUsed}{t("枚", "")}</span>
               <span>・</span>
-              <span>1チケット =</span>
+              <span>{t("1チケット =", "1 ticket =")}</span>
               <input
                 type="number"
                 value={ticketValue}
@@ -722,7 +732,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
               <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
                 <div className="h-1.5 bg-violet-500" style={{ width: `${virtue.total % 100}%` }} />
               </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">次のチケットまで {100 - (virtue.total % 100)} 徳ポイント</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">{t("次のチケットまで", "Until next ticket:")} {100 - (virtue.total % 100)} {t("徳ポイント", "virtue points")}</p>
             </div>
           </div>
 
@@ -750,7 +760,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
 
           {showGoalForm ? (
             <div className="bg-slate-800/60 border border-violet-700/40 rounded-xl p-3 space-y-2">
-              <p className="text-xs font-semibold text-slate-200">{editGoalId ? "目標を編集" : "目標を追加"}</p>
+              <p className="text-xs font-semibold text-slate-200">{editGoalId ? t("目標を編集", "Edit Goal") : t("目標を追加", "Add Goal")}</p>
               <div className="flex gap-1 flex-wrap">
                 {EMOJI_OPTIONS.map(e => (
                   <button key={e} type="button" onClick={() => setGoalForm(f => ({ ...f, emoji: e }))}
@@ -777,14 +787,14 @@ export default function GoalsAndDebt({ transactions }: Props) {
               </div>
               <div className="flex gap-2">
                 <button type="button" onClick={submitGoal} disabled={!goalForm.name.trim()} className="flex-1 py-2 bg-violet-600 hover:bg-violet-500 disabled:opacity-40 rounded-lg text-sm font-medium transition-all">
-                  {editGoalId ? "更新" : "追加"}
+                  {editGoalId ? t("更新", "Update") : t("追加", "Add")}
                 </button>
-                <button type="button" onClick={() => { setShowGoalForm(false); setEditGoalId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">キャンセル</button>
+                <button type="button" onClick={() => { setShowGoalForm(false); setEditGoalId(null) }} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition-all">{t("キャンセル", "Cancel")}</button>
               </div>
             </div>
           ) : (
             <button type="button" onClick={() => setShowGoalForm(true)} className="w-full py-2 border border-dashed border-slate-600 hover:border-violet-500 text-slate-400 hover:text-violet-300 rounded-xl text-sm transition-all">
-              ＋ 目標を追加
+              ＋ {t("目標を追加", "Add Goal")}
             </button>
           )}
         </div>
@@ -798,14 +808,14 @@ export default function GoalsAndDebt({ transactions }: Props) {
           <div className="bg-linear-to-br from-amber-900/40 to-yellow-900/20 border border-amber-700/40 rounded-xl p-4 text-center">
             <p className="text-3xl mb-1">🙏</p>
             <p className="text-4xl font-black text-amber-300">{virtue.total}</p>
-            <p className="text-xs text-slate-400 mt-1">累計徳ポイント</p>
+            <p className="text-xs text-slate-400 mt-1">{t("累計徳ポイント", "Total Virtue Points")}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <div className="bg-slate-800/60 rounded-lg p-2">
-                <p className="text-[10px] text-slate-400">獲得チケット</p>
+                <p className="text-[10px] text-slate-400">{t("獲得チケット", "Earned Tickets")}</p>
                 <p className="text-lg font-bold text-violet-300">🎫 {ticketsEarned}枚</p>
               </div>
               <div className="bg-slate-800/60 rounded-lg p-2">
-                <p className="text-[10px] text-slate-400">使用可能</p>
+                <p className="text-[10px] text-slate-400">{t("使用可能", "Available")}</p>
                 <p className="text-lg font-bold text-pink-300">🎫 {ticketsAvailable}枚</p>
               </div>
             </div>
@@ -813,7 +823,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                 <div className="h-2 bg-amber-500 transition-all" style={{ width: `${virtue.total % 100}%` }} />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">次のチケットまで {100 - (virtue.total % 100)} ポイント</p>
+              <p className="text-[10px] text-slate-400 mt-1">{t("次のチケットまで", "Until next ticket:")} {100 - (virtue.total % 100)} {t("ポイント", "points")}</p>
             </div>
           </div>
 
@@ -829,7 +839,7 @@ export default function GoalsAndDebt({ transactions }: Props) {
                 { label: "固定費率35%以下", pts: "+3" },
                 { label: "貯蓄率10%以上", pts: "+5" },
               ].map(item => (
-                <div key={item.label} className="flex justify-between items-center rounded bg-slate-900/40 px-2 py-1">
+                <div key={item.label} className="flex justify-between items-center rounded bg-slate-900 px-2 py-1">
                   <span>{item.label}</span>
                   <span className="text-amber-400 font-semibold">{item.pts}</span>
                 </div>
@@ -842,11 +852,11 @@ export default function GoalsAndDebt({ transactions }: Props) {
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
             <p className="text-xs font-semibold text-slate-200 mb-2">📅 月別獲得履歴</p>
             {virtue.byMonth.length === 0 ? (
-              <p className="text-xs text-slate-500">取引データがありません</p>
+              <p className="text-xs text-slate-500">{t("取引データがありません", "No transaction data")}</p>
             ) : (
               <div className="space-y-1 max-h-60 overflow-y-auto">
                 {[...virtue.byMonth].reverse().map(m => (
-                  <div key={m.ym} className="rounded-lg border border-slate-700 bg-slate-900/40 px-2 py-1.5">
+                  <div key={m.ym} className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5">
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-slate-300">{m.ym.replace("-", "年")}月</span>
                       <span className={`text-sm font-bold ${m.points > 0 ? "text-amber-400" : "text-slate-500"}`}>🙏 {m.points}pt</span>

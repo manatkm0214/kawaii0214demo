@@ -19,7 +19,7 @@ export default function InputForm() {
   const [isFixed, setIsFixed] = useState(false);
 
   return (
-    <div className="bg-slate-900/70 rounded-xl p-6 max-w-xl mx-auto mt-8 w-full">
+    <div className="bg-slate-900 rounded-xl p-6 max-w-xl mx-auto mt-8 w-full">
       <div className="flex gap-2 mb-4">
         {['収入', '支出', '貯金', '投資', '固定費'].map((t) => (
           <button

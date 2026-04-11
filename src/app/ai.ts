@@ -7,6 +7,7 @@ export type AIRequestType =
   | "annual"
   | "life_advice"
   | "calendar_advice"
+  | "food_lifestyle"
 
 export type AIRequestBody = {
   provider?: AIProvider

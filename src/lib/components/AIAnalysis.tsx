@@ -1,129 +1,273 @@
-"use client"
+"use client";
 
-import { Transaction } from "@/lib/utils"
-// Claude用AIProvider型のimport削除
-import Charts from "./Charts"
-
-
-import { useState, useCallback } from "react"
-import Image from "next/image"
-import { useCharacterImage } from "../hooks/useCharacterImage"
+import { useCallback, useMemo, useState } from "react";
+import Image from "next/image";
+import { dispatchAIInputDraft, type AIInputDraft } from "@/lib/aiInputDraft";
+import type { Transaction } from "@/lib/utils";
+import { useCharacterImage } from "../hooks/useCharacterImage";
+import { useLang } from "@/lib/hooks/useLang";
+import { useAIProvider, setAIProvider, AI_PROVIDERS } from "@/lib/hooks/useAIProvider";
 
 const mascotsByMode = {
   normal: [
     {
       key: "girl",
-      name: "さくら",
-      img: "/girl-mascot.png",
       lines: [
-        "一緒にがんばろうねっ！",
-        "今日もえらいよ！",
-        "節約って、ちょっと楽しいかも…？",
-        "私が応援してるから、無理しないでね♡",
-        "きゅん…！その調子でファイト！",
-        "目標に近づいてるよ、すごい！",
-        "また一歩前進だね！",
-        "私も見守ってるよ！",
+        "まずは今月のお金の流れを一緒に見ていこう。",
+        "無理のない改善から始めれば大丈夫です。",
+        "できたことから積み上げれば家計は整っていきます。",
       ],
     },
     {
       key: "boy",
-      name: "カケル",
-      img: "/boy-mascot.png",
       lines: [
-        "よく頑張ってるな、偉いぞ。",
-        "無理せず、少しずつで大丈夫だ。",
-        "俺も応援してるからな。",
-        "目標に向かって一緒に進もう。",
-        "その調子、かっこいいぞ！",
-        "着実に前進してるな。",
-        "困ったらいつでも頼ってくれ。",
-        "今日もお疲れさま。",
+        "焦らず、続けやすい形で整えていこう。",
+        "家計は少しずつ整えるほうが長続きします。",
+        "数字は責めるためではなく、整えるために使おう。",
       ],
     },
   ],
   kids: [
     {
       key: "kids",
-      name: "まめちゃん",
-      img: "/kids-mascot.png",
       lines: [
-        "いっしょにおこづかいがんばろう！",
-        "えらいね！おかし買えるかな？",
-        "おこづかい帳、ちゃんとつけてえらい！",
-        "つぎは何を買う？たのしみだね！",
-        "ちょっとずつためていこうね！",
-        "おかねはたいせつにしようね！",
+        "できたことを少しずつ増やしていこうね。",
+        "おこづかいも目標も、ゆっくりで大丈夫だよ。",
+        "見やすくすると続けやすくなるよ。",
       ],
     },
   ],
   senior: [
     {
       key: "senior",
-      name: "しげるさん",
-      img: "/senior-mascot.png",
       lines: [
-        "無理せず、ゆっくり続けましょう。",
-        "健康も大事にね。",
-        "年金や医療費も忘れずに。",
-        "今日もお疲れさまです。",
-        "少しずつで十分ですよ。",
-        "困ったら家族やサポートに相談しましょう。",
+        "安心を大事にしながら見直していきましょう。",
+        "生活費と備えの両方を無理なく整えましょう。",
+        "落ち着いて続けられる形がいちばん大切です。",
       ],
     },
   ],
+} as const;
+
+type Mode = "normal" | "kids" | "senior";
+type AnalysisType = "analysis" | "saving" | "advice";
+
+type ActionDetail = {
+  title?: string;
+  expected_impact_yen?: number;
+  priority?: string;
+};
+
+type AnalysisResultData = {
+  summary?: string;
+  positives?: string[];
+  warnings?: string[];
+  actions?: string[];
+  actions_detailed?: ActionDetail[];
+};
+
+type SavingsPlanResultData = {
+  fixed_savings?: string[];
+  variable_savings?: string[];
+  income_boost?: string[];
+  monthly_save?: string;
+  summary?: string;
+};
+
+type LifeAdviceResultData = {
+  life_score?: number;
+  life_comment?: string;
+  advice?: string[];
+  next_month_goal?: string;
+};
+
+type ApplySuggestion = {
+  id: string;
+  label: string;
+  note: string;
+  draft: AIInputDraft;
+};
+
+function parseJsonBlock<T>(value: string): T | null {
+  if (!value.trim()) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    const start = value.indexOf("{");
+    const end = value.lastIndexOf("}");
+    if (start < 0 || end <= start) return null;
+    try {
+      return JSON.parse(value.slice(start, end + 1)) as T;
+    } catch {
+      return null;
+    }
+  }
 }
 
+function extractYen(value?: string) {
+  if (!value) return undefined;
+  const matched = value.replace(/,/g, "").match(/(\d{3,})/);
+  if (!matched) return undefined;
+  const amount = Number(matched[1]);
+  return Number.isFinite(amount) ? amount : undefined;
+}
 
-type Provider = "openai" | "gemini"
+export default function AIAnalysis({
+  transactions,
+  currentMonth,
+  onOpenInput,
+}: {
+  transactions: Transaction[];
+  currentMonth: string;
+  onOpenInput?: () => void;
+}) {
+  const { characterUrl, characterName } = useCharacterImage();
+  const lang = useLang();
+  const t = useCallback((ja: string, en: string) => (lang === "en" ? en : ja), [lang]);
 
-export default function AIAnalysis({ transactions, currentMonth }: { transactions: Transaction[]; currentMonth: string }) {
-  const { characterUrl, characterName } = useCharacterImage()
+  const [mode, setMode] = useState<Mode>("normal");
+  const provider = useAIProvider();
+  const [analysisType, setAnalysisType] = useState<AnalysisType>("analysis");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [applyStatus, setApplyStatus] = useState("");
+  const [mascotLine, setMascotLine] = useState<string>(mascotsByMode.normal[0].lines[0]);
 
-  const [mode, setMode] = useState<"normal" | "kids" | "senior">("normal")
-  const [mascot, setMascot] = useState<string>(mascotsByMode.normal[0].key)
-  const [mascotLine, setMascotLine] = useState<string>(mascotsByMode.normal[0].lines[0])
+  const randomLine = useCallback((nextMode: Mode) => {
+    const lines = mascotsByMode[nextMode][0].lines;
+    return lines[Math.floor(Math.random() * lines.length)];
+  }, []);
 
-  const randomLine = useCallback(() => {
-    const modeList = mascotsByMode[mode]
-    const found = modeList.find(m => m.key === mascot) || modeList[0]
-    return found.lines[Math.floor(Math.random() * found.lines.length)]
-  }, [mode, mascot])
+  const analysisJson = useMemo(() => parseJsonBlock<AnalysisResultData>(result), [result]);
+  const savingJson = useMemo(() => parseJsonBlock<SavingsPlanResultData>(result), [result]);
+  const adviceJson = useMemo(() => parseJsonBlock<LifeAdviceResultData>(result), [result]);
 
-  const [provider, setProvider] = useState<Provider>("openai")
-  const [analysisType, setAnalysisType] = useState<"analysis" | "saving" | "advice">("analysis")
-  const [result, setResult] = useState<string>("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
+  const applySuggestions = useMemo<ApplySuggestion[]>(() => {
+    if (analysisType === "analysis" && analysisJson) {
+      const detailed = (analysisJson.actions_detailed ?? [])
+        .filter((item) => item.title)
+        .slice(0, 3)
+        .map((item, index) => {
+          const draft: AIInputDraft = {
+            tab: "saving",
+            amount: item.expected_impact_yen,
+            memo: item.title ?? "",
+          };
 
+          return {
+            id: `analysis-${index}`,
+            label: item.title ?? "",
+            note:
+              item.expected_impact_yen && item.expected_impact_yen > 0
+                ? t(`見込み効果 ${item.expected_impact_yen.toLocaleString()} 円`, `Estimated impact JPY ${item.expected_impact_yen.toLocaleString()}`)
+                : t("入力欄のメモへ反映", "Reflect to input memo"),
+            draft,
+          };
+        });
 
+      if (detailed.length > 0) return detailed;
+
+      return (analysisJson.actions ?? []).slice(0, 3).map((item, index) => {
+        const draft: AIInputDraft = {
+          tab: "saving",
+          memo: item,
+        };
+
+        return {
+          id: `analysis-text-${index}`,
+          label: item,
+          note: t("入力欄のメモへ反映", "Reflect to input memo"),
+          draft,
+        };
+      });
+    }
+
+    if (analysisType === "saving" && savingJson) {
+      const list = [
+        ...(savingJson.fixed_savings ?? []),
+        ...(savingJson.variable_savings ?? []),
+        ...(savingJson.income_boost ?? []),
+      ].slice(0, 3);
+      const monthlySave = extractYen(savingJson.monthly_save);
+
+      return list.map((item, index) => {
+        const draft: AIInputDraft = {
+          tab: "saving",
+          amount: monthlySave,
+          memo: item,
+        };
+
+        return {
+          id: `saving-${index}`,
+          label: item,
+          note: monthlySave ? t(`目安 ${monthlySave.toLocaleString()} 円`, `Guide JPY ${monthlySave.toLocaleString()}`) : t("入力欄のメモへ反映", "Reflect to input memo"),
+          draft,
+        };
+      });
+    }
+
+    if (analysisType === "advice" && adviceJson) {
+      const entries = [
+        ...(adviceJson.next_month_goal ? [adviceJson.next_month_goal] : []),
+        ...(adviceJson.advice ?? []),
+      ].slice(0, 3);
+
+      return entries.map((item, index) => {
+        const draft: AIInputDraft = {
+          tab: "expense",
+          memo: item,
+        };
+
+        return {
+          id: `advice-${index}`,
+          label: item,
+          note: t("入力欄のメモへ反映", "Reflect to input memo"),
+          draft,
+        };
+      });
+    }
+
+    if (!result.trim()) return [];
+
+    const draft: AIInputDraft = {
+      tab: analysisType === "saving" ? "saving" : "expense",
+      memo: result.slice(0, 180),
+    };
+
+    return [
+      {
+        id: "raw-result",
+        label: t("このAI提案を入力欄へ送る", "Send this AI suggestion to input"),
+        note: t("要点をメモ欄へ入れます", "Adds the result to the memo field"),
+        draft,
+      },
+    ];
+  }, [adviceJson, analysisJson, analysisType, result, savingJson, t]);
 
   async function handleAnalysis() {
-    setLoading(true)
-    setError("")
-    setResult("")
+    setLoading(true);
+    setError("");
+    setResult("");
+    setApplyStatus("");
+
     try {
-      let data = transactions
-      // モードごとに分析ロジックを分岐
+      let data = transactions;
+
       if (mode === "kids") {
-        // 子供向け: 今月のみ・おこづかい/おやつ/おもちゃカテゴリだけ
-        data = transactions.filter(t => t.date.slice(0, 7) === currentMonth && ["おこづかい", "おやつ", "おもちゃ"].includes(t.category || ""))
+        data = transactions.filter((tx) => tx.date.slice(0, 7) === currentMonth);
       } else if (mode === "senior") {
-        // 高齢者: 医療費・年金・生活費カテゴリを強調
-        data = transactions.filter(t => ["医療費", "年金", "生活費", "食費", "光熱費"].includes(t.category || ""))
+        data = transactions.filter((tx) => ["income", "expense", "saving"].includes(tx.type));
+      } else if (analysisType === "analysis") {
+        const months = [...new Set(transactions.map((tx) => tx.date.slice(0, 7)))].sort().reverse().slice(0, 3);
+        data = transactions.filter((tx) => months.includes(tx.date.slice(0, 7)));
       } else {
-        // analysis: 直近3ヶ月, saving/advice: 今月のみ
-        if (analysisType === "analysis") {
-          const months = [...new Set(transactions.map(t => t.date.slice(0, 7)))].sort().reverse().slice(0, 3)
-          data = transactions.filter(t => months.includes(t.date.slice(0, 7)))
-        } else {
-          data = transactions.filter(t => t.date.slice(0, 7) === currentMonth)
-        }
+        data = transactions.filter((tx) => tx.date.slice(0, 7) === currentMonth);
       }
-      // analysisType値をAPIのtype値に変換
-      let apiType: string = analysisType
-      if (analysisType === "saving") apiType = "savings_plan"
-      if (analysisType === "advice") apiType = "life_advice"
+
+      let apiType: string = analysisType;
+      if (analysisType === "saving") apiType = "savings_plan";
+      if (analysisType === "advice") apiType = "life_advice";
 
       const res = await fetch("/api/ai", {
         method: "POST",
@@ -134,107 +278,174 @@ export default function AIAnalysis({ transactions, currentMonth }: { transaction
           data,
           mode,
         }),
-      })
-      const payload = await res.json()
-      if (!res.ok) throw new Error(payload?.error || "AI分析に失敗しました")
-      setResult(payload?.result || "")
-      setMascotLine(randomLine())
-    } catch (e) {
-      if (e instanceof Error) {
-        setError(e.message)
-      } else {
-        setError("AI分析に失敗しました")
+      });
+
+      const payload = (await res.json()) as { result?: string; error?: string };
+      if (!res.ok) {
+        throw new Error(payload.error || t("AI分析に失敗しました", "AI analysis failed"));
       }
+
+      setResult(payload.result || "");
+      setMascotLine(randomLine(mode));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("AI分析に失敗しました", "AI analysis failed"));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
+  }
+
+  function handleApplySuggestion(draft: AIInputDraft) {
+    dispatchAIInputDraft(draft);
+    onOpenInput?.();
+    setApplyStatus(t("入力欄へ反映しました。金額やカテゴリを確認して保存してください。", "Reflected to the input form. Review the values, then save."));
   }
 
   return (
     <div className="animate-fade-in flex flex-col gap-4">
-      {/* 年間グラフ（12ヶ月分） */}
-      <Charts transactions={transactions} currentMonth={currentMonth} />
-
-      <div className="mt-6 p-4 bg-slate-800 rounded-xl border border-slate-700 flex flex-col gap-4">
-        {/* モード選択 */}
-        <div className="flex gap-3 items-center flex-wrap mb-2">
-          <span className="text-slate-300 font-bold">モード:</span>
-          {[
-            { key: "normal", label: "通常" },
-            { key: "kids", label: "子供" },
-            { key: "senior", label: "高齢者" },
-          ].map(m => (
+      <div className="metric-shell mt-6 flex flex-col gap-4 rounded-[28px] p-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold text-slate-300">{t("モード", "Mode")}</span>
+          {([
+            { key: "normal", label: t("通常", "Normal") },
+            { key: "kids", label: t("こども", "Kids") },
+            { key: "senior", label: t("シニア", "Senior") },
+          ] as const).map((item) => (
             <button
-              key={m.key}
-              className={`px-3 py-1 rounded-lg font-bold text-sm border-2 ${mode === m.key ? "border-emerald-400 bg-emerald-900/30 text-emerald-200" : "border-slate-700 bg-slate-700 text-slate-300"}`}
+              key={item.key}
+              type="button"
+              className={`rounded-lg border-2 px-3 py-2 text-sm font-bold ${
+                mode === item.key ? "border-emerald-400 bg-emerald-950 text-emerald-200" : "border-slate-600 bg-slate-800 text-slate-200"
+              }`}
               onClick={() => {
-                setMode(m.key as "normal"|"kids"|"senior")
-                const nextMascots = mascotsByMode[m.key as keyof typeof mascotsByMode]
-                setMascot(nextMascots[0].key)
-                setMascotLine(nextMascots[0].lines[Math.floor(Math.random() * nextMascots[0].lines.length)])
+                setMode(item.key);
+                setMascotLine(randomLine(item.key));
               }}
               disabled={loading}
-            >{m.label}</button>
+            >
+              {item.label}
+            </button>
           ))}
         </div>
-        {/* キャラクター選択UIは非表示化（自由設定のみ） */}
 
-        {/* キャラクター画像・名前 */}
-        <div className="flex items-center gap-3 bg-slate-900/80 rounded-xl p-3 border border-pink-400/40">
+        <div className="metric-tile rounded-2xl border border-pink-400/35 p-3">
           {characterUrl ? (
-            <Image src={characterUrl} alt={characterName || "キャラクター"} width={48} height={48} className="w-12 h-12 rounded-full object-cover border-2 border-pink-300 bg-white" unoptimized />
+            <Image
+              src={characterUrl}
+              alt={characterName || t("キャラクター画像", "Character image")}
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-full border-2 border-pink-300 bg-white object-cover"
+              unoptimized
+            />
           ) : (
-            <div className="w-12 h-12 rounded-full border-2 border-pink-300 bg-slate-800 flex items-center justify-center text-xl">🤖</div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-pink-300 bg-slate-800 text-xl text-pink-200">
+              AI
+            </div>
           )}
           <div>
-            <div className="font-bold text-pink-200 text-sm mb-1">{characterName || "AI"}のひとこと</div>
-            <div className="text-pink-100 text-xs">{mascotLine}</div>
+            <div className="mb-1 text-sm font-bold text-pink-200">{characterName || "AI"} {t("からのひとこと", "message")}</div>
+            <div className="text-xs text-pink-100">{mascotLine}</div>
           </div>
         </div>
 
-        {/* AIプロバイダー選択 */}
-        <div className="flex gap-3 items-center flex-wrap mt-2">
-          <span className="text-slate-300 font-bold">AIプロバイダー:</span>
-          <button
-            className={`px-3 py-1 rounded-lg font-bold text-sm ${provider === "openai" ? "bg-violet-600 text-white" : "bg-slate-700 text-slate-300"}`}
-            onClick={() => setProvider("openai")}
-            disabled={loading}
-          >OpenAI</button>
-          <button
-            className={`px-3 py-1 rounded-lg font-bold text-sm ${provider === "gemini" ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-300"}`}
-            onClick={() => setProvider("gemini")}
-            disabled={loading}
-          >Gemini</button>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold text-slate-300">{t("AIプロバイダー", "AI provider")}</span>
+          {AI_PROVIDERS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              className={`rounded-lg px-3 py-2 text-sm font-bold ${provider === p.key ? `${p.color} text-white` : "border border-slate-600 bg-slate-800 text-slate-200"}`}
+              onClick={() => setAIProvider(p.key)}
+              disabled={loading}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
-        {/* 分析種別選択 */}
-        <div className="flex gap-3 items-center flex-wrap mt-2">
-          <span className="text-slate-300 font-bold">分析種別:</span>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold text-slate-300">{t("分析の種類", "Analysis type")}</span>
           <button
-            className={`px-3 py-1 rounded-lg font-bold text-sm ${analysisType === "analysis" ? "bg-emerald-600 text-white" : "bg-slate-700 text-slate-300"}`}
+            type="button"
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "analysis" ? "bg-emerald-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
             onClick={() => setAnalysisType("analysis")}
             disabled={loading}
-          >今月のAI分析</button>
+          >
+            {t("AI分析", "AI analysis")}
+          </button>
           <button
-            className={`px-3 py-1 rounded-lg font-bold text-sm ${analysisType === "saving" ? "bg-cyan-600 text-white" : "bg-slate-700 text-slate-300"}`}
+            type="button"
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "saving" ? "bg-cyan-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
             onClick={() => setAnalysisType("saving")}
             disabled={loading}
-          >AI節約プラン</button>
+          >
+            {t("AI節約プラン", "AI savings plan")}
+          </button>
           <button
-            className={`px-3 py-1 rounded-lg font-bold text-sm ${analysisType === "advice" ? "bg-pink-600 text-white" : "bg-slate-700 text-slate-300"}`}
+            type="button"
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "advice" ? "bg-pink-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
             onClick={() => setAnalysisType("advice")}
             disabled={loading}
-          >AI生活アドバイス</button>
+          >
+            {t("AI生活アドバイス", "AI life advice")}
+          </button>
         </div>
+
         <button
-          className="mt-2 px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold disabled:opacity-60"
+          type="button"
+          className="mt-1 rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white hover:bg-emerald-500 disabled:opacity-60"
           onClick={handleAnalysis}
           disabled={loading}
-        >{loading ? (analysisType === "analysis" ? "分析中..." : analysisType === "saving" ? "節約案作成中..." : "アドバイス生成中...") : (
-          analysisType === "analysis" ? "今月のAI分析" : analysisType === "saving" ? "AI節約プラン" : "AI生活アドバイス"
-        )}</button>
-        {error && <div className="text-red-400 font-bold">{error}</div>}
+        >
+          {loading
+            ? analysisType === "analysis"
+              ? t("分析中...", "Analyzing...")
+              : analysisType === "saving"
+                ? t("プラン作成中...", "Creating plan...")
+                : t("アドバイス作成中...", "Generating advice...")
+            : analysisType === "analysis"
+              ? t("AI分析を実行", "Run AI analysis")
+              : analysisType === "saving"
+                ? t("AI節約プランを作る", "Create AI savings plan")
+                : t("AI生活アドバイスを作る", "Create AI life advice")}
+        </button>
+
+        {error && <div className="font-bold text-rose-400">{error}</div>}
+
+        {applyStatus && (
+          <div className="rounded-2xl border border-emerald-800 bg-emerald-950 px-4 py-3 text-sm text-emerald-200">
+            {applyStatus}
+          </div>
+        )}
+
+        {applySuggestions.length > 0 && (
+          <div className="metric-tile rounded-2xl border border-cyan-800 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-cyan-100">{t("入力欄へ反映", "Reflect to input")}</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  {t("AI提案をそのまま入力欄へ送って、あとから金額やカテゴリを整えられます。", "Send an AI suggestion into the input form, then adjust the amount or category.")}
+                </p>
+              </div>
+            </div>
+            <div className="mt-3 space-y-2">
+              {applySuggestions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleApplySuggestion(item.draft)}
+                  className="w-full rounded-2xl border border-cyan-800 bg-slate-900 px-4 py-3 text-left transition hover:border-cyan-500 hover:bg-slate-800"
+                >
+                  <p className="text-sm font-semibold text-cyan-100">{item.label}</p>
+                  <p className="mt-1 text-xs text-slate-400">{item.note}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {result && (
-          <div className="mt-4 p-4 bg-slate-900 rounded-lg border border-slate-700 whitespace-pre-wrap text-slate-100">
+          <div className="metric-tile mt-2 whitespace-pre-wrap rounded-2xl border border-slate-600 p-4 text-slate-100">
             {result}
           </div>
         )}

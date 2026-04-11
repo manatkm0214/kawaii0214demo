@@ -1,114 +1,373 @@
 import { NextRequest, NextResponse } from "next/server";
 
+type AIProvider = "openai" | "gemini" | "claude";
+
 type AIRequestBody = {
-  provider: "openai" | "gemini";
+  provider?: AIProvider;
   type: string;
   data: Record<string, unknown>;
 };
-export async function POST(req: NextRequest) {
-  const { provider = "openai", type, data }: AIRequestBody = await req.json();
 
-  let prompt = "";
-  // data型ガード
-  const d: Record<string, unknown> = typeof data === "object" && data !== null ? data as Record<string, unknown> : {};
-  // 型安全な参照用関数
-  const arr = (v: unknown) => Array.isArray(v) ? v : [];
-  const obj = (v: unknown) => (typeof v === "object" && v !== null ? v as Record<string, unknown> : {});
+type ProviderResponse = {
+  text: string;
+  provider: AIProvider;
+};
+
+function buildPrompt(type: string, data: Record<string, unknown>) {
+  const d = data;
+  const arr = (value: unknown) => (Array.isArray(value) ? value : []);
+  const obj = (value: unknown) => (typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {});
+
   if (type === "category") {
-    prompt = `家計簿アプリのAIアシスタントです。\n以下のメモから最適なカテゴリを1つだけ提案してください。\nメモ: "${d.memo ?? ""}"\n種別: ${d.transactionType ?? ""}\n利用可能カテゴリ: ${arr(d.categories).join(", ")}\nカテゴリ名のみ返してください。`;
-  } else if (type === "analysis") {
+    return `You classify household budget entries.
+Choose the single best category from the candidate list.
+
+Memo: "${d.memo ?? ""}"
+Transaction type: ${d.transactionType ?? ""}
+Candidate categories: ${arr(d.categories).join(", ")}
+
+Return only the category name.`;
+  }
+
+  if (type === "analysis") {
     const allocationTargets = obj(d.allocationTargets);
     const allocationActual = obj(d.allocationActual);
-    prompt = `家計簿AIアナリストです。以下のデータを分析し、日本語で回答してください。\n\n今月のデータ:\n- 収入合計: ${d.income ?? ""}円\n- 支出合計: ${d.expense ?? ""}円\n- 貯金合計: ${d.saving ?? ""}円\n- 投資合計: ${d.investment ?? ""}円\n- 貯蓄率: ${d.savingRate ?? ""}%\n- 固定費率: ${d.fixedRate ?? ""}%\n- 手取り(基準): ${d.takeHome ?? d.income ?? ""}円\n- 目標配分: 固定費${allocationTargets.fixed ?? "-"}%以下 / 変動費${allocationTargets.variable ?? "-"}%以下 / 貯蓄${allocationTargets.savings ?? "-"}%以上\n- 実績配分: 固定費${allocationActual.fixed ?? "-"}% / 変動費${allocationActual.variable ?? "-"}% / 貯蓄${allocationActual.savings ?? "-"}%\n- 月末予測: ${JSON.stringify(d.forecast ?? {})}\n- 予算進捗: ${JSON.stringify(arr(d.budgetProgress))}\n- カテゴリ別支出: ${JSON.stringify(d.categoryExpenses ?? {})}\n\n以下の形式でJSON回答してください（マークダウン記法なし）:\n{\n  "summary": "今月の総評（2-3文、初心者にもわかる言葉）",\n  "positives": ["良い点1", "良い点2"],\n  "warnings": ["注意点1", "注意点2"],\n  "actions": ["来月のアクション1", "来月のアクション2", "来月のアクション3"],\n  "actions_detailed": [\n    {"title":"実行アクション", "expected_impact_yen": 3000, "priority":"high"},\n    {"title":"実行アクション", "expected_impact_yen": 1500, "priority":"medium"},\n    {"title":"実行アクション", "expected_impact_yen": 800, "priority":"low"}\n  ]\n}`;
-  } else if (type === "savings_plan") {
-    prompt = `家計改善プランナーです。\n目標: ${d.goal ?? ""}\n現在の固定費: ${d.fixedExpenses ?? ""}円\n現在の変動費: ${d.variableExpenses ?? ""}円\n収入: ${d.income ?? ""}円\n\n具体的な節約プランをJSON形式で返してください（マークダウン記法なし）:\n{\n  "fixed_savings": ["固定費削減案1（金額付き）", "固定費削減案2"],\n  "variable_savings": ["変動費削減案1", "変動費削減案2"],\n  "income_boost": ["収入アップ案1", "収入アップ案2"],\n  "monthly_save": "月間節約見込み額（円）",\n  "summary": "プランの総評"\n}`;
-  } else if (type === "annual") {
-    prompt = `家計年間レポートアナリストです。\n過去12ヶ月のデータ: ${JSON.stringify(d.monthlyData ?? {})}\n\n以下のJSON形式で年間総評を返してください（マークダウン記法なし）:\n{\n  "annual_summary": "年間の総評（3-4文）",\n  "best_month": "最も良かった月と理由",\n  "worst_month": "最も厳しかった月と理由",\n  "trend": "年間トレンドの分析",\n  "next_year": "来年へのアドバイス3点"\n}`;
-  } else if (type === "life_advice") {
-    prompt = `生活の質アドバイザーです。家計データから生活パターンを分析し、家計と生活習慣の両面からアドバイスをしてください。\n\n対象月: ${d.currentMonth ?? ""}\n収入: ${d.income ?? ""}円\n支出: ${d.expense ?? ""}円\n貯蓄率: ${d.savingRate ?? ""}%\nカテゴリ別支出: ${JSON.stringify(d.categoryExpenses ?? {})}\n\n分析の観点:\n- 食費・外食の割合から食生活の豊かさや健康度を推測する\n- 娯楽・趣味費から余暇・休息のバランスを推測する\n- 教育・書籍費から自己投資の姿勢を推測する\n- 医療・スポーツ費から健康管理への意識を推測する\n- 交通費から行動範囲・活動量を推測する\n\n以下のJSON形式で返してください（マークダウン記法なし）:\n{\n  "life_score": 75,\n  "life_comment": "総合的な生活の質スコア（100点満点）とその理由2文",\n  "patterns": [\n    {"label": "食生活", "score": 80, "comment": "外食と食費のバランスから推測した一言"},\n    {"label": "娯楽・休息", "score": 60, "comment": "娯楽費から推測"},\n    {"label": "自己投資", "score": 70, "comment": "教育・書籍費から推測"},\n    {"label": "健康管理", "score": 65, "comment": "医療・スポーツ費から推測"}\n  ],\n  "advice": [\n    "具体的な生活改善アドバイス1（家計と生活の両面から）",\n    "アドバイス2",\n    "アドバイス3"\n  ],\n  "next_month_goal": "来月の生活目標（家計だけでなく生活習慣を含む1文）"\n}`;
-  } else if (type === "calendar_advice") {
-    prompt = `家計カレンダーアドバイザーです。年間の収支データから重要なイベントや注意点をアドバイスしてください。\n\n対象月: ${d.currentMonth ?? ""}\n12ヶ月の月別データ: ${JSON.stringify(d.monthlyData ?? {})}\n今月のカテゴリ別支出: ${JSON.stringify(d.categoryExpenses ?? {})}\nカレンダー予定数: ${d.eventCount ?? 0}件\n\n以下のJSON形式で返してください（マークダウン記法なし）:\n{\n  "month_summary": "今月の家計の一言コメント（1文）",\n  "calendar_tips": [\n    "今月のカレンダー活用アドバイス1（例：給料日直後の大きな出費に注意）",\n    "アドバイス2（例：月末に光熱費の締め日が重なりやすい）",\n    "アドバイス3"\n  ],\n  "upcoming_warnings": [\n    "来月・翌月の注意点1（季節的な出費など）",\n    "注意点2"\n  ],\n  "best_saving_day": "お金を使いにくい・節約しやすいタイミングの提案（1文）",\n  "annual_pattern": "年間を通じた支出パターンの特徴（1文）"\n}`;
+    return `You are a household budget analyst.
+Analyze the monthly data and return JSON only.
+
+Data:
+- income: ${d.income ?? ""}
+- expense: ${d.expense ?? ""}
+- saving: ${d.saving ?? ""}
+- investment: ${d.investment ?? ""}
+- savingRate: ${d.savingRate ?? ""}%
+- fixedRate: ${d.fixedRate ?? ""}%
+- takeHome: ${d.takeHome ?? d.income ?? ""}
+- allocationTargets: ${JSON.stringify(allocationTargets)}
+- allocationActual: ${JSON.stringify(allocationActual)}
+- forecast: ${JSON.stringify(d.forecast ?? {})}
+- budgetProgress: ${JSON.stringify(arr(d.budgetProgress))}
+- categoryExpenses: ${JSON.stringify(d.categoryExpenses ?? {})}
+
+Return:
+{
+  "summary": "2-3 sentence summary",
+  "positives": ["positive 1", "positive 2"],
+  "warnings": ["warning 1", "warning 2"],
+  "actions": ["action 1", "action 2", "action 3"],
+  "actions_detailed": [
+    {"title":"action", "expected_impact_yen": 3000, "priority":"high"},
+    {"title":"action", "expected_impact_yen": 1500, "priority":"medium"},
+    {"title":"action", "expected_impact_yen": 800, "priority":"low"}
+  ]
+}`;
   }
 
-  if (!prompt) {
-    return NextResponse.json({ error: "不正なリクエスト種別です" }, { status: 400 });
+  if (type === "savings_plan") {
+    return `You create a practical savings plan for a household.
+Return JSON only.
+
+Goal: ${d.goal ?? ""}
+Fixed expenses: ${d.fixedExpenses ?? ""}
+Variable expenses: ${d.variableExpenses ?? ""}
+Income: ${d.income ?? ""}
+
+Return:
+{
+  "fixed_savings": ["idea 1", "idea 2"],
+  "variable_savings": ["idea 1", "idea 2"],
+  "income_boost": ["idea 1", "idea 2"],
+  "monthly_save": "estimated monthly saving",
+  "summary": "short summary"
+}`;
   }
 
-  // プロバイダーごとにAPI分岐
-  let apiUrl = "";
-  let apiHeaders: Record<string, string> = {};
-  let apiBody: Record<string, unknown> = {};
-  let parseResponse: (raw: string) => string = () => "";
+  if (type === "annual") {
+    return `You are a yearly household budget analyst.
+Past 12 months data: ${JSON.stringify(d.monthlyData ?? {})}
 
-  if (provider === "openai") {
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-    const model = process.env.OPENAI_MODEL?.trim() || "gpt-3.5-turbo";
-    if (!apiKey) {
-      return NextResponse.json({ error: "OPENAI_API_KEY が未設定です" }, { status: 500 });
+Return JSON only:
+{
+  "annual_summary": "3-4 sentence annual summary",
+  "best_month": "best month and why",
+  "worst_month": "worst month and why",
+  "trend": "yearly trend analysis",
+  "next_year": "3 concise recommendations for next year"
+}`;
+  }
+
+  if (type === "life_advice") {
+    return `You provide practical lifestyle advice from household budget data.
+Return JSON only.
+
+Current month: ${d.currentMonth ?? ""}
+Income: ${d.income ?? ""}
+Expense: ${d.expense ?? ""}
+Saving rate: ${d.savingRate ?? ""}%
+Category expenses: ${JSON.stringify(d.categoryExpenses ?? {})}
+
+Return:
+{
+  "life_score": 75,
+  "life_comment": "short overview",
+  "patterns": [
+    {"label": "food", "score": 80, "comment": "comment"},
+    {"label": "leisure", "score": 60, "comment": "comment"},
+    {"label": "self_growth", "score": 70, "comment": "comment"},
+    {"label": "health", "score": 65, "comment": "comment"}
+  ],
+  "advice": ["advice 1", "advice 2", "advice 3"],
+  "next_month_goal": "single next-month goal"
+}`;
+  }
+
+  if (type === "food_lifestyle") {
+    const pantryItems = arr(d.pantryItems).map((item) => {
+      const pantry = obj(item);
+      return {
+        name: pantry.name ?? "",
+        amount: pantry.amount ?? "",
+        expiresInDays: pantry.expiresInDays ?? null,
+      };
+    });
+
+    return `You are an assistant inside a household-budget app.
+Generate realistic cooking and lifestyle suggestions based on pantry items, area, and this month's budget pace.
+
+Rules:
+- Return JSON only
+- If lang is "ja", write all user-facing text in Japanese
+- If lang is "en", write all user-facing text in English
+- Provide up to 3 recipes
+- Provide up to 3 lifestyleSuggestions
+- Prioritize using pantryItems
+- Avoid unrealistic or overly expensive ideas
+
+Input:
+- lang: ${d.lang ?? "ja"}
+- currentMonth: ${d.currentMonth ?? ""}
+- area: ${d.area ?? ""}
+- mode: ${d.mode ?? "save"}
+- pantryItems: ${JSON.stringify(pantryItems)}
+- stats: ${JSON.stringify(obj(d.stats))}
+
+Return:
+{
+  "summary": "short overview",
+  "recipes": [
+    {
+      "title": "recipe name",
+      "reason": "why this fits",
+      "ingredients": ["ingredient 1", "ingredient 2"],
+      "steps": ["step 1", "step 2", "step 3"],
+      "missingIngredients": ["missing ingredient 1"],
+      "level": "save"
     }
-    apiUrl = "https://api.openai.com/v1/chat/completions";
-    apiHeaders = {
+  ],
+  "lifestyleSuggestions": [
+    {
+      "title": "suggestion title",
+      "body": "specific advice",
+      "budgetLabel": "short label"
+    }
+  ]
+}`;
+  }
+
+  if (type === "input_board_suggest") {
+    const lang = d.lang ?? "ja";
+    return `You are a household budget app assistant.
+Based on the user's recent transaction history, suggest which categories, units, and payment methods are most useful to show as quick-buttons in the input form.
+Return JSON only. ${lang === "ja" ? "Write labels in Japanese." : "Write labels in English."}
+
+Available categories per type:
+${JSON.stringify(d.availableCategories ?? {})}
+
+Available payment methods: ${arr(d.availablePayments).join(", ")}
+Available units (as multiplier numbers): ${arr(d.availableUnits).join(", ")}
+
+Recent transaction summary:
+- Top categories used: ${JSON.stringify(d.topCategories ?? {})}
+- Top payment methods: ${JSON.stringify(d.topPayments ?? [])}
+- Units typically used: ${JSON.stringify(d.topUnits ?? [])}
+
+Suggest the most relevant subset. Include at least 3 categories per type. Return:
+{
+  "categories": {
+    "income": ["category1", "category2"],
+    "expense": ["category1", "category2"],
+    "saving": ["category1"],
+    "investment": ["category1"]
+  },
+  "units": [1, 1000],
+  "payments": ["method1", "method2"],
+  "reason": "one-line reason in the user's language"
+}`;
+  }
+
+  if (type === "calendar_advice") {
+    return `You are a calendar-based household budget advisor.
+Use yearly cashflow and this month's data to suggest timing-aware advice.
+Return JSON only.
+
+Current month: ${d.currentMonth ?? ""}
+Monthly data for 12 months: ${JSON.stringify(d.monthlyData ?? {})}
+Current category expenses: ${JSON.stringify(d.categoryExpenses ?? {})}
+Calendar event count: ${d.eventCount ?? 0}
+
+Return:
+{
+  "month_summary": "one-line summary",
+  "calendar_tips": ["tip 1", "tip 2", "tip 3"],
+  "upcoming_warnings": ["warning 1", "warning 2"],
+  "best_saving_day": "timing suggestion",
+  "annual_pattern": "one-line annual pattern"
+}`;
+  }
+
+  return "";
+}
+
+function extractErrorMessage(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const error = record.error;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const errorRecord = error as Record<string, unknown>;
+    const message = errorRecord.message;
+    if (typeof message === "string") return message;
+  }
+  return null;
+}
+
+async function requestOpenAI(prompt: string): Promise<ProviderResponse> {
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const model = process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`,
-    };
-    apiBody = {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
       model,
       max_tokens: 2048,
       messages: [{ role: "user", content: prompt }],
-    };
-    parseResponse = (raw) => {
-      let result: Record<string, unknown> | null = null;
-      try { result = raw ? JSON.parse(raw) : null; } catch { return ""; }
-      if (
-        result &&
-        Array.isArray((result as { choices?: unknown[] }).choices) &&
-        typeof ((result as { choices: unknown[] }).choices[0]) === "object" &&
-        (result as { choices: unknown[] }).choices[0] !== null &&
-        typeof (((result as { choices: { message?: { content?: unknown } }[] }).choices[0].message?.content)) === "string"
-      ) {
-        return ((result as { choices: { message: { content: string } }[] }).choices[0].message.content).trim();
-      }
-      return "";
-    };
-  } else if (provider === "gemini") {
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
-    const model = process.env.GEMINI_MODEL?.trim() || "gemini-pro";
-    if (!apiKey) {
-      return NextResponse.json({ error: "GEMINI_API_KEY が未設定です" }, { status: 500 });
-    }
-    apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    apiHeaders = { "Content-Type": "application/json" };
-    apiBody = { contents: [{ parts: [{ text: prompt }] }] };
-    parseResponse = (raw) => {
-      let result: Record<string, unknown> | null = null;
-      try { result = raw ? JSON.parse(raw) : null; } catch { return ""; }
-      if (
-        result &&
-        Array.isArray((result as { candidates?: unknown[] }).candidates) &&
-        typeof ((result as { candidates: unknown[] }).candidates[0]) === "object" &&
-        (result as { candidates: unknown[] }).candidates[0] !== null &&
-        typeof (((result as { candidates: { content?: { parts?: { text?: unknown }[] } }[] }).candidates[0].content?.parts?.[0]?.text)) === "string"
-      ) {
-        return (((result as { candidates: { content: { parts: { text: string }[] } }[] }).candidates[0].content.parts[0].text)).trim();
-      }
-      return "";
-    };
-  } else {
-    return NextResponse.json({ error: "未対応のAIプロバイダーです" }, { status: 400 });
-  }
-
-  // 共通API呼び出し
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: apiHeaders,
-    body: JSON.stringify(apiBody),
+    }),
   });
-  const raw = await response.text();
-  const text = parseResponse(raw);
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const parsed = raw as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  const text = parsed.choices?.[0]?.message?.content?.trim() ?? "";
 
   if (!response.ok || !text) {
-    return NextResponse.json({ error: "AIから有効な回答が返りませんでした" }, { status: response.status || 502 });
+    throw new Error(extractErrorMessage(raw) || "OpenAI response could not be generated.");
   }
 
-  return NextResponse.json({ result: text });
+  return { text, provider: "openai" };
+}
+
+async function requestGemini(prompt: string): Promise<ProviderResponse> {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+    }),
+  });
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const parsed = raw as {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+  };
+  const text =
+    parsed.candidates?.[0]?.content?.parts
+      ?.map((part) => part.text ?? "")
+      .join("")
+      .trim() ?? "";
+
+  if (!response.ok || !text) {
+    throw new Error(extractErrorMessage(raw) || "Gemini response could not be generated.");
+  }
+
+  return { text, provider: "gemini" };
+}
+
+async function requestClaude(prompt: string): Promise<ProviderResponse> {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const model = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  const parsed = raw as {
+    content?: Array<{ type?: string; text?: string }>;
+  };
+  const text = parsed.content?.find((item) => item.type === "text")?.text?.trim() ?? "";
+
+  if (!response.ok || !text) {
+    throw new Error(extractErrorMessage(raw) || "Claude response could not be generated.");
+  }
+
+  return { text, provider: "claude" };
+}
+
+async function requestByProvider(provider: AIProvider, prompt: string) {
+  if (provider === "gemini") return requestGemini(prompt);
+  if (provider === "claude") return requestClaude(prompt);
+  return requestOpenAI(prompt);
+}
+
+function getProviderOrder(preferred: AIProvider): AIProvider[] {
+  const ordered: AIProvider[] = [preferred, "openai", "gemini", "claude"];
+  return ordered.filter((provider, index) => ordered.indexOf(provider) === index);
+}
+
+export async function POST(req: NextRequest) {
+  const body = (await req.json()) as AIRequestBody;
+  const provider = body.provider ?? "openai";
+  const prompt = buildPrompt(body.type, body.data ?? {});
+
+  if (!prompt) {
+    return NextResponse.json({ error: "Unsupported AI request type." }, { status: 400 });
+  }
+
+  const errors: string[] = [];
+
+  for (const candidate of getProviderOrder(provider)) {
+    try {
+      const result = await requestByProvider(candidate, prompt);
+      return NextResponse.json({ result: result.text, provider: result.provider });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "AI response could not be generated.";
+      errors.push(`${candidate}: ${message}`);
+    }
+  }
+
+  return NextResponse.json(
+    { error: errors[0] || "AI response could not be generated." },
+    { status: 502 },
+  );
 }

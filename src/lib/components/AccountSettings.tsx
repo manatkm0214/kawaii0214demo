@@ -1,38 +1,28 @@
 "use client"
 
-import { useMemo, useState } from "react"
-import type { User } from "@supabase/supabase-js"
-import { createClient } from "@/lib/supabase/client"
+import { useState } from "react"
+import { useLang } from "@/lib/hooks/useLang"
 import type { Profile } from "@/lib/utils"
 
 const MONEY_UNITS = [
-  { label: "円", factor: 1 },
-  { label: "千円", factor: 1000 },
-  { label: "万円", factor: 10000 },
+  { key: "yen", factor: 1, ja: "円", en: "Yen" },
+  { key: "thousand", factor: 1000, ja: "千円", en: "1K" },
+  { key: "man", factor: 10000, ja: "万円", en: "10K" },
 ] as const
 
 interface Props {
-  user: User
+  user: {
+    id: string
+    email?: string | null
+  }
   profile: Profile | null
   onClose: () => void
   onProfileUpdated: (nextProfile: Profile) => void
 }
 
-function isPasswordValid(password: string): boolean {
-  return password.normalize("NFKC").trim().length >= 8
-}
-
-function toServerCompatiblePassword(raw: string): string {
-  let next = raw.normalize("NFKC").trim()
-  if (!/[a-z]/.test(next)) next += "a"
-  if (!/[A-Z]/.test(next)) next += "A"
-  if (!/[0-9]/.test(next)) next += "1"
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"|<>?,./`~]/.test(next)) next += "!"
-  if (next.length < 8) next = next.padEnd(8, "x")
-  return next
-}
-
 export default function AccountSettings({ user, profile, onClose, onProfileUpdated }: Props) {
+  const lang = useLang()
+  const t = (ja: string, en: string) => (lang === "en" ? en : ja)
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "")
   const [takeHome, setTakeHome] = useState(() => {
     const value = Number(profile?.allocation_take_home || 0)
@@ -45,36 +35,25 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
     return parsed > 0 ? String(parsed) : ""
   })
   const [savingsGoalUnit, setSavingsGoalUnit] = useState<1 | 1000 | 10000>(1)
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [savingProfile, setSavingProfile] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
 
-  const passwordLen = useMemo(() => newPassword.normalize("NFKC").trim().length, [newPassword])
-
-  function switchTakeHomeUnit(nextUnit: 1 | 1000 | 10000) {
-    if (nextUnit === takeHomeUnit) return
-    const raw = Number(takeHome || 0)
+  function switchUnit(
+    currentValue: string,
+    currentUnit: 1 | 1000 | 10000,
+    nextUnit: 1 | 1000 | 10000,
+    setter: (next: string) => void,
+    unitSetter: (next: 1 | 1000 | 10000) => void
+  ) {
+    if (currentUnit === nextUnit) return
+    const raw = Number(currentValue || 0)
     if (!Number.isFinite(raw) || raw <= 0) {
-      setTakeHomeUnit(nextUnit)
+      unitSetter(nextUnit)
       return
     }
-    const normalized = raw * takeHomeUnit
-    setTakeHome(String(Math.round((normalized / nextUnit) * 10) / 10))
-    setTakeHomeUnit(nextUnit)
-  }
-
-  function switchSavingsGoalUnit(nextUnit: 1 | 1000 | 10000) {
-    if (nextUnit === savingsGoalUnit) return
-    const raw = Number(savingsGoal || 0)
-    if (!Number.isFinite(raw) || raw <= 0) {
-      setSavingsGoalUnit(nextUnit)
-      return
-    }
-    const normalized = raw * savingsGoalUnit
-    setSavingsGoal(String(Math.round((normalized / nextUnit) * 10) / 10))
-    setSavingsGoalUnit(nextUnit)
+    const normalized = raw * currentUnit
+    setter(String(Math.round((normalized / nextUnit) * 10) / 10))
+    unitSetter(nextUnit)
   }
 
   async function handleSaveProfile() {
@@ -82,38 +61,37 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
     setSavingProfile(true)
 
     try {
-      const supabase = createClient()
       const normalizedTakeHome = Number(takeHome || 0) * takeHomeUnit
       const normalizedSavingsGoal = Number(savingsGoal || 0) * savingsGoalUnit
 
       if (takeHome && (!Number.isFinite(normalizedTakeHome) || normalizedTakeHome <= 0)) {
-        setMessage({ type: "error", text: "手取りは1以上で入力してください。" })
+        setMessage({ type: "error", text: t("手取りは 1 以上で入力してください。", "Take-home pay must be 1 or more.") })
         return
       }
 
       if (savingsGoal && (!Number.isFinite(normalizedSavingsGoal) || normalizedSavingsGoal < 0)) {
-        setMessage({ type: "error", text: "貯金目標は0以上で入力してください。" })
+        setMessage({ type: "error", text: t("貯金目標は 0 以上で入力してください。", "Savings goal must be 0 or more.") })
         return
       }
 
-      const payload = {
-        id: user.id,
-        display_name: displayName.trim() || null,
-        currency: profile?.currency ?? "JPY",
-        allocation_take_home: takeHome ? Math.round(normalizedTakeHome) : null,
-        allocation_target_fixed_rate: profile?.allocation_target_fixed_rate ?? 35,
-        allocation_target_variable_rate: profile?.allocation_target_variable_rate ?? 25,
-        allocation_target_savings_rate: profile?.allocation_target_savings_rate ?? 20,
-      }
+      const response = await fetch("/api/profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          display_name: displayName.trim() || null,
+          currency: profile?.currency ?? "JPY",
+          allocation_take_home: takeHome ? Math.round(normalizedTakeHome) : null,
+          allocation_target_fixed_rate: profile?.allocation_target_fixed_rate ?? 35,
+          allocation_target_variable_rate: profile?.allocation_target_variable_rate ?? 25,
+          allocation_target_savings_rate: profile?.allocation_target_savings_rate ?? 20,
+        }),
+      })
+      const result = await response.json()
 
-      const { data, error } = await supabase
-        .from("profiles")
-        .upsert(payload, { onConflict: "id" })
-        .select()
-        .single()
-
-      if (error || !data) {
-        setMessage({ type: "error", text: "プロフィール更新に失敗しました。時間をおいて再試行してください。" })
+      if (!response.ok || !result.profile) {
+        setMessage({ type: "error", text: t("プロフィール保存に失敗しました。", "Could not save your profile.") })
         return
       }
 
@@ -122,121 +100,76 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
         window.dispatchEvent(new Event("kakeibo-goals-updated"))
       }
 
-      onProfileUpdated(data)
-      setMessage({ type: "success", text: "アカウント情報（手取り・貯金目標）を更新しました。" })
+      onProfileUpdated(result.profile)
+      setMessage({ type: "success", text: t("アカウント情報を更新しました。", "Account details updated.") })
     } finally {
       setSavingProfile(false)
     }
   }
 
-  async function handleChangePassword() {
-    setMessage(null)
-
-    const normalized = newPassword.normalize("NFKC").trim()
-    const normalizedConfirm = confirmPassword.normalize("NFKC").trim()
-
-    if (!isPasswordValid(normalized)) {
-      setMessage({ type: "error", text: "新しいパスワードは8文字以上で入力してください。" })
-      return
-    }
-
-    if (normalized !== normalizedConfirm) {
-      setMessage({ type: "error", text: "確認用パスワードが一致しません。" })
-      return
-    }
-
-    setChangingPassword(true)
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.updateUser({ password: toServerCompatiblePassword(normalized) })
-
-      if (error) {
-        const raw = error.message.toLowerCase()
-        if (raw.includes("password should contain at least one character of each")) {
-          setMessage({ type: "error", text: "サーバー設定により、小文字・大文字・数字・記号を含む必要があります（例: Abc12345!）。" })
-          return
-        }
-        setMessage({ type: "error", text: `パスワード変更に失敗しました: ${error.message}` })
-        return
-      }
-
-      setNewPassword("")
-      setConfirmPassword("")
-      setMessage({ type: "success", text: "パスワードを変更しました。" })
-    } finally {
-      setChangingPassword(false)
-    }
+  function handlePasswordHelp() {
+    setMessage({
+      type: "error",
+      text: t(
+        "パスワード変更はいまはログイン画面側の再設定を使ってください。",
+        "For now, please use password reset from the login screen."
+      ),
+    })
   }
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-sm bg-slate-900/95 border border-slate-600 rounded-2xl p-6 space-y-4 shadow-2xl shadow-slate-950/50">
+      <div className="w-full max-w-sm bg-slate-900 border border-slate-600 rounded-2xl p-6 space-y-4 shadow-2xl shadow-slate-950/50">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-50">アカウント設定</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-xs text-slate-200 hover:text-white underline underline-offset-2"
-          >
-            閉じる
+          <h2 className="text-xl font-bold text-slate-50">{t("アカウント設定", "Account Settings")}</h2>
+          <button type="button" onClick={onClose} className="text-xs text-slate-200 hover:text-white underline underline-offset-2">
+            {t("閉じる", "Close")}
           </button>
         </div>
 
         {message && (
-          <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${
-            message.type === "success"
-              ? "bg-emerald-950 border border-emerald-500/60 text-emerald-100"
-              : "bg-red-950 border border-red-500/60 text-red-100"
-          }`}>
+          <div className={`rounded-xl px-4 py-3 text-xs leading-relaxed ${message.type === "success" ? "bg-emerald-950 border border-emerald-500/60 text-emerald-100" : "bg-red-950 border border-red-500/60 text-red-100"}`}>
             {message.text}
           </div>
         )}
 
         <div className="rounded-xl border border-slate-600 bg-slate-800 p-3 space-y-2">
-          <p className="text-xs text-slate-300">メールアドレス</p>
-          <p className="text-sm text-slate-50 break-all">{user.email ?? "未設定"}</p>
+          <p className="text-xs text-slate-300">{t("メール", "Email")}</p>
+          <p className="text-sm text-slate-50 break-all">{user.email ?? t("未設定", "Unset")}</p>
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-medium text-slate-200">表示名</label>
+          <label className="text-xs font-medium text-slate-200">{t("表示名", "Display Name")}</label>
           <input
             type="text"
             value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="表示名"
+            onChange={(event) => setDisplayName(event.target.value)}
+            placeholder={t("表示名", "Display Name")}
             className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
           />
-          <button
-            type="button"
-            onClick={handleSaveProfile}
-            disabled={savingProfile}
-            className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium disabled:opacity-50"
-          >
-            {savingProfile ? "保存中..." : "アカウント情報を保存"}
-          </button>
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-200">今月の手取り</p>
+          <p className="text-xs font-medium text-slate-200">{t("今月の手取り", "Take-home pay this month")}</p>
           <div className="flex gap-2">
             <input
               type="number"
               min={0}
               inputMode="decimal"
               value={takeHome}
-              onChange={(e) => setTakeHome(e.target.value)}
-              placeholder="金額"
+              onChange={(event) => setTakeHome(event.target.value)}
+              placeholder={t("金額", "Amount")}
               className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
             />
             <div className="flex gap-1">
-              {MONEY_UNITS.map((u) => (
+              {MONEY_UNITS.map((unit) => (
                 <button
-                  key={u.label}
+                  key={unit.key}
                   type="button"
-                  onClick={() => switchTakeHomeUnit(u.factor as 1 | 1000 | 10000)}
-                  className={`px-3 py-3 rounded-xl text-xs border ${takeHomeUnit === u.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
+                  onClick={() => switchUnit(takeHome, takeHomeUnit, unit.factor as 1 | 1000 | 10000, setTakeHome, setTakeHomeUnit)}
+                  className={`px-3 py-3 rounded-xl text-xs border ${takeHomeUnit === unit.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
                 >
-                  {u.label}
+                  {lang === "en" ? unit.en : unit.ja}
                 </button>
               ))}
             </div>
@@ -244,56 +177,40 @@ export default function AccountSettings({ user, profile, onClose, onProfileUpdat
         </div>
 
         <div className="space-y-2">
-          <p className="text-xs font-medium text-slate-200">毎月の貯金目標</p>
+          <p className="text-xs font-medium text-slate-200">{t("毎月の貯金目標", "Monthly savings goal")}</p>
           <div className="flex gap-2">
             <input
               type="number"
               min={0}
               inputMode="decimal"
               value={savingsGoal}
-              onChange={(e) => setSavingsGoal(e.target.value)}
-              placeholder="金額"
+              onChange={(event) => setSavingsGoal(event.target.value)}
+              placeholder={t("金額", "Amount")}
               className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
             />
             <div className="flex gap-1">
-              {MONEY_UNITS.map((u) => (
+              {MONEY_UNITS.map((unit) => (
                 <button
-                  key={u.label}
+                  key={unit.key}
                   type="button"
-                  onClick={() => switchSavingsGoalUnit(u.factor as 1 | 1000 | 10000)}
-                  className={`px-3 py-3 rounded-xl text-xs border ${savingsGoalUnit === u.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
+                  onClick={() => switchUnit(savingsGoal, savingsGoalUnit, unit.factor as 1 | 1000 | 10000, setSavingsGoal, setSavingsGoalUnit)}
+                  className={`px-3 py-3 rounded-xl text-xs border ${savingsGoalUnit === unit.factor ? "bg-sky-600 border-sky-500 text-white" : "bg-slate-950 border-slate-500 text-slate-200"}`}
                 >
-                  {u.label}
+                  {lang === "en" ? unit.en : unit.ja}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
+        <button type="button" onClick={handleSaveProfile} disabled={savingProfile} className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-medium disabled:opacity-50">
+          {savingProfile ? t("保存中...", "Saving...") : t("アカウント情報を保存", "Save Account Info")}
+        </button>
+
         <div className="border-t border-slate-600 pt-4 space-y-2">
-          <p className="text-xs font-medium text-slate-200">パスワード変更</p>
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="新しいパスワード（8文字以上）"
-            className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="確認用パスワード"
-            className="w-full bg-slate-950 border border-slate-500 rounded-xl px-4 py-3 text-slate-50 placeholder-slate-400 focus:outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-400/30"
-          />
-          <p className="text-[11px] text-slate-400">現在 {passwordLen} 文字</p>
-          <button
-            type="button"
-            onClick={handleChangePassword}
-            disabled={changingPassword}
-            className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold disabled:opacity-50"
-          >
-            {changingPassword ? "変更中..." : "パスワードを変更"}
+          <p className="text-xs font-medium text-slate-200">{t("パスワード", "Password")}</p>
+          <button type="button" onClick={handlePasswordHelp} className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold">
+            {t("再設定の案内を見る", "Show reset guidance")}
           </button>
         </div>
       </div>

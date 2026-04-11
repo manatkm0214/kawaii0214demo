@@ -1,22 +1,62 @@
+import { createHmac, randomBytes } from "crypto"
 import { NextResponse } from "next/server"
-import { randomBytes } from "crypto"
 
-function getBaseUrl(): string {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+type SignedStatePayload = {
+  nonce: string
+  ts: number
+}
+
+function readEnv(...keys: string[]) {
+  for (const key of keys) {
+    const value = process.env[key]?.trim()
+    if (value) return value
+  }
+  return ""
+}
+
+function getBaseUrl(request?: Request): string {
+  if (request) {
+    const origin = new URL(request.url).origin
+    if (origin) return origin.replace(/\/$/, "")
+  }
+  const siteUrl = readEnv("NEXT_PUBLIC_SITE_URL", "next_public_site_url")
   if (siteUrl) return siteUrl.replace(/\/$/, "")
   return "http://localhost:3000"
 }
 
-export async function GET() {
-  const clientId = process.env.LINE_CHANNEL_ID?.trim()
+function getLineStateSecret(clientSecret: string) {
+  return readEnv("LINE_STATE_SECRET", "line_state_secret") || clientSecret
+}
+
+function encodeBase64Url(input: string) {
+  return Buffer.from(input, "utf8").toString("base64url")
+}
+
+function createSignedState(payload: SignedStatePayload, secret: string) {
+  const body = encodeBase64Url(JSON.stringify(payload))
+  const signature = createHmac("sha256", secret).update(body).digest("base64url")
+  return `${body}.${signature}`
+}
+
+export async function GET(request: Request) {
+  const clientId = readEnv("LINE_CHANNEL_ID", "line_channel_id")
+  const clientSecret = readEnv("LINE_CHANNEL_SECRET", "line_channel_secret")
+
   if (!clientId) {
-    return NextResponse.json({ error: "LINE_CHANNEL_ID が設定されていません" }, { status: 500 })
+    return NextResponse.json({ error: "LINE_CHANNEL_ID が設定されていません。" }, { status: 500 })
   }
 
-  const baseUrl = getBaseUrl()
+  if (!clientSecret) {
+    return NextResponse.json({ error: "LINE_CHANNEL_SECRET が設定されていません。" }, { status: 500 })
+  }
+
+  const baseUrl = getBaseUrl(request)
   const redirectUri = `${baseUrl}/api/auth/line/callback`
-  const state = randomBytes(16).toString("hex")
   const nonce = randomBytes(16).toString("hex")
+  const state = createSignedState(
+    { nonce, ts: Date.now() },
+    getLineStateSecret(clientSecret),
+  )
 
   const params = new URLSearchParams({
     response_type: "code",
@@ -31,22 +71,5 @@ export async function GET() {
   const authUrl = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(authUrl)}`
 
-  const response = NextResponse.json({ authUrl, qrUrl })
-  response.cookies.set("line_oauth_state", state, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 10,
-  })
-
-  response.cookies.set("line_oauth_nonce", nonce, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 10,
-  })
-
-  return response
+  return NextResponse.json({ authUrl, qrUrl })
 }

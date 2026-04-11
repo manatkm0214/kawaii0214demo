@@ -134,26 +134,26 @@ export default function PresetSetup() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white dark:bg-slate-900 rounded-xl shadow p-6 mt-8 flex flex-col gap-4">
+    <div className="w-full max-w-md mx-auto bg-slate-900 rounded-xl shadow p-6 mt-8 flex flex-col gap-4 text-slate-100">
       <div className="flex gap-2 mb-4 justify-end">
         {LANGUAGES.map(l => (
           <button
             key={l.code}
             onClick={() => handleLangChange(l.code as LangKey)}
-            className={`px-2 py-1 rounded border text-xs ${lang === l.code ? "bg-violet-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"}`}
+            className={`px-2 py-1 rounded border text-xs ${lang === l.code ? "bg-violet-600 text-white" : "bg-slate-950 text-slate-200"}`}
           >
             {l.label}
           </button>
         ))}
       </div>
-      <h2 className="text-xl font-bold mb-2 text-violet-700 dark:text-violet-300">{T.title}</h2>
+      <h2 className="text-xl font-bold mb-2 text-violet-300">{T.title}</h2>
       <div className="flex gap-2 mb-6 justify-center">
         {T.steps.map((label: string, idx: number) => (
           <div
             key={label}
             className={`flex flex-col items-center w-16 ${step === idx ? "text-violet-600 font-bold" : "text-slate-400"}`}
           >
-            <div className={`rounded-full w-8 h-8 flex items-center justify-center mb-1 border-2 ${step === idx ? "border-violet-600 bg-violet-100 dark:bg-violet-900" : "border-slate-300 bg-slate-100 dark:bg-slate-800"}`}>{idx + 1}</div>
+            <div className={`rounded-full w-8 h-8 flex items-center justify-center mb-1 border-2 ${step === idx ? "border-violet-600 bg-violet-900" : "border-slate-600 bg-slate-950"}`}>{idx + 1}</div>
             <span className="text-xs text-center">{label}</span>
           </div>
         ))}
@@ -165,7 +165,7 @@ export default function PresetSetup() {
               <label className="block mb-2 font-semibold">{T.nickname}</label>
               <input
                 type="text"
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
                 value={nickname}
                 onChange={e => setNickname(e.target.value)}
                 placeholder={T.nickname}
@@ -177,7 +177,7 @@ export default function PresetSetup() {
               <label className="block mb-2 font-semibold">{T.income}</label>
               <input
                 type="number"
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
                 value={income}
                 onChange={e => setIncome(e.target.value)}
                 placeholder={T.income}
@@ -189,7 +189,7 @@ export default function PresetSetup() {
               <label className="block mb-2 font-semibold">{T.savingsGoal}</label>
               <input
                 type="number"
-                className="w-full rounded border px-3 py-2"
+                className="w-full rounded border border-slate-700 bg-slate-950 px-3 py-2"
                 value={savingsGoal}
                 onChange={e => setSavingsGoal(e.target.value)}
                 placeholder={T.savingsGoal}
@@ -213,7 +213,7 @@ export default function PresetSetup() {
                         setCategories(prev => prev.map((c, i) => i === idx ? { ...c, percent: v } : c));
                       }}
                       placeholder="%"
-                      className="w-16 rounded border px-2 py-1 text-xs"
+                      className="w-16 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs"
                     />
                     <span>%</span>
                     <input
@@ -225,7 +225,7 @@ export default function PresetSetup() {
                         setCategories(prev => prev.map((c, i) => i === idx ? { ...c, amount: v } : c));
                       }}
                       placeholder={T.savingsGoal}
-                      className="w-24 rounded border px-2 py-1 text-xs"
+                      className="w-24 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs"
                     />
                     <span>円</span>
                   </div>
@@ -250,7 +250,7 @@ export default function PresetSetup() {
       )}
       <div className="flex gap-2 mt-4 justify-between">
         {step > 0 && !done && (
-          <button onClick={handlePrev} className="px-4 py-2 rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200">{T.prev}</button>
+          <button onClick={handlePrev} className="px-4 py-2 rounded bg-slate-950 text-slate-200">{T.prev}</button>
         )}
         {step < 5 && !done && (
           <button onClick={handleNext} className="ml-auto px-4 py-2 rounded bg-violet-600 text-white">{T.next}</button>

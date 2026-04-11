@@ -1,19 +1,21 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user"
+import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import type { Transaction } from "@/lib/utils"
 
 export async function POST() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const supabaseAdmin = getSupabaseAdmin()
+  const user = await getAppSessionUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   // 今月の固定費を取得
   const now = new Date()
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 
-  const { data: fixedTxns } = await supabase
+  const { data: fixedTxns } = await supabaseAdmin
     .from("transactions")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", user.supabaseUserId)
     .eq("is_fixed", true)
     .like("date", `${thisMonth}%`)
 
@@ -26,10 +28,10 @@ export async function POST() {
   const nextMonthStr = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, "0")}`
 
   // 既に来月のコピーがないか確認
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from("transactions")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", user.supabaseUserId)
     .like("date", `${nextMonthStr}%`)
     .eq("is_fixed", true)
 
@@ -39,13 +41,13 @@ export async function POST() {
 
   // 来月分としてコピー
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const copies = fixedTxns.map(({ created_at, ...rest }) => ({
+  const copies = (fixedTxns as Transaction[]).map(({ created_at, ...rest }) => ({
     ...rest,
     date: `${nextMonthStr}-01`,
   }))
 
-const { error } = await supabase.from("transactions").insert(copies)
-if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const { error } = await supabaseAdmin.from("transactions").insert(copies as never[])
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ message: `${copies.length}件の固定費を来月分として生成しました`, count: copies.length })
 }

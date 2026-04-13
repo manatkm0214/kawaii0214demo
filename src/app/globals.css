@@ -370,6 +370,7 @@ html[data-theme="light"] .metric-tile-accent {
     0 10px 22px -18px rgba(56, 189, 248, 0.14);
 }
 
+html[data-theme="light"] .dashboard-light-copy .text-black,
 html[data-theme="light"] .dashboard-light-copy .text-white,
 html[data-theme="light"] .dashboard-light-copy .text-slate-50,
 html[data-theme="light"] .dashboard-light-copy .text-slate-100,
@@ -414,6 +415,23 @@ html[data-theme="light"] .dashboard-light-copy .text-sky-700,
 html[data-theme="light"] .dashboard-light-copy .text-blue-700,
 html[data-theme="light"] .dashboard-light-copy .text-violet-300 {
   color: #000000 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .text-red-600 {
+  color: #dc2626 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .text-emerald-600 {
+  color: #059669 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .font-extrabold,
+html[data-theme="light"] .dashboard-light-copy .font-black {
+  font-weight: 800 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .font-black {
+  font-weight: 900 !important;
 }
 
 html[data-theme="light"] .dashboard-light-copy .board-card {

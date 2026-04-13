@@ -522,7 +522,7 @@ export default function Dashboard({
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      tone: "text-rose-600",
+      tone: "text-red-600 font-black",
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
@@ -625,18 +625,18 @@ export default function Dashboard({
               <h3 className="text-lg font-extrabold text-slate-950">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
               <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
             </div>
-            <p className={`mt-3 text-xl font-extrabold ${safetyRating.tone}`}>{safetyRating.label}</p>
-            <p className="mt-1 text-sm font-semibold text-slate-700">{safetyRating.note}</p>
+            <p className={`mt-3 text-xl ${safetyRating.tone}`}>{safetyRating.label}</p>
+            <p className="mt-1 text-sm font-semibold text-slate-900">{safetyRating.note}</p>
             <div className="board-tile border mt-4 rounded-2xl p-3">
               <p className="text-base font-extrabold text-slate-950">{lang === "en" ? "Living level" : "生活レベル"}</p>
               <p className={`mt-1 text-lg font-extrabold ${lifeLevel.tone}`}>{lifeLevel.label}</p>
-              <p className="mt-1 text-sm font-semibold text-slate-700">{lifeLevel.note}</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
             <p className="mt-3 text-base font-extrabold text-slate-950">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p className="mt-1 text-sm font-semibold text-slate-700">
+            <p className="mt-1 text-sm font-semibold text-slate-900">
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 

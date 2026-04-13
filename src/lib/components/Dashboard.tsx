@@ -522,7 +522,7 @@ export default function Dashboard({
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      tone: "text-red-600 font-black",
+      tone: "text-rose-600",
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 

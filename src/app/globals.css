@@ -401,11 +401,6 @@ html[data-theme="light"] .dashboard-light-copy .text-amber-700,
 html[data-theme="light"] .dashboard-light-copy .text-amber-800,
 html[data-theme="light"] .dashboard-light-copy .text-amber-300,
 html[data-theme="light"] .dashboard-light-copy .text-amber-200,
-html[data-theme="light"] .dashboard-light-copy .text-rose-600,
-html[data-theme="light"] .dashboard-light-copy .text-rose-700,
-html[data-theme="light"] .dashboard-light-copy .text-rose-300,
-html[data-theme="light"] .dashboard-light-copy .text-rose-200,
-html[data-theme="light"] .dashboard-light-copy .text-rose-100,
 html[data-theme="light"] .dashboard-light-copy .text-pink-700,
 html[data-theme="light"] .dashboard-light-copy .text-pink-800,
 html[data-theme="light"] .dashboard-light-copy .text-pink-200,
@@ -417,19 +412,24 @@ html[data-theme="light"] .dashboard-light-copy .text-violet-300 {
   color: #000000 !important;
 }
 
+/* 彩度を保つカラー — 黒マッピングから除外 */
 html[data-theme="light"] .dashboard-light-copy .text-red-600 {
   color: #dc2626 !important;
 }
-
+html[data-theme="light"] .dashboard-light-copy .text-rose-600 {
+  color: #e11d48 !important;
+}
+html[data-theme="light"] .dashboard-light-copy .text-rose-700 {
+  color: #be123c !important;
+}
 html[data-theme="light"] .dashboard-light-copy .text-emerald-600 {
   color: #059669 !important;
 }
 
-html[data-theme="light"] .dashboard-light-copy .font-extrabold,
-html[data-theme="light"] .dashboard-light-copy .font-black {
+/* font-weight 保護 — text-sm強制上書きより優先 */
+html[data-theme="light"] .dashboard-light-copy .font-extrabold {
   font-weight: 800 !important;
 }
-
 html[data-theme="light"] .dashboard-light-copy .font-black {
   font-weight: 900 !important;
 }

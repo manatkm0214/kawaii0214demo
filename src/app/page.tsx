@@ -27,8 +27,8 @@ function buildBoardTitle(displayName: string | null | undefined, lang: "ja" | "e
 
 function buildGardenLead(lang: "ja" | "en") {
   return lang === "en"
-    ? "A sparkling idol budget board inspired by a colorful garden, lake, piano, violin, and flower field."
-    : "カラフルな庭園と湖、ピアノやバイオリン、お花畑を重ねた、毎日使いたくなるきらきらアイドル家計ボード。";
+    ? "A cute daily budget board with pastel ribbons, plush charm, and a soft sweet-room mood."
+    : "パステルのリボンやぬいぐるみのやさしさを重ねた、毎日ひらきたくなるかわいい家計ボード。";
 }
 
 interface HomeUser {
@@ -88,7 +88,7 @@ function PrivacyTermsDialog({ onAgree, onBack }: { onAgree: () => void; onBack?:
             {lang === "en" ? "Read Privacy" : "プライバシーを読む"}
           </Link>
         </div>
-        <label className="mt-5 flex items-center gap-3 rounded-2xl border border-white/70 bg-white/80 px-4 py-4 text-sm text-slate-900 backdrop-blur">
+        <label className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-400 bg-white/95 px-4 py-4 text-sm text-slate-800 backdrop-blur">
           <input
             type="checkbox"
             checked={checked}
@@ -101,7 +101,7 @@ function PrivacyTermsDialog({ onAgree, onBack }: { onAgree: () => void; onBack?:
           type="button"
           disabled={!checked}
           onClick={onAgree}
-          className="mt-5 w-full rounded-full bg-[linear-gradient(135deg,#ec4899_0%,#f97316_45%,#38bdf8_100%)] px-5 py-3 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-5 w-full rounded-full bg-[linear-gradient(135deg,#ec4899_0%,#f97316_45%,#38bdf8_100%)] px-5 py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 border border-slate-500 shadow-lg"
         >
           {lang === "en" ? "Agree and continue" : "同意して進む"}
         </button>
@@ -109,7 +109,7 @@ function PrivacyTermsDialog({ onAgree, onBack }: { onAgree: () => void; onBack?:
           <button
             type="button"
             onClick={onBack}
-            className="mt-3 w-full rounded-full border border-white/70 bg-white/80 px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-white"
+            className="mt-3 w-full rounded-full border border-slate-400 bg-white/95 px-5 py-3 text-sm font-semibold text-slate-800 transition hover:bg-white"
           >
             {lang === "en" ? "Back" : "前のページへ行く"}
           </button>
@@ -134,7 +134,7 @@ function NameSetupDialog({
   const titlePreview = buildBoardTitle(value, lang);
 
   return (
-    <div className="fixed inset-0 z-[82] flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[82] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
       <div className="hero-stage w-full max-w-lg rounded-[32px] p-6">
         <div className="hero-badge px-3 py-1.5 text-xs font-semibold tracking-[0.24em]">
           {lang === "en" ? "NAME" : "名前"}
@@ -148,27 +148,27 @@ function NameSetupDialog({
             : "利用規約に同意したあと、Balance に表示する名前を登録します。"}
         </p>
 
-        <label className="mt-5 block text-sm font-semibold text-slate-800">
+        <label className="mt-5 block text-sm font-bold text-slate-900">
           {lang === "en" ? "Display name" : "表示名"}
           <input
             type="text"
             value={value}
             onChange={(event) => onChange(event.target.value)}
             placeholder={lang === "en" ? "e.g. Mana" : "例: まな"}
-            className="mt-2 w-full rounded-2xl border border-white/70 bg-white/85 px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-pink-400"
+            className="mt-2 w-full rounded-2xl border border-slate-400 bg-white/95 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-pink-600"
           />
         </label>
 
         <div className="idol-glass mt-4 rounded-[24px] px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-pink-700">{lang === "en" ? "Preview" : "プレビュー"}</p>
-          <p className="mt-2 text-lg font-bold text-slate-950">{titlePreview}</p>
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-pink-800">{lang === "en" ? "Cute Kakeibo Preview" : "かわいい家計簿プレビュー"}</p>
+          <p className="mt-2 text-lg font-black text-slate-900">{titlePreview}</p>
         </div>
 
         <button
           type="button"
           onClick={onSave}
           disabled={saving || !value.trim()}
-          className="idol-cta mt-5 w-full rounded-full px-5 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+          className="idol-cta mt-5 w-full rounded-full px-5 py-3 text-sm font-bold border border-slate-500 shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
         >
           {saving ? (lang === "en" ? "Saving..." : "保存中...") : (lang === "en" ? "Save name" : "名前を保存")}
         </button>
@@ -804,13 +804,13 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-0" aria-hidden>
               <div className="absolute inset-3 rounded-[34px] border border-white/45" />
               <div className="absolute inset-x-[12%] bottom-[-7.5rem] h-52 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.52)_0%,rgba(186,230,253,0.3)_30%,rgba(255,255,255,0)_74%)] blur-2xl" />
-              <div className="absolute left-[6%] top-[18%] text-2xl text-rose-300/80 animate-float-slow">♪</div>
+              <div className="absolute left-[6%] top-[18%] text-2xl text-rose-300/80 animate-float-slow">♡</div>
               <div className="absolute left-[14%] top-[10%] text-3xl text-fuchsia-300/75 animate-float-slow" style={{ animationDelay: "0.4s" }}>✦</div>
-              <div className="absolute right-[14%] top-[12%] text-2xl text-sky-300/80 animate-float-slow" style={{ animationDelay: "0.7s" }}>♩</div>
+              <div className="absolute right-[14%] top-[12%] text-2xl text-sky-300/80 animate-float-slow" style={{ animationDelay: "0.7s" }}>🎀</div>
               <div className="absolute right-[7%] top-[18%] text-3xl text-amber-300/80 animate-float-slow" style={{ animationDelay: "1.1s" }}>✿</div>
               <div className="absolute bottom-[18%] left-[8%] text-2xl text-pink-300/90 animate-float-slow" style={{ animationDelay: "0.9s" }}>🌸</div>
-              <div className="absolute bottom-[22%] right-[10%] text-2xl text-violet-300/85 animate-float-slow" style={{ animationDelay: "0.6s" }}>🎻</div>
-              <div className="absolute right-[20%] bottom-[30%] text-3xl text-cyan-300/75 animate-float-slow" style={{ animationDelay: "1.3s" }}>🎹</div>
+              <div className="absolute bottom-[22%] right-[10%] text-2xl text-violet-300/85 animate-float-slow" style={{ animationDelay: "0.6s" }}>🧸</div>
+              <div className="absolute right-[20%] bottom-[30%] text-3xl text-cyan-300/75 animate-float-slow" style={{ animationDelay: "1.3s" }}>🫧</div>
               <div className="absolute left-[19%] bottom-[28%] text-lg text-rose-400/80 animate-float-slow" style={{ animationDelay: "0.5s" }}>✦</div>
             </div>
             <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
@@ -821,13 +821,13 @@ export default function Home() {
                 <div className="mt-4">
                   <p className="garden-kicker">Balance</p>
                   <h1 className="garden-title mt-1 text-3xl font-black md:text-5xl">
-                    {lang === "en" ? "Princess Kakeibo" : "お姫様家計簿"}
+                    {lang === "en" ? "Cute Kakeibo" : "かわいい家計簿"}
                   </h1>
                   <p className="garden-copy mt-3 text-base font-semibold md:text-lg">
-                    {lang === "en" ? "A dazzling idol balance board you'll want to open every day." : "毎日使いたくなる きらきらアイドル家計ボード"}
+                    {lang === "en" ? "A sweet balance board you'll want to open every day." : "毎日ひらきたくなる ふわかわ家計ボード"}
                   </p>
                   <p className="garden-separator mt-4 text-sm font-bold tracking-[0.42em]">
-                    🌸 ✦ ✦ ✦ 🌸
+                    🎀 ✦ 🧸 ✦ 🎀
                   </p>
                   <p className="garden-note mt-4 max-w-2xl text-sm leading-7 md:text-base">
                     {buildGardenLead(lang)}
@@ -837,12 +837,12 @@ export default function Home() {
               <div className="relative z-10 flex flex-col items-start gap-3 md:items-end">
                 <div className="garden-mini-card max-w-sm rounded-[28px] px-4 py-4 text-sm">
                   <p className="text-xs font-bold uppercase tracking-[0.28em] text-rose-700/80">
-                    {lang === "en" ? "Garden Stage" : "Garden Stage"}
+                    {lang === "en" ? "Cute Mood" : "Cute Mood"}
                   </p>
                   <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                     {lang === "en"
-                      ? "Start inside a framed lakeside stage, then move into login and your board."
-                      : "はじめる前から、湖のある庭園ステージの外枠デザインで世界観に入れるようにしました。"}
+                      ? "Start in a soft pastel room with ribbons and plush accents, then move into login and your board."
+                      : "はじめる前から、リボンやぬいぐるみの空気を感じるやさしいデザインで世界観に入れるようにしました。"}
                   </p>
                 </div>
                 {controls}
@@ -978,15 +978,15 @@ export default function Home() {
                     {buildBoardTitle(profile?.display_name, lang)}
                   </h1>
                 </div>
-                <p className="garden-separator text-sm font-bold tracking-[0.34em]">🌸 ✦ ✦ ✦ 🌸</p>
+                <p className="garden-separator text-sm font-bold tracking-[0.34em]">🎀 ✦ 🧸 ✦ 🎀</p>
                 <button type="button" onClick={() => setShowPresetSetup(true)} className="rounded-full bg-[linear-gradient(135deg,#ec4899_0%,#f97316_45%,#38bdf8_100%)] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(236,72,153,0.22)] transition hover:brightness-105">
                   {lang === "en" ? "Apply preset to board" : "配分プリセットをボードへ反映"}
                 </button>
               </div>
               <p className="garden-copy mt-3 max-w-3xl text-sm md:text-base">
                 {lang === "en"
-                  ? "Keep your princess board bright with a garden-lake stage, musical sparkle, and your daily balance view."
-                  : "庭園と湖のステージ、音楽のきらめきをまとった、お姫様家計簿ボードで毎日のBalanceを見やすく整えます。"}
+                  ? "Keep your cute board bright with ribbons, plush charm, and your daily balance view."
+                  : "リボンやぬいぐるみのかわいさをまとった家計ボードで、毎日のBalanceを見やすく整えます。"}
               </p>
               <p className="garden-note mt-2 max-w-3xl text-sm md:text-base">
                 {lang === "en" ? "Navigation stays near the input area so the board feels simple and magical." : "切り替えは入力エリア付近のボードタブに集約し、世界観を保ったまま迷いにくくしています。"}

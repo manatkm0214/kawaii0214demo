@@ -19,7 +19,7 @@ export const STYLE_PALETTES: StylePalette[] = [
   { id: "seiso", labelJa: "清楚", labelEn: "Graceful", stops: ["#fffefd", "#eef4ff", "#d8eafe"] },
   { id: "couture-rose", labelJa: "クチュールローズ", labelEn: "Couture Rose", stops: ["#fff8fb", "#fbcfe8", "#f9a8d4"] },
   { id: "mint-frill", labelJa: "ミントフリル", labelEn: "Mint Frill", stops: ["#f6fffb", "#ccfbf1", "#99f6e4"] },
-  { id: "peach-pop", labelJa: "ピーチポップ", labelEn: "Peach Pop", stops: ["#fffaf5", "#fed7aa", "#fdba74"] },
+  { id: "peach-pop", labelJa: "キャンディアプリコット", labelEn: "Candy Apricot", stops: ["#fffaf5", "#fed7aa", "#fdba74"] },
   { id: "lavender", labelJa: "ラベンダー", labelEn: "Lavender", stops: ["#fcfaff", "#e9d5ff", "#d8b4fe"] },
   { id: "retro-girl", labelJa: "レトロガーリー", labelEn: "Retro Girly", stops: ["#fff7ed", "#fecdd3", "#f9a8d4"] },
   { id: "oshare-mode", labelJa: "おしゃれモード", labelEn: "Oshare Mode", stops: ["#fffdf9", "#f5e9ff", "#c7d2fe"] },

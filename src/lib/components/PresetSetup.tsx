@@ -146,6 +146,14 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
     setCategoryRatios(next);
   }
 
+  function handleNext() {
+    if (step === 2) {
+      // Step 1で選んだプリセット理論 + Step 2の手取りから目標を自動計算
+      setGoals(buildGoalsFromPreset(activePreset, takeHome, fixed, variable, saving, investing));
+    }
+    setStep((current) => (current < 4 ? ((current + 1) as 1 | 2 | 3 | 4) : current));
+  }
+
   function handleComplete() {
     onComplete({
       profile: {
@@ -230,7 +238,7 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
             </label>
             <label className="block text-sm font-medium text-slate-800">
               {t("月の手取り", "Monthly take-home")}
-              <input type="number" value={takeHome} min={0} onChange={(event) => { setTakeHome(Number(event.target.value) || 0); markCustom(); }} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-cyan-500" />
+              <input type="number" value={takeHome} min={0} onChange={(event) => { setTakeHome(Number(event.target.value) || 0); }} className="mt-2 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-cyan-500" />
             </label>
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {[
@@ -255,10 +263,10 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
             <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
               <p className="text-sm font-semibold text-cyan-900">{t("金額の目安", "Amount preview")}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div><p className="text-xs text-cyan-800">{t("固定費", "Fixed")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * fixed) / 100))}</p></div>
-                <div><p className="text-xs text-cyan-800">{t("変動費", "Variable")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(variableAmount)}</p></div>
-                <div><p className="text-xs text-cyan-800">{t("貯金", "Saving")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * saving) / 100))}</p></div>
-                <div><p className="text-xs text-cyan-800">{t("投資", "Investing")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * investing) / 100))}</p></div>
+                <div><p className="text-xs font-medium text-slate-900">{t("固定費", "Fixed")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * fixed) / 100))}</p></div>
+                <div><p className="text-xs font-medium text-slate-900">{t("変動費", "Variable")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(variableAmount)}</p></div>
+                <div><p className="text-xs font-medium text-slate-900">{t("貯金", "Saving")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * saving) / 100))}</p></div>
+                <div><p className="text-xs font-medium text-slate-900">{t("投資", "Investing")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(Math.round((takeHome * investing) / 100))}</p></div>
               </div>
             </div>
           </div>
@@ -268,9 +276,12 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
       {step === 3 && (
         <div className="grid gap-4 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-5">
-            <button type="button" onClick={() => setGoals(buildGoalsFromPreset(activePreset, takeHome, fixed, variable, saving, investing))} className="rounded-full border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900 transition hover:bg-cyan-100">
-              {t("理論値を反映", "Apply theory")}
-            </button>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-slate-500">{t("手取りとプリセット理論から自動計算済み。個別に調整できます。", "Auto-calculated from income and preset theory. Adjust individually below.")}</p>
+              <button type="button" onClick={() => setGoals(buildGoalsFromPreset(activePreset, takeHome, fixed, variable, saving, investing))} className="shrink-0 rounded-full border border-cyan-300 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-900 transition hover:bg-cyan-100">
+                {t("理論値にリセット", "Reset to theory")}
+              </button>
+            </div>
             {[
               { label: t("月間貯金目標", "Monthly savings goal"), value: goals.monthlySavingsGoal, key: "monthlySavingsGoal" as const },
               { label: t("先取り貯金目標", "Pay-yourself-first goal"), value: goals.payYourselfFirstGoal, key: "payYourselfFirstGoal" as const },
@@ -292,10 +303,10 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
             <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
               <p className="text-sm font-semibold text-cyan-900">{t("目標の目安", "Goal preview")}</p>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs text-slate-500">{t("月間貯金目標", "Monthly savings goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.monthlySavingsGoal)}</p></div>
-                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs text-slate-500">{t("先取り貯金目標", "Pay-yourself-first goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.payYourselfFirstGoal)}</p></div>
-                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs text-slate-500">{t("生活防衛月数", "Defense months")}</p><p className="mt-1 text-base font-semibold text-slate-950">{goals.defenseMonths}{lang === "en" ? " months" : "か月"}</p></div>
-                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs text-slate-500">{t("受動収入目標", "Passive income goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.passiveIncomeGoal)}</p></div>
+                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs font-medium text-slate-900">{t("月間貯金目標", "Monthly savings goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.monthlySavingsGoal)}</p></div>
+                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs font-medium text-slate-900">{t("先取り貯金目標", "Pay-yourself-first goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.payYourselfFirstGoal)}</p></div>
+                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs font-medium text-slate-900">{t("生活防衛月数", "Defense months")}</p><p className="mt-1 text-base font-semibold text-slate-950">{goals.defenseMonths}{lang === "en" ? " months" : "か月"}</p></div>
+                <div className="rounded-2xl border border-cyan-100 bg-white p-3"><p className="text-xs font-medium text-slate-900">{t("受動収入目標", "Passive income goal")}</p><p className="mt-1 text-base font-semibold text-slate-950">{formatCurrency(goals.passiveIncomeGoal)}</p></div>
               </div>
             </div>
           </div>
@@ -331,7 +342,7 @@ export default function PresetSetup({ mode, onComplete, onCancel }: PresetSetupP
             {t("戻る", "Back")}
           </button>
           {step < 4 && (
-            <button type="button" onClick={() => setStep((current) => (current < 4 ? ((current + 1) as 1 | 2 | 3 | 4) : current))} disabled={step === 2 && total !== 100} className="rounded-full bg-cyan-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-40">
+            <button type="button" onClick={handleNext} disabled={step === 2 && total !== 100} className="rounded-full bg-cyan-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-cyan-600 disabled:cursor-not-allowed disabled:opacity-40">
               {t("次へ", "Next")}
             </button>
           )}

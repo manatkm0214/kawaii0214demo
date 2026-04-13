@@ -10,6 +10,7 @@ import AIChat from "./AIChat";
 import AnnualReportFull from "./AnnualReportFull";
 import InputForm from "./InputForm";
 import SeniorDashboard from "./SeniorDashboard";
+import EconomicBenchmarkGuide from "./EconomicBenchmarkGuide";
 import FoodLifestyleAssistant, { type LifestyleSuggestion } from "./FoodLifestyleAssistant";
 import NearbyShopGuide from "./NearbyShopGuide";
 import { KidsFinanceDashboard, type KidsFinanceState } from "./KidsDashboard";
@@ -22,7 +23,7 @@ import type { Budget, Profile, Transaction } from "@/lib/utils";
 import { formatCurrency, getCategoryLabel } from "@/lib/utils";
 import { useLang } from "@/lib/hooks/useLang";
 
-type ActivePage = "input" | "charts" | "calendar" | "goals" | "ai" | "annual" | "senior" | "kids";
+type ActivePage = "input" | "charts" | "calendar" | "goals" | "ai" | "annual" | "benchmarks" | "senior" | "kids";
 
 function AIPageView({
   transactions,
@@ -30,35 +31,48 @@ function AIPageView({
   currentMonth,
   onOpenInput,
   lang,
+  mode,
+  t,
 }: {
   transactions: Transaction[];
   budgets: Budget[];
   currentMonth: string;
   onOpenInput: () => void;
   lang: "ja" | "en";
+  mode: string;
+  t: (ja: string, en: string) => string;
 }) {
   return (
     <div className="space-y-5">
-      <div className="rounded-[28px] border border-slate-200 bg-white px-4 py-4 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-600">AI</p>
-        <h2 className="mt-1 text-lg font-black text-slate-900">
+      <div className="board-card border rounded-[28px] px-4 py-4 shadow-sm">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-black">AI</p>
+        <h2 className="mt-1 text-lg font-black text-black">
           {lang === "en" ? "AI support" : "AIサポート"}
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm font-extrabold text-slate-950">
           {lang === "en"
             ? "Use analysis for structured feedback and chat for back-and-forth questions."
             : "分析で全体像を見て、チャットで気になることをそのまま相談できます。"}
         </p>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <AIAnalysis transactions={transactions} currentMonth={currentMonth} onOpenInput={onOpenInput} />
-        <AIChat transactions={transactions} budgets={budgets} currentMonth={currentMonth} />
+        <span
+          className={`w-fit shrink-0 rounded-full border px-3 py-1.5 text-xs font-extrabold text-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] ${
+            mode === "save"
+              ? "border-slate-400 bg-amber-100"
+              : mode === "standard"
+                ? "border-slate-400 bg-cyan-100"
+                : "border-slate-400 bg-pink-100"
+          }`}
+        >
+          {mode === "save"
+            ? t("\u7bc0\u7d04\u30e2\u30fc\u30c9", "Save mode")
+            : mode === "standard"
+              ? t("\u6a19\u6e96\u30e2\u30fc\u30c9", "Balanced mode")
+              : t("\u3086\u3068\u308a\u30e2\u30fc\u30c9", "Treat mode")}
+        </span>
       </div>
     </div>
   );
 }
-
 export const LABELS = {
   ja: {
     summary: "サマリー",
@@ -495,20 +509,20 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Safe" : "安全",
         note: lang === "en" ? "Your household pace is stable." : "家計の流れはかなり安定しています。",
-        tone: "text-emerald-300",
+        tone: "text-emerald-600",
       };
     }
     if (stats.balance >= 0 && stats.savingRate >= 10) {
       return {
         label: lang === "en" ? "Watch" : "注意",
         note: lang === "en" ? "Stable, but keep watching fixed costs and reserves." : "大きくは崩れていませんが、固定費と備えは要チェックです。",
-        tone: "text-amber-300",
+        tone: "text-slate-950",
       };
     }
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      tone: "text-rose-300",
+      tone: "text-rose-600",
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
@@ -518,67 +532,70 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Comfortable" : "ゆとりあり",
         note: lang === "en" ? "Lifestyle fits your take-home well." : "手取りに対して生活コストの余白があります。",
+        tone: "text-emerald-600",
       };
     }
     if (expenseRatio <= 0.8) {
       return {
         label: lang === "en" ? "Balanced" : "標準",
         note: lang === "en" ? "Current lifestyle is manageable." : "今の生活レベルは概ね回せています。",
+        tone: "text-slate-950",
       };
     }
     return {
       label: lang === "en" ? "Stretched" : "背伸び気味",
       note: lang === "en" ? "Lifestyle costs are pressing against take-home pay." : "生活コストが手取りをかなり圧迫しています。",
+      tone: "text-rose-600",
     };
   }, [lang, stats.expense, stats.income, stats.savingRate]);
 
   const t = LABELS[lang];
 
   return (
-    <div className="dashboard-light-copy space-y-4">
+    <div className="dashboard-light-copy space-y-4 bg-[linear-gradient(120deg,#f8fafc_0%,#fce7f3_60%,#e0f2fe_100%)] bg-no-repeat bg-fixed">
       <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-3">
-          <div className="metric-shell rounded-[28px] p-4">
+          <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-              {[
-                { label: lang === "en" ? "Income" : "収入", value: formatCurrency(stats.income), tone: "text-emerald-300" },
-                { label: lang === "en" ? "Expense" : "支出", value: formatCurrency(stats.expense), tone: "text-orange-300" },
-                { label: lang === "en" ? "Saving" : "貯蓄", value: formatCurrency(stats.saving + stats.investment), tone: "text-cyan-300" },
-                { label: lang === "en" ? "Balance" : "差額", value: formatCurrency(stats.balance), tone: stats.balance >= 0 ? "text-white" : "text-rose-300" },
+              {[ 
+                { label: lang === "en" ? "Income" : "収入", value: formatCurrency(stats.income), tone: "text-black" },
+                { label: lang === "en" ? "Expense" : "支出", value: formatCurrency(stats.expense), tone: "text-black" },
+                { label: lang === "en" ? "Saving" : "貯蓄", value: formatCurrency(stats.saving + stats.investment), tone: "text-black" },
+                { label: lang === "en" ? "Balance" : "差額", value: formatCurrency(stats.balance), tone: "text-black" },
               ].map((card) => (
-                <div key={card.label} className="metric-tile metric-tile-accent flex h-full min-h-[128px] flex-col justify-between rounded-3xl p-4">
-                  <p className="text-sm uppercase tracking-[0.18em] text-slate-300">{card.label}</p>
-                  <p className={`mt-3 text-xl font-semibold ${card.tone}`}>{card.value}</p>
+                <div key={card.label} className="flex h-full min-h-32 flex-col justify-between rounded-3xl board-tile border p-4 shadow-sm bg-white">
+                  <p className="text-sm font-black uppercase tracking-[0.18em] text-black">{card.label}</p>
+                  <p className="mt-3 text-2xl font-black text-black">{card.value}</p>
                 </div>
               ))}
             </div>
           </div>
 
           <div className="grid items-stretch gap-3 lg:grid-cols-2">
-            <div className="metric-shell h-full rounded-[28px] p-4">
+            <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white">{t.detailMetrics}</h3>
-                <span className="text-sm text-slate-400">{currentMonth}</span>
+                <h3 className="text-base font-bold text-black">{t.detailMetrics}</h3>
+                <span className="text-sm font-semibold text-black">{currentMonth}</span>
               </div>
               <div className="mt-3 space-y-2">
                 {detailMetrics.map((metric) => (
-                  <div key={metric.label} className="metric-tile rounded-2xl px-3 py-3">
+                  <div key={metric.label} className="board-tile border rounded-2xl px-3 py-3 bg-white">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-white">{metric.label}</p>
-                        <p className="mt-1 text-sm text-slate-300">{metric.sub}</p>
+                        <p className="text-sm font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{metric.label}</p>
+                        <p className="mt-1 text-sm font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">{metric.sub}</p>
                       </div>
-                      <span className={`rounded-full px-3 py-1 text-sm font-bold ${metric.ok ? "bg-emerald-400/15 text-emerald-200" : "bg-amber-400/15 text-amber-200"}`}>{metric.value}</span>
+                      <span className={`rounded-full px-3 py-1 text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.22)] ${metric.ok ? "bg-emerald-100" : "bg-amber-100"}`}>{metric.value}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="metric-shell h-full rounded-[28px] p-4">
+            <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white">{t.forecast}</h3>
-                <span className="text-sm text-slate-400">{lang === "en" ? "Monthly projection" : "月次予測"}</span>
+                <h3 className="text-lg font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{t.forecast}</h3>
+                <span className="text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{lang === "en" ? "Monthly projection" : "月次予測"}</span>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {[
@@ -587,15 +604,15 @@ export default function Dashboard({
                   { label: lang === "en" ? "Projected saving" : "貯蓄見込み", value: formatCurrency(forecast.projectedSaving) },
                   { label: lang === "en" ? "Annual pace" : "年間ペース", value: formatCurrency(forecast.annualProjection) },
                 ].map((item) => (
-                  <div key={item.label} className="metric-tile rounded-2xl p-3">
-                    <p className="text-sm text-slate-300">{item.label}</p>
-                    <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
+                  <div key={item.label} className="board-tile border rounded-2xl p-3 bg-white">
+                    <p className="text-sm font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.22)]">{item.label}</p>
+                    <p className="mt-2 text-xl font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.28)]">{item.value}</p>
                   </div>
                 ))}
               </div>
-              <div className={`mt-3 rounded-2xl border px-3 py-3 ${forecast.projectedBalance >= 0 ? "border-emerald-800 bg-emerald-950" : "border-rose-800 bg-rose-950"}`}>
-                <p className="text-sm text-slate-400">{lang === "en" ? "Projected balance" : "差額見込み"}</p>
-                <p className={`mt-2 text-base font-semibold ${forecast.projectedBalance >= 0 ? "text-emerald-200" : "text-rose-200"}`}>{formatCurrency(forecast.projectedBalance)}</p>
+              <div className={`board-tile mt-3 rounded-2xl border px-3 py-3 ${forecast.projectedBalance >= 0 ? "border-emerald-400" : "border-rose-400"} bg-white`}> 
+                <p className="text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.22)]">{lang === "en" ? "Projected balance" : "差額見込み"}</p>
+                <p className="mt-2 text-2xl font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.32)]">{formatCurrency(forecast.projectedBalance)}</p>
               </div>
             </div>
           </div>
@@ -603,32 +620,32 @@ export default function Dashboard({
         </div>
 
         <div className="space-y-3">
-          <div className="metric-shell h-full rounded-[28px] p-4">
+          <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">
             <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
-              <span className="text-sm text-slate-400">{defenseProgress}%</span>
+              <h3 className="text-lg font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
+              <span className="text-xl font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{defenseProgress}%</span>
             </div>
-            <p className={`mt-3 text-base font-semibold ${safetyRating.tone}`}>{safetyRating.label}</p>
-            <p className="mt-1 text-sm text-slate-300">{safetyRating.note}</p>
-            <div className="metric-tile mt-4 rounded-2xl p-3">
-              <p className="text-sm text-slate-300">{lang === "en" ? "Living level" : "生活レベル"}</p>
-              <p className="mt-1 text-sm font-semibold text-white">{lifeLevel.label}</p>
-              <p className="mt-1 text-sm text-slate-300">{lifeLevel.note}</p>
+            <p className={`mt-3 text-xl font-extrabold ${safetyRating.tone} drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]`}>{safetyRating.label}</p>
+            <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">{safetyRating.note}</p>
+            <div className="board-tile border mt-4 rounded-2xl p-3 bg-white">
+              <p className="text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <p className={`mt-1 text-lg font-extrabold drop-shadow-[0_2px_0_rgba(0,0,0,0.22)] ${lifeLevel.tone}`}>{lifeLevel.label}</p>
+              <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">{lifeLevel.note}</p>
             </div>
-            <div className="mt-4 h-3 rounded-full bg-slate-800">
+            <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
-            <p className="mt-3 text-sm text-slate-300">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-3 text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.18)]">{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p className="mt-1 text-base font-bold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 
             <div className="mt-6 flex items-center justify-between">
-              <h3 className="text-base font-bold text-white">{t.categoryAllocation}</h3>
-              <span className="text-sm text-slate-400">{lang === "en" ? "Targets from preset" : "プリセット反映"}</span>
+              <h3 className="text-base font-bold text-black">{t.categoryAllocation}</h3>
+              <span className="text-sm font-semibold text-black">{lang === "en" ? "Targets from preset" : "プリセット反映"}</span>
             </div>
             {categoryAllocationView.length === 0 ? (
-              <p className="mt-4 text-sm text-slate-300">
+              <p className="mt-4 text-sm font-semibold text-black">
                 {lang === "en"
                   ? "No allocation preset yet. Apply a preset from the top button to reflect it here."
                   : "まだ配分プリセットがありません。上のボタンからプリセットを反映するとここに表示されます。"}
@@ -638,15 +655,15 @@ export default function Dashboard({
                 {categoryAllocationView.map((row) => {
                   const pct = row.targetAmount > 0 ? Math.min(100, Math.round((row.actualAmount / row.targetAmount) * 100)) : 0;
                   return (
-                    <div key={row.category} className="metric-tile rounded-2xl p-3">
+                    <div key={row.category} className="board-tile border rounded-2xl p-3 bg-white">
                       <div className="flex items-center justify-between gap-3 text-sm">
-                        <span className="font-medium text-slate-100">{getBudgetCategoryLabel(row.category, lang)}</span>
-                        <span className="rounded-full bg-cyan-400/15 px-2.5 py-1 text-cyan-200">{formatCurrency(row.targetAmount)}</span>
+                        <span className="font-bold text-black">{getBudgetCategoryLabel(row.category, lang)}</span>
+                        <span className="rounded-full bg-cyan-100 px-2.5 py-1 font-black text-black">{formatCurrency(row.targetAmount)}</span>
                       </div>
-                      <div className="mt-2 h-2 rounded-full bg-slate-800">
+                      <div className="mt-2 h-2 rounded-full bg-cyan-100">
                         <div className={`h-2 rounded-full ${pct <= 100 ? "bg-cyan-400" : "bg-rose-400"}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                       </div>
-                      <div className="mt-2 flex items-center justify-between text-sm text-slate-300">
+                      <div className="mt-2 flex items-center justify-between text-sm font-bold text-black">
                         <span>{t.actual}: {formatCurrency(row.actualAmount)}</span>
                         <span>{pct}%</span>
                       </div>
@@ -661,11 +678,11 @@ export default function Dashboard({
       </div>
 
       <div className="space-y-3">
-        <div className="rounded-[24px] border border-slate-700 bg-slate-900 px-4 py-4">
+        <div className="board-card rounded-[28px] border px-4 py-4 shadow-sm bg-white">
           <div className="flex flex-col gap-3">
             <div>
-              <h3 className="text-base font-bold text-white">{lang === "en" ? "AI daily support" : "AI生活サポート"}</h3>
-              <p className="mt-1 text-sm text-slate-300">
+              <h3 className="text-lg font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{lang === "en" ? "AI daily support" : "AI生活サポート"}</h3>
+              <p className="mt-1 text-base font-extrabold text-slate-950 drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">
                 {lang === "en"
                   ? "Recipe ideas and nearby store guidance are grouped here so they are easier to scan on desktop."
                   : "食事の提案と近くのお店案内をここにまとめて、パソコンでも見やすくしています。"}
@@ -681,8 +698,20 @@ export default function Dashboard({
                   key={option.key}
                   type="button"
                   onClick={() => setSupportMode(option.key)}
-                  className={`rounded-full px-3 py-2 text-sm font-medium ${
-                    supportMode === option.key ? "bg-cyan-400 text-slate-950" : "bg-slate-950 text-slate-300"
+                  className={`rounded-full border px-3 py-2 text-base font-extrabold drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] transition
+                    ${option.key === "save"
+                      ? supportMode === "save"
+                        ? "border-amber-700 bg-amber-300 text-black shadow-sm"
+                        : "border-amber-400 bg-amber-100 text-black hover:border-amber-500"
+                      : option.key === "standard"
+                        ? supportMode === "standard"
+                          ? "border-cyan-700 bg-cyan-300 text-black shadow-sm"
+                          : "border-cyan-400 bg-cyan-100 text-black hover:border-cyan-500"
+                        : supportMode === "luxury"
+                          ? supportMode === "luxury"
+                            ? "border-pink-700 bg-pink-300 text-black shadow-sm"
+                            : "border-pink-400 bg-pink-100 text-black hover:border-pink-500"
+                          : ""
                   }`}
                 >
                   {option.label}
@@ -711,7 +740,7 @@ export default function Dashboard({
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-1.5">
+      <div className="board-card rounded-[28px] border p-1.5 shadow-sm">
         <div className="flex flex-wrap gap-1.5">
           {([
             { key: "input", label: lang === "en" ? "Input" : "入力" },
@@ -720,6 +749,7 @@ export default function Dashboard({
             { key: "goals", label: lang === "en" ? "Goals" : "目標" },
             { key: "ai", label: lang === "en" ? "AI" : "AI" },
             { key: "annual", label: lang === "en" ? "Annual" : "年次" },
+            { key: "benchmarks", label: lang === "en" ? "Benchmarks" : "基準" },
             { key: "senior", label: lang === "en" ? "Senior" : "シニア" },
             { key: "kids", label: lang === "en" ? "Kids" : "こども" },
           ] as const).map((tab) => (
@@ -727,10 +757,10 @@ export default function Dashboard({
               key={tab.key}
               type="button"
               onClick={() => setActivePage(tab.key)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
                 activePage === tab.key
-                  ? "bg-cyan-400 text-slate-950"
-                  : "bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white"
+                  ? "border-slate-950 bg-cyan-500 text-white shadow-sm"
+                  : "border-slate-400 bg-white/90 text-black hover:border-slate-500 hover:text-black"
               }`}
             >
               {tab.label}
@@ -739,7 +769,7 @@ export default function Dashboard({
         </div>
       </div>
 
-      <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-3 md:p-4">
+      <div className="board-card rounded-[28px] border p-3 shadow-sm md:p-4">
         {activePage === "input" && (
           <InputForm
             recentTransactions={transactions}
@@ -774,9 +804,12 @@ export default function Dashboard({
             currentMonth={currentMonth}
             onOpenInput={() => setActivePage("input")}
             lang={lang}
+            mode={supportMode}
+            t={(ja: string, en: string) => (lang === "en" ? en : ja)}
           />
         )}
         {activePage === "annual" && <AnnualReportFull transactions={transactions} currentMonth={currentMonth} />}
+        {activePage === "benchmarks" && <EconomicBenchmarkGuide />}
         {activePage === "senior" && <SeniorDashboard />}
         {activePage === "kids" && (
           <div className="space-y-5">

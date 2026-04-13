@@ -6,7 +6,7 @@ export const BOARD_BG_KEY = "kakeibo-board-bg";
 export const BOARD_CHANGE_EVENT = "kakeibo-board-bg-updated";
 
 export const BOARD_PRESETS = [
-  { id: "princess-idol-board", labelJa: "お姫様アイドル", labelEn: "Princess Idol", bg: "linear-gradient(145deg, #fff8fc 0%, #ffe4f3 34%, #f5d9ff 68%, #dbeafe 100%)", border: "#f9a8d4", surface: "#fff7fb", accent: "pink", category: "idol" },
+  { id: "princess-idol-board", labelJa: "ふわかわリボン", labelEn: "Ribbon Kawaii", bg: "linear-gradient(145deg, #fff8fc 0%, #ffe4f3 34%, #f5d9ff 68%, #dbeafe 100%)", border: "#f9a8d4", surface: "#fff7fb", accent: "pink", category: "idol" },
   { id: "clean-white", labelJa: "標準ライト", labelEn: "Light Standard", bg: "linear-gradient(145deg, #ffffff 0%, #f8fafc 52%, #eef2ff 100%)", border: "#d8e2f0", surface: "#f8fafc", accent: "cyan", category: "standard" },
   { id: "seiso-lace", labelJa: "清楚レース", labelEn: "Elegant Lace", bg: "linear-gradient(150deg, #ffffff 0%, #f8f4ff 40%, #eef6ff 100%)", border: "#c7d2fe", surface: "#f0f4ff", accent: "indigo", category: "seiso" },
   { id: "atelier-air", labelJa: "アトリエエアリー", labelEn: "Atelier Air", bg: "linear-gradient(145deg, #fffdfa 0%, #fff5ec 28%, #f3e8ff 64%, #dbeafe 100%)", border: "#e9c7d8", surface: "#fff9fb", accent: "rose", category: "oshare" },

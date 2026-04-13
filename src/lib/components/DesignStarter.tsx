@@ -30,6 +30,14 @@ type GeneratedImage = {
   prompt: string;
 };
 
+type DesignImageErrorCode =
+  | "OPENAI_BILLING_LIMIT"
+  | "OPENAI_CONFIG"
+  | "GEMINI_CONFIG"
+  | "OPENAI_NO_IMAGE"
+  | "GEMINI_NO_IMAGE"
+  | "IMAGE_GENERATION_FAILED";
+
 function readSavedDesigns(): SavedDesign[] {
   if (typeof window === "undefined") return [];
   try {
@@ -64,6 +72,65 @@ function makeDesignId(name: string) {
   return `${name.trim().toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
 }
 
+function mapDesignImageError(code: DesignImageErrorCode | undefined, t: (ja: string, en: string) => string, fallback: string) {
+  switch (code) {
+    case "OPENAI_BILLING_LIMIT":
+      return t(
+        "OpenAI の課金上限に達しているため画像生成できませんでした。Gemini を使うか、しばらくしてからもう一度お試しください。",
+        "OpenAI image generation is unavailable because the billing limit has been reached. Use Gemini or try again later.",
+      );
+    case "OPENAI_CONFIG":
+      return t("OpenAI の画像生成設定が見つかりません。", "OpenAI image generation is not configured.");
+    case "GEMINI_CONFIG":
+      return t("Gemini の画像生成設定が見つかりません。", "Gemini image generation is not configured.");
+    case "OPENAI_NO_IMAGE":
+      return t("OpenAI が画像を返せませんでした。もう一度お試しください。", "OpenAI could not return an image. Please try again.");
+    case "GEMINI_NO_IMAGE":
+      return t("Gemini が画像を返せませんでした。もう一度お試しください。", "Gemini could not return an image. Please try again.");
+    default:
+      return fallback;
+  }
+}
+
+function getImageExtension(url: string) {
+  if (url.startsWith("data:")) {
+    const match = url.match(/^data:(image\/[a-zA-Z0-9.+-]+);/);
+    const subtype = match?.[1]?.split("/")[1] || "png";
+    if (subtype === "jpeg") return "jpg";
+    if (subtype.includes("+")) return subtype.split("+")[0];
+    return subtype;
+  }
+
+  const directMatch = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+  return directMatch?.[1]?.toLowerCase() || "png";
+}
+
+async function downloadImageFile(url: string, filename: string) {
+  let objectUrl: string | undefined;
+  let href = url;
+
+  if (!url.startsWith("data:")) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Could not fetch the image for download.");
+    }
+    const blob = await response.blob();
+    objectUrl = URL.createObjectURL(blob);
+    href = objectUrl;
+  }
+
+  const anchor = document.createElement("a");
+  anchor.href = href;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  if (objectUrl) {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 type DesignStarterProps = {
   onContinue: () => void;
   onBack: () => void;
@@ -75,8 +142,12 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
   const lang = useLang();
   const t = (ja: string, en: string) => (lang === "en" ? en : ja);
   const recommendedImagePrompt = t(
-    "半リアル寄りで、自然な顔立ち、やわらかい肌の陰影、繊細な髪の流れ、少し派手なエレガント衣装、リアル寄りのツインテールの女の子、上半身ポートレート",
-    "semi-realistic girl with natural facial proportions, soft skin shading, detailed flowing hair, elegant slightly flashy outfit, realistic twin-tails, bust-up portrait",
+    "半リアル寄りのかわいい女の子、自然な顔立ち、やわらかい肌の陰影、ふんわりした髪、リボンやフリルのある上品でかわいい服、やさしい笑顔、上半身ポートレート",
+    "semi-realistic cute girl with natural facial proportions, soft skin shading, fluffy detailed hair, ribbon and frill styling, warm gentle smile, bust-up portrait",
+  );
+  const plushImagePrompt = t(
+    "ふわふわのぬいぐるみマスコット、やさしい表情、布の質感、パステルカラー、リボン付き、かわいい正面寄りの上半身ポートレート",
+    "fluffy plush toy mascot with a gentle expression, soft fabric texture, pastel colors, ribbon accessory, cute centered bust-up portrait",
   );
   const fileRef = useRef<HTMLInputElement>(null);
   const {
@@ -108,8 +179,8 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
   const [status, setStatus] = useState("");
   const [imagePrompt, setImagePrompt] = useState(() =>
     t(
-      "少女アニメ風で、少し派手なエレガント衣装、アニメっぽいツインテール、きらきらした大きな目の女の子、上半身ポートレート",
-      "semi-realistic girl with natural facial proportions, soft skin shading, detailed flowing hair, elegant slightly flashy outfit, realistic twin-tails, bust-up portrait",
+      "半リアル寄りのかわいい女の子、自然な顔立ち、やわらかい肌の陰影、ふんわりした髪、リボンやフリルのある上品でかわいい服、やさしい笑顔、上半身ポートレート",
+      "semi-realistic cute girl with natural facial proportions, soft skin shading, fluffy detailed hair, ribbon and frill styling, warm gentle smile, bust-up portrait",
     ),
   );
   const [imageProvider, setImageProvider] = useState<"gemini" | "openai">("gemini");
@@ -129,6 +200,32 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
   const previewUrl = urlInput || characterUrl;
   const previewName = nameInput || characterName;
   const progress = `${Math.round((step / 3) * 100)}%`;
+  
+  function makeDownloadFilename(provider?: "gemini" | "openai") {
+    const rawBaseName = (previewName || t("かわいい家計簿", "cute-kakeibo"))
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9\u3040-\u30ff\u4e00-\u9fff_-]+/gi, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    const baseName = rawBaseName || "cute-kakeibo";
+    const providerName = provider === "openai" ? "openai" : "gemini";
+    const extension = getImageExtension(previewUrl || "");
+    return `${baseName}-${providerName}.${extension}`;
+  }
+
+  async function handleSaveImage(url: string, provider?: "gemini" | "openai") {
+    try {
+      await downloadImageFile(url, makeDownloadFilename(provider));
+      setStatus(t("画像を保存しました。", "Saved the image."));
+    } catch (error) {
+      setImageError(
+        error instanceof Error
+          ? error.message
+          : t("画像の保存に失敗しました。", "Could not save the image."),
+      );
+    }
+  }
   const secondaryLabel = backLabel ?? { ja: "タイトルにいく", en: "Go to title" };
   const primaryLabel = continueLabel ?? { ja: "次へ進む", en: "Next" };
 
@@ -208,12 +305,21 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
       const payload = (await response.json()) as {
         imageUrl?: string;
         provider?: "gemini" | "openai";
+        requestedProvider?: "gemini" | "openai";
         prompt?: string;
         error?: string;
+        errorCode?: DesignImageErrorCode;
+        fallbackNotice?: string;
       };
 
       if (!response.ok || !payload.imageUrl) {
-        throw new Error(payload.error || t("画像生成に失敗しました。", "Image generation failed."));
+        throw new Error(
+          mapDesignImageError(
+            payload.errorCode,
+            t,
+            payload.error || t("画像生成に失敗しました。", "Image generation failed."),
+          ),
+        );
       }
 
       const nextImage: GeneratedImage = {
@@ -226,7 +332,17 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
       setGeneratedImages((prev) => [nextImage, ...prev].slice(0, 6));
       setUrlInput(payload.imageUrl);
       setCharacterUrl(payload.imageUrl);
-      setStatus(t("AI画像を生成して反映しました。", "Generated an AI image and applied it."));
+      setStatus(
+        payload.fallbackNotice === "OPENAI_BILLING_LIMIT_FALLBACK_TO_GEMINI"
+          ? t(
+              "OpenAI の課金上限に達していたため、Gemini で画像を生成しました。画像は保存もできます。",
+              "OpenAI hit its billing limit, so Gemini generated the image instead. You can save the image too.",
+            )
+          : t(
+              "かわいい家計簿用の画像を生成して反映しました。画像は保存もできます。",
+              "Created a Cute Kakeibo image and applied it. You can save it too.",
+            ),
+      );
     } catch (error) {
       setImageError(error instanceof Error ? error.message : t("画像生成に失敗しました。", "Image generation failed."));
     } finally {
@@ -235,7 +351,7 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
   }
 
   function saveCurrentDesign() {
-    const fallbackName = previewName || t("わたしのデザイン", "My design");
+    const fallbackName = previewName || t("かわいい家計簿デザイン", "Cute Kakeibo design");
     const useName = (designName || fallbackName).trim();
     const next: SavedDesign = {
       id: makeDesignId(useName),
@@ -475,7 +591,7 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
                   <div className="rounded-[24px] border border-slate-700 bg-slate-950 p-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">{t("AIで画像生成", "Generate with AI")}</p>
+                        <p className="text-sm font-semibold text-white">{t("かわいい家計簿AI画像", "Cute Kakeibo AI Image")}</p>
                         <p className="mt-1 text-xs text-slate-400">
                           {t("Gemini と OpenAI でキャラクター画像を作って、そのまま反映できます。", "Create a character image with Gemini or OpenAI and apply it right away.")}
                         </p>
@@ -505,27 +621,27 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
                       value={imagePrompt}
                       onChange={(event) => setImagePrompt(event.target.value)}
                       rows={3}
-                      placeholder={t("例: 半リアル寄りで、自然な顔立ち、少し派手なエレガント衣装、リアル寄りのツインテールの女の子", "e.g. semi-realistic girl, natural facial proportions, elegant slightly flashy outfit, realistic twin-tails")}
+                      placeholder={t("例: 半リアル寄りのかわいい女の子、やさしい笑顔、リボンやフリルのある服", "e.g. semi-realistic cute girl, warm smile, ribbon and frill styling")}
                       className="mt-3 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
                     />
 
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() =>
-                          setImagePrompt(
-                            t(
-                              "少女アニメ風で、少し派手なエレガント衣装、アニメっぽいツインテール、きらきらした大きな目の女の子、上半身ポートレート",
-                              "semi-realistic girl with natural facial proportions, soft skin shading, detailed flowing hair, elegant slightly flashy outfit, realistic twin-tails, bust-up portrait",
-                            ),
-                          )
-                        }
+                        onClick={() => setImagePrompt(recommendedImagePrompt)}
                         className="app-chip"
                       >
-                        {t("おすすめを入れる", "Use recommended prompt")}
+                        {t("女の子向けおすすめ", "Use girl prompt")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImagePrompt(plushImagePrompt)}
+                        className="app-chip"
+                      >
+                        {t("ぬいぐるみ向け", "Use plush prompt")}
                       </button>
                       <button type="button" onClick={handleGenerateImage} disabled={imageLoading} className="app-chip">
-                        {imageLoading ? t("生成中...", "Generating...") : t("AIで画像生成", "Generate image")}
+                        {imageLoading ? t("生成中...", "Generating...") : t("かわいい家計簿AIで画像生成", "Create Cute Kakeibo image")}
                       </button>
                     </div>
 
@@ -534,24 +650,45 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
                     {generatedImages.length > 0 && (
                       <div className="mt-4 grid gap-3 sm:grid-cols-2">
                         {generatedImages.map((image) => (
-                          <button
+                          <div
                             key={image.id}
-                            type="button"
-                            onClick={() => {
-                              setUrlInput(image.url);
-                              setCharacterUrl(image.url);
-                              setStatus(t("生成画像を反映しました。", "Applied the generated image."));
-                            }}
                             className="overflow-hidden rounded-[22px] border border-slate-700 bg-slate-900 text-left transition hover:border-cyan-400"
                           >
                             <div className="relative h-36 w-full">
                               <Image src={image.url} alt={image.prompt} fill className="object-cover" unoptimized />
                             </div>
                             <div className="p-3">
-                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{image.provider}</p>
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">{image.provider}</p>
+                                {image.provider === "gemini" && (
+                                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-300">
+                                    {t("保存OK", "Save OK")}
+                                  </span>
+                                )}
+                              </div>
                               <p className="mt-2 line-clamp-2 text-xs text-slate-300">{image.prompt}</p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setUrlInput(image.url);
+                                    setCharacterUrl(image.url);
+                                    setStatus(t("生成画像を反映しました。", "Applied the generated image."));
+                                  }}
+                                  className="app-chip"
+                                >
+                                  {t("適用", "Apply")}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleSaveImage(image.url, image.provider)}
+                                  className="app-chip"
+                                >
+                                  {t("画像を保存", "Save image")}
+                                </button>
+                              </div>
                             </div>
-                          </button>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -560,6 +697,11 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
                     <button type="button" onClick={() => fileRef.current?.click()} className="app-chip">
                       {t("画像を選ぶ", "Choose image")}
                     </button>
+                    {previewUrl && (
+                      <button type="button" onClick={() => void handleSaveImage(previewUrl, imageProvider)} className="app-chip">
+                        {t("現在の画像を保存", "Save current image")}
+                      </button>
+                    )}
                     <input ref={fileRef} type="file" accept="image/*" onChange={handleFile} className="hidden" />
                     <input
                       type="text"
@@ -632,13 +774,13 @@ export default function DesignStarter({ onContinue, onBack, backLabel, continueL
 
           <div className="space-y-5">
             <div className="rounded-[30px] border border-slate-700 bg-slate-950 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{t("プレビュー", "Preview")}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{t("かわいい家計簿プレビュー", "Cute Kakeibo Preview")}</p>
               <div className="mt-4 overflow-hidden rounded-[32px] border border-slate-700 p-5" style={{ background: customBackground || BG_PRESETS[0].value }}>
                 <div className="rounded-[28px] border border-slate-700 bg-slate-900 p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.28em] text-cyan-200">{t("未来設計ノート", "Future Planning Note")}</p>
-                      <h3 className="mt-2 text-2xl font-semibold text-white">{previewName || t("わたしのノート", "My note")}</h3>
+                      <p className="text-xs uppercase tracking-[0.28em] text-cyan-200">{t("かわいい家計簿ボード", "Cute Kakeibo Board")}</p>
+                      <h3 className="mt-2 text-2xl font-semibold text-white">{previewName || t("かわいい家計簿", "Cute Kakeibo")}</h3>
                       <p className="mt-2 text-sm text-slate-300">{t("あとからいつでも切り替えられるデザインです。", "You can switch this design later any time.")}</p>
                     </div>
                     <span className="rounded-full border border-slate-700 bg-slate-800 px-3 py-1 text-xs text-slate-200">

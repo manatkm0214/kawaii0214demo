@@ -261,66 +261,66 @@ export default function NearbyShopGuide({
   };
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-[28px] border border-slate-700 bg-slate-900 p-4">
+    <div className="flex h-full min-w-0 flex-col rounded-[28px] board-card border p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-white">{t("お店案内", "Nearby shop guide")}</h3>
-          <p className="mt-1 text-sm text-slate-300">
+          <h3 className="text-base font-black text-black">{t("お店案内", "Nearby shop guide")}</h3>
+          <p className="mt-1 text-sm font-semibold text-black">
             {t("エリアでも現在地でも探せます。探したいお店は上の入力欄で選んで、そのまま探すに反映します。", "You can search by area or by current location. Store type is selected in the top inputs and used directly by search.")}
           </p>
         </div>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-black">
           {t("今月の収支", "Balance")}: {formatCurrency(stats.balance)}
         </span>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-slate-700 bg-slate-950 p-3">
+      <div className="mt-4 rounded-2xl board-tile border p-3">
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("エリア入力", "Area")}</span>
+            <span className="mb-1.5 block text-sm font-semibold text-black">{t("エリア入力", "Area")}</span>
             <input
               value={area}
               onChange={(event) => onAreaChange(event.target.value)}
               placeholder={t("例: 渋谷 / 横浜 / 新宿駅", "e.g. Shibuya / Yokohama / Shinjuku Station")}
-              className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("予算目安", "Budget target")}</span>
+            <span className="mb-1.5 block text-sm font-semibold text-black">{t("予算目安", "Budget target")}</span>
             <input
               value={budgetLimit}
               onChange={(event) => setBudgetLimit(event.target.value)}
               placeholder={t("例: 3000", "e.g. 3000")}
               type="number"
               min={0}
-              className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
         </div>
 
         <label className="mt-3 block">
-          <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("自由入力で探す", "Custom keyword")}</span>
+          <span className="mb-1.5 block text-sm font-semibold text-black">{t("自由入力で探す", "Custom keyword")}</span>
           <input
             value={customQuery}
             onChange={(event) => setCustomQuery(event.target.value)}
             placeholder={t("例: ベーカリー / 100均 / ペット用品", "e.g. bakery / 100 yen shop / pet supplies")}
-            className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
           />
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-black">
             {t("選んだ店種に加えて、このキーワードでも候補を探します。", "Search will also use this free-form keyword in addition to the selected store type.")}
           </p>
         </label>
 
         <div className="mt-3">
-          <p className="mb-2 text-sm font-semibold text-white">{t("探したいお店", "Store type")}</p>
+          <p className="mb-2 text-sm font-black text-black">{t("探したいお店", "Store type")}</p>
           <div className="flex flex-wrap gap-2">
             {(Object.keys(optionLabels) as ShopKind[]).map((option) => (
               <button
                 key={option}
                 type="button"
                 onClick={() => setKind(option)}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition ${
-                  kind === option ? "bg-cyan-400 text-slate-950" : "border border-white/10 bg-slate-900 text-slate-300 hover:bg-slate-800"
+                className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+                  kind === option ? "border border-slate-950 bg-cyan-500 text-white shadow-sm" : "border border-slate-400 bg-white text-black hover:border-slate-500 hover:text-black"
                 }`}
               >
                 {lang === "en" ? optionLabels[option].en : optionLabels[option].ja}
@@ -329,13 +329,13 @@ export default function NearbyShopGuide({
           </div>
         </div>
 
-        <p className="mt-3 text-sm text-slate-400">{budgetNote}</p>
+        <p className="mt-3 text-sm text-black">{budgetNote}</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => void findAreaShops()}
             disabled={loading}
-            className="min-h-[50px] rounded-full bg-cyan-400 px-5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:opacity-50"
+            className="min-h-[50px] rounded-full bg-cyan-500 px-5 text-sm font-semibold text-white transition hover:bg-cyan-400 disabled:opacity-50"
           >
             {loading && lastSource === "area" ? t("検索中...", "Searching...") : t("このエリアで探す", "Search this area")}
           </button>
@@ -343,62 +343,62 @@ export default function NearbyShopGuide({
             type="button"
             onClick={findNearbyShops}
             disabled={loading}
-            className="min-h-[50px] rounded-full bg-emerald-400 px-5 text-sm font-semibold text-slate-950 transition hover:bg-emerald-300 disabled:opacity-50"
+            className="min-h-[50px] rounded-full bg-emerald-500 px-5 text-sm font-semibold text-white transition hover:bg-emerald-400 disabled:opacity-50"
           >
             {loading && lastSource === "current" ? t("取得中...", "Finding...") : t("現在地で探す", "Use current location")}
           </button>
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-slate-700 bg-slate-950 p-3">
+      <div className="mt-3 rounded-2xl board-tile border p-3">
         {lifestyleSuggestions.length > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-white">{t("暮らし方の提案", "Lifestyle suggestions")}</p>
+            <p className="text-sm font-black text-black">{t("暮らし方の提案", "Lifestyle suggestions")}</p>
             {lifestyleSuggestions.map((card) => (
-              <div key={`${card.title}-${card.budgetLabel}`} className="rounded-2xl border border-slate-700 bg-slate-900 p-3">
+              <div key={`${card.title}-${card.budgetLabel}`} className="rounded-2xl board-tile border p-3">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm font-semibold text-white">{card.title}</p>
-                  <span className="text-[11px] text-slate-400">{card.budgetLabel}</span>
+                  <p className="text-sm font-black text-black">{card.title}</p>
+                  <span className="text-[11px] text-black">{card.budgetLabel}</span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{card.body}</p>
+                <p className="mt-2 text-sm leading-6 text-black">{card.body}</p>
               </div>
             ))}
           </div>
         )}
 
-        <div className={`${lifestyleSuggestions.length > 0 ? "mt-3" : ""} rounded-2xl border border-white/10 bg-slate-900 p-3`}>
-          <p className="text-sm leading-7 text-slate-200">{lang === "en" ? guidanceByKind[kind].en : guidanceByKind[kind].ja}</p>
-          {customQuery.trim() && <p className="mt-2 text-sm text-pink-200">{t(`自由入力: ${customQuery.trim()}`, `Custom keyword: ${customQuery.trim()}`)}</p>}
+        <div className={`${lifestyleSuggestions.length > 0 ? "mt-3" : ""} rounded-2xl board-tile border p-3`}>
+          <p className="text-sm leading-7 text-black">{lang === "en" ? guidanceByKind[kind].en : guidanceByKind[kind].ja}</p>
+          {customQuery.trim() && <p className="mt-2 text-sm text-black">{t(`自由入力: ${customQuery.trim()}`, `Custom keyword: ${customQuery.trim()}`)}</p>}
           {hasBudgetLimit && (
-            <p className="mt-2 text-sm text-cyan-200">
+            <p className="mt-2 text-sm text-black">
               {t(`予算目安: ${parsedBudgetLimit.toLocaleString()} 円`, `Budget target: JPY ${parsedBudgetLimit.toLocaleString()}`)}
             </p>
           )}
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-black">
             {mode === "luxury" ? t("ゆとりモード", "Treat mode") : mode === "standard" ? t("標準モード", "Balanced mode") : t("節約モード", "Save mode")}
           </p>
         </div>
       </div>
 
-      {status && <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-slate-900 px-3 py-2 text-sm text-cyan-100">{status}</div>}
+      {status && <div className="mt-3 rounded-2xl border border-slate-400 bg-cyan-50 px-3 py-2 text-sm text-black">{status}</div>}
 
       <div className="mt-3 flex-1 space-y-2 overflow-hidden">
         {shops.length === 0 ? (
-          <div className="flex min-h-[220px] items-center rounded-2xl border border-dashed border-white/10 bg-slate-950 px-3 py-4 text-sm text-slate-400">
+          <div className="flex min-h-[220px] items-center rounded-2xl board-tile border border-dashed px-3 py-4 text-sm text-black">
             {t("上の入力欄で店種を選んでから、エリア検索または現在地検索で候補を表示できます。", "Pick a store type above, then use area or current-location search to show results.")}
           </div>
         ) : (
           <div className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
             {shops.map((shop, index) => (
-              <div key={shop.id} className="rounded-2xl border border-white/10 bg-slate-950 p-3">
+              <div key={shop.id} className="rounded-2xl board-tile border p-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-black text-black">
                       {index + 1}. {shop.name}
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">{shop.kind}</p>
+                    <p className="mt-1 text-xs text-black">{shop.kind}</p>
                   </div>
-                  <span className="shrink-0 text-xs text-cyan-200">{shop.distanceKm.toFixed(2)} km</span>
+                  <span className="shrink-0 text-xs text-black">{shop.distanceKm.toFixed(2)} km</span>
                 </div>
               </div>
             ))}

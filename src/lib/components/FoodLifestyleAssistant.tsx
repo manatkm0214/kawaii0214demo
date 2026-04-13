@@ -420,21 +420,21 @@ export default function FoodLifestyleAssistant({
   }
 
   return (
-    <div className="flex h-full min-w-0 flex-col rounded-[28px] border border-slate-700 bg-slate-900 p-4">
+    <div className="flex h-full min-w-0 flex-col rounded-[28px] board-card border p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h3 className="text-base font-bold text-white">{t("\u0041\u0049\u98df\u4e8b\u30a2\u30b7\u30b9\u30c8", "Food AI assistant")}</h3>
-          <p className="mt-1 text-sm text-slate-300">
+          <h3 className="text-base font-black text-slate-950">{t("\u0041\u0049\u98df\u4e8b\u30a2\u30b7\u30b9\u30c8", "Food AI assistant")}</h3>
+          <p className="mt-1 text-sm font-extrabold text-slate-950">
             {t("\u98df\u6750\u3092\u307e\u3068\u3081\u3066\u5165\u308c\u308b\u3068\u3001\u307e\u305a\u3059\u3050\u5019\u88dc\u3092\u51fa\u3057\u3001\u305d\u306e\u5f8c\u306b AI \u306e\u63d0\u6848\u3067\u66f4\u65b0\u3057\u307e\u3059\u3002", "Add pantry items to get instant local recipes first, then refine them with AI.")}
           </p>
         </div>
         <span
-          className={`w-fit shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold ${
+          className={`w-fit shrink-0 rounded-full border px-3 py-1.5 text-xs font-black ${
             mode === "save"
-              ? "bg-amber-400/15 text-amber-200"
+              ? "border-slate-400 bg-amber-100 text-black"
               : mode === "standard"
-                ? "bg-cyan-400/15 text-cyan-200"
-                : "bg-pink-400/15 text-pink-200"
+                ? "border-slate-400 bg-cyan-100 text-black"
+                : "border-slate-400 bg-pink-100 text-black"
           }`}
         >
           {mode === "save" ? t("\u7bc0\u7d04\u30e2\u30fc\u30c9", "Save mode") : mode === "standard" ? t("\u6a19\u6e96\u30e2\u30fc\u30c9", "Balanced mode") : t("\u3086\u3068\u308a\u30e2\u30fc\u30c9", "Treat mode")}
@@ -443,36 +443,36 @@ export default function FoodLifestyleAssistant({
 
       <div className="mt-4 grid min-w-0 gap-4 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="min-w-0 space-y-3">
-          <div className="rounded-2xl border border-slate-700 bg-slate-950 p-3">
+          <div className="rounded-2xl board-tile border p-3">
             <div className="mx-auto max-w-[640px]">
               <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("\u98df\u6750\u540d", "Ingredients")}</span>
+                <span className="mb-1.5 block text-sm font-extrabold text-slate-950">{t("\u98df\u6750\u540d", "Ingredients")}</span>
                 <textarea
                   value={names}
                   onChange={(event) => setNames(event.target.value)}
                   placeholder={t("\u4f8b: \u5375\u3001\u7389\u306d\u304e\u3001\u8c46\u8150\n\u8aad\u70b9\u30fb\u30ab\u30f3\u30de\u30fb\u6539\u884c\u3067\u8907\u6570\u5165\u529b\u3067\u304d\u307e\u3059", "e.g. eggs, onion, tofu\nUse commas or new lines for multiple items")}
                   rows={4}
-                  className="w-full resize-none rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
                 />
               </label>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("\u91cf", "Amount")}</span>
+                  <span className="mb-1.5 block text-sm font-extrabold text-slate-950">{t("\u91cf", "Amount")}</span>
                   <input
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
                     placeholder={t("\u4f8b: 2\u500b / 1\u30d1\u30c3\u30af", "e.g. 2 pieces / 1 pack")}
-                    className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-slate-200">{t("\u6b8b\u308a\u65e5\u6570", "Days left")}</span>
+                  <span className="mb-1.5 block text-sm font-semibold text-slate-950">{t("\u6b8b\u308a\u65e5\u6570", "Days left")}</span>
                   <input
                     value={expiresInDays}
                     onChange={(event) => setExpiresInDays(event.target.value)}
                     placeholder={t("\u4f8b: 3", "e.g. 3")}
                     type="number"
-                    className="w-full rounded-2xl border border-white/10 bg-slate-900 px-3 py-3 text-sm text-white outline-none focus:border-cyan-400"
+                    className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
                   />
                 </label>
               </div>
@@ -484,16 +484,16 @@ export default function FoodLifestyleAssistant({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-700 bg-slate-950 p-3">
+          <div className="rounded-2xl board-tile border p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-white">{t("\u5165\u308c\u305f\u98df\u6750", "Pantry items")}</p>
+              <p className="text-sm font-black text-slate-950">{t("\u5165\u308c\u305f\u98df\u6750", "Pantry items")}</p>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400">{items.length}{t("\u4ef6", " items")}</span>
+                <span className="text-xs text-slate-950">{items.length}{t("\u4ef6", " items")}</span>
                 {items.length > 0 && (
                   <button
                     type="button"
                     onClick={clearAssistant}
-                    className="text-xs font-medium text-rose-300 transition hover:text-rose-200"
+                    className="text-xs font-semibold text-slate-950 transition hover:text-slate-950"
                   >
                     {t("\u8868\u793a\u3092\u524a\u9664", "Clear shown items")}
                   </button>
@@ -502,17 +502,17 @@ export default function FoodLifestyleAssistant({
             </div>
             <div className="mt-3 max-h-[240px] space-y-2 overflow-y-auto pr-1">
               {items.length === 0 ? (
-                <p className="text-sm text-slate-400">{t("\u5375\u3001\u7389\u306d\u304e\u3001\u8c46\u8150\u306a\u3069\u3001\u4eca\u3042\u308b\u98df\u6750\u3092\u307e\u3068\u3081\u3066\u5165\u308c\u3066\u307f\u3066\u304f\u3060\u3055\u3044\u3002", "Add several pantry staples such as eggs, onion, or tofu.")}</p>
+                <p className="text-sm text-black">{t("\u5375\u3001\u7389\u306d\u304e\u3001\u8c46\u8150\u306a\u3069\u3001\u4eca\u3042\u308b\u98df\u6750\u3092\u307e\u3068\u3081\u3066\u5165\u308c\u3066\u307f\u3066\u304f\u3060\u3055\u3044\u3002", "Add several pantry staples such as eggs, onion, or tofu.")}</p>
               ) : (
                 items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl border border-slate-700 bg-slate-900 px-3 py-3">
+                  <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl board-tile border px-3 py-3">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-white">{item.name}</p>
-                      <p className="mt-1 text-xs text-slate-400">
+                      <p className="truncate text-sm font-extrabold text-slate-950 drop-shadow-[0_2px_0_rgba(0,0,0,0.65)]">{item.name}</p>
+                      <p className="mt-1 text-xs font-extrabold text-slate-950 drop-shadow-[0_2px_0_rgba(0,0,0,0.65)]">
                         {[item.amount, item.expiresInDays != null ? t(`\u3042\u3068${item.expiresInDays}\u65e5`, `${item.expiresInDays} days left`) : ""].filter(Boolean).join(" / ")}
                       </p>
                     </div>
-                    <button type="button" onClick={() => removeItem(item.id)} className="text-xs text-slate-500 hover:text-rose-300">
+                    <button type="button" onClick={() => removeItem(item.id)} className="text-xs font-semibold text-black hover:text-black">
                       {t("\u524a\u9664", "Delete")}
                     </button>
                   </div>
@@ -523,11 +523,11 @@ export default function FoodLifestyleAssistant({
         </div>
 
         <div className="min-w-0 space-y-3">
-          <div className="rounded-2xl border border-slate-700 bg-slate-950 p-3">
+          <div className="rounded-2xl board-tile border p-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-white">{t("\u4f5c\u308c\u308b\u30ec\u30b7\u30d4", "Recipe ideas")}</p>
-                <p className="mt-1 text-xs text-slate-400">{t("\u4eca\u6708\u306e\u5dee\u984d", "Current balance")}: {formatCurrency(stats.balance)}</p>
+                <p className="text-sm font-black text-black">{t("\u4f5c\u308c\u308b\u30ec\u30b7\u30d4", "Recipe ideas")}</p>
+                <p className="mt-1 text-xs text-black">{t("\u4eca\u6708\u306e\u5dee\u984d", "Current balance")}: {formatCurrency(stats.balance)}</p>
               </div>
               <div className="flex shrink-0 gap-2">
                 <button
@@ -542,7 +542,7 @@ export default function FoodLifestyleAssistant({
                   type="button"
                   onClick={() => void requestAnalysis(items, area)}
                   disabled={loading || items.length === 0}
-                  className="rounded-full border border-cyan-800 bg-cyan-950 px-4 py-2.5 text-sm font-semibold text-cyan-200 disabled:opacity-60"
+                  className="rounded-full border border-slate-400 bg-cyan-50 px-4 py-2.5 text-sm font-semibold text-black disabled:opacity-60"
                 >
                   {loading ? t("\u66f4\u65b0\u4e2d...", "Updating...") : t("\u4eca\u3059\u3050\u66f4\u65b0", "Refresh now")}
                 </button>
@@ -550,11 +550,27 @@ export default function FoodLifestyleAssistant({
             </div>
 
             <div className="mt-3 space-y-2">
-              {result.recipes.map((recipe) => (
-                <div key={`${recipe.title}-${recipe.reason}`} className="rounded-2xl border border-slate-700 bg-slate-900 p-3">
-                  <p className="text-sm font-semibold text-white">{recipe.title}</p>
-                </div>
-              ))}
+                      {result.recipes.map((recipe) => (
+                        <div key={`${recipe.title}-${recipe.reason}`} className="rounded-2xl board-tile border p-3">
+                          <p className="text-sm font-extrabold text-slate-950 drop-shadow-[0_2px_0_rgba(0,0,0,0.65)]">{recipe.title}</p>
+                          {recipe.reason && (
+                            <p className="mt-1 text-xs text-slate-900">{recipe.reason}</p>
+                          )}
+                        </div>
+                      ))}
+                      {/* 生活提案カード（要改善→赤、良い→緑） */}
+                      {result.lifestyleSuggestions.map((card) => {
+                        // "要改善"や"improve"がタイトルやbudgetLabel/bodyに含まれる場合は赤、"良"や"good"が含まれる場合は緑
+                        const isWarning = card.title.includes("要改善") || card.body.includes("要改善") || card.budgetLabel.includes("要改善") || card.title.toLowerCase().includes("improve") || card.body.toLowerCase().includes("improve");
+                        const isGood = card.title.includes("良") || card.body.includes("良") || card.budgetLabel.includes("良") || card.title.toLowerCase().includes("good") || card.body.toLowerCase().includes("good");
+                        return (
+                          <div key={card.title + card.body} className="rounded-2xl board-tile border p-3">
+                            <p className={`text-sm font-extrabold drop-shadow-[0_2px_0_rgba(0,0,0,0.65)] ${isWarning ? 'text-red-600' : isGood ? 'text-emerald-600' : 'text-slate-950'}`}>{card.title}</p>
+                            <p className="mt-1 text-xs text-slate-900">{card.body}</p>
+                            {card.budgetLabel && <span className="mt-1 inline-block text-xs font-bold text-cyan-700">{card.budgetLabel}</span>}
+                          </div>
+                        );
+                      })}
             </div>
           </div>
         </div>

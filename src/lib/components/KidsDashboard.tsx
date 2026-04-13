@@ -3,7 +3,6 @@
 import { useMemo } from "react"
 import type { KidsExpense, KidsExpenseCategory } from "./KidsExpenseForm";
 import type { KidsIncome } from "./KidsIncomeForm";
-
 import type { KidsSavingsGoal } from "../types/kids-finance";
 
 export type KidsFinanceState = {
@@ -39,77 +38,129 @@ function getCurrentMonthKey() {
   return new Date().toISOString().slice(0, 7)
 }
 
-function getEncouragementMessage({
-  balance,
-  monthlySpent,
-  monthlyBudget,
-  savingsProgress,
-}: {
-  balance: number
-  monthlySpent: number
-  monthlyBudget: number
-  savingsProgress: number
-}) {
-  if (balance < 0) {
-    return "つかいすぎちゅうい！つぎは少しだけがまんしてみよう。"
-  }
+// ── キャラクター定義 ──────────────────────────────────────
+type CharacterKey = "cute" | "cool";
 
-  if (monthlySpent > monthlyBudget) {
-    return "こんげつのよさんをこえたよ。つぎはつかう前にかくにんしよう。"
-  }
+const CHARACTERS: Record<CharacterKey, { emoji: string; name: string; bg: string; text: string; border: string }> = {
+  cute: { emoji: "🐰", name: "ミミ",  bg: "bg-pink-50",  text: "text-pink-700",  border: "border-pink-200" },
+  cool: { emoji: "🦁", name: "レオ",  bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+};
 
-  if (savingsProgress >= 1) {
-    return "もくひょうたっせい！すごい！つぎのもくひょうもきめてみよう。"
-  }
+type MsgState = "goalAchieved" | "nearGoal" | "good" | "overBudget" | "normal";
 
-  if (savingsProgress >= 0.7) {
-    return "あとすこし！このちょうしでためていこう。"
-  }
+const MESSAGES: Record<MsgState, Record<CharacterKey, string[]>> = {
+  goalAchieved: {
+    cute: ["やったー！もくひょうたっせい！すごすぎるよ～！🌸", "えらい！えらい！だいすき！つぎのもくひょうもいっしょにがんばろ！✨"],
+    cool: ["完璧だ！さすがオレの仲間！🔥", "目標達成！お前はすごいぞ！次も絶対いける！⚡"],
+  },
+  nearGoal: {
+    cute: ["もうすぐだよ！いっしょにがんばろ～！💕", "あとすこし！ミミも応援してるよ！🌷"],
+    cool: ["あと少しだ！諦めるな！ラストスパートをかけろ！", "もう少しで到達だ！強くなれ！"],
+  },
+  good: {
+    cute: ["じょうずにつかえてるね！かしこ～い！🌸", "すてき！ミミのじまんだよ！えらいね！"],
+    cool: ["いい調子だ！その調子で続けろ！", "さすがだな、よく考えて使えてる！"],
+  },
+  overBudget: {
+    cute: ["よさんオーバーしちゃったけど…だいじょうぶ！つぎはできるよ！🐰", "ミミもいっしょにかんがえるね！つぎはがんばろ！"],
+    cool: ["予算オーバーか。でも落ち込むな！次は計画を立てろ！", "失敗は成功の始まりだ。次こそ決めてやれ！"],
+  },
+  normal: {
+    cute: ["まいにちすこしずつきろくしてね！応援してるよ！🌷", "ちょきん、がんばってるね！えらい！🐰"],
+    cool: ["コツコツ続けること、それが強さだ！", "記録を続けろ。それがお前の武器になる！"],
+  },
+};
 
-  if (balance > 0 && monthlySpent <= monthlyBudget * 0.7) {
-    return "じょうずにつかえているよ！このままつづけよう。"
-  }
-
-  return "まいにちすこしずつきろくできると、もっとじょうずになるよ。"
+function getMsgState(savingsProgress: number, monthlySpent: number, monthlyBudget: number, balance: number): MsgState {
+  if (savingsProgress >= 1) return "goalAchieved";
+  if (monthlySpent > monthlyBudget) return "overBudget";
+  if (savingsProgress >= 0.7) return "nearGoal";
+  if (balance > 0 && monthlySpent <= monthlyBudget * 0.7) return "good";
+  return "normal";
 }
 
+// ── 花まるスタンプ ────────────────────────────────────────
+function HanamaruStamp() {
+  return (
+    <div className="flex flex-col items-center gap-3 py-2">
+      {/* 紙吹雪 */}
+      <div className="flex gap-2 text-lg select-none">
+        {"🎊✨🌟✨🎊".split("").map((ch, i) => (
+          <span key={i} className="animate-bounce" style={{ animationDelay: `${i * 0.12}s` }}>{ch}</span>
+        ))}
+      </div>
+
+      {/* スタンプ本体 */}
+      <div className="relative flex h-36 w-36 items-center justify-center">
+        {/* 花びら */}
+        {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+          <div
+            key={deg}
+            className="absolute h-8 w-3.5 rounded-full bg-rose-400/75"
+            style={{ transform: `rotate(${deg}deg) translateY(-44px)` }}
+          />
+        ))}
+        {/* 円スタンプ */}
+        <div className="relative z-10 flex h-22 w-22 -rotate-6 items-center justify-center rounded-full border-[5px] border-rose-500 bg-white shadow-xl shadow-rose-100">
+          <div className="text-center leading-tight">
+            <p className="text-xl font-black text-rose-500">花まる</p>
+            <p className="text-[10px] font-bold text-rose-400">たっせい！</p>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-sm font-bold text-rose-600">🎉 もくひょうたっせい！おめでとう！ 🎉</p>
+    </div>
+  );
+}
+
+// ── キャラクター吹き出し ───────────────────────────────────
+function CharacterBubble({ charKey, message }: { charKey: CharacterKey; message: string }) {
+  const ch = CHARACTERS[charKey];
+  return (
+    <div className={`flex items-start gap-3 rounded-2xl border ${ch.border} ${ch.bg} p-4`}>
+      <div className="flex shrink-0 flex-col items-center gap-0.5">
+        <span className="text-4xl leading-none">{ch.emoji}</span>
+        <span className={`text-[11px] font-bold ${ch.text}`}>{ch.name}</span>
+      </div>
+      <div className={`mt-1 flex-1 rounded-2xl rounded-tl-none border ${ch.border} bg-white px-4 py-3`}>
+        <p className={`text-sm font-medium leading-6 ${ch.text}`}>{message}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── メインダッシュボード ───────────────────────────────────
 export function KidsFinanceDashboard({ state }: Props) {
   const currentMonthKey = getCurrentMonthKey()
 
-  const totalIncome = useMemo(() => {
-    return state.incomes.reduce((sum: number, item: KidsIncome) => sum + item.amount, 0)
-  }, [state.incomes])
+  const totalIncome = useMemo(
+    () => state.incomes.reduce((sum: number, item: KidsIncome) => sum + item.amount, 0),
+    [state.incomes]
+  )
 
-  const totalExpense = useMemo(() => {
-    return state.expenses.reduce((sum: number, item: KidsExpense) => sum + item.amount, 0)
-  }, [state.expenses])
+  const totalExpense = useMemo(
+    () => state.expenses.reduce((sum: number, item: KidsExpense) => sum + item.amount, 0),
+    [state.expenses]
+  )
 
   const balance = totalIncome - totalExpense - state.savings
 
-  const monthlyExpenses = useMemo(() => {
-    return state.expenses.filter((item) => getMonthKey(item.date) === currentMonthKey)
-  }, [state.expenses, currentMonthKey])
+  const monthlyExpenses = useMemo(
+    () => state.expenses.filter((item) => getMonthKey(item.date) === currentMonthKey),
+    [state.expenses, currentMonthKey]
+  )
 
-  const monthlySpent = useMemo(() => {
-    return monthlyExpenses.reduce((sum: number, item: KidsExpense) => sum + item.amount, 0)
-  }, [monthlyExpenses])
+  const monthlySpent = useMemo(
+    () => monthlyExpenses.reduce((sum: number, item: KidsExpense) => sum + item.amount, 0),
+    [monthlyExpenses]
+  )
 
   const remainingBudget = state.monthlyBudget - monthlySpent
 
   const expenseByCategory = useMemo(() => {
-    const base: Record<KidsExpenseCategory, number> = {
-      snack: 0,
-      toy: 0,
-      book: 0,
-      game: 0,
-      school: 0,
-      other: 0,
-    }
-
-    for (const item of monthlyExpenses as KidsExpense[]) {
-      base[item.category] += item.amount
-    }
-
+    const base: Record<KidsExpenseCategory, number> = { snack: 0, toy: 0, book: 0, game: 0, school: 0, other: 0 }
+    for (const item of monthlyExpenses as KidsExpense[]) base[item.category] += item.amount
     return base
   }, [monthlyExpenses])
 
@@ -123,7 +174,7 @@ export function KidsFinanceDashboard({ state }: Props) {
       .sort((a, b) => b.amount - a.amount)
   }, [expenseByCategory])
 
-  const maxCategoryAmount = Math.max(...categoryRows.map((row) => row.amount), 1)
+  const maxCategoryAmount = Math.max(...categoryRows.map((r) => r.amount), 1)
 
   const savingsProgress =
     state.savingsGoal.targetAmount > 0
@@ -134,92 +185,107 @@ export function KidsFinanceDashboard({ state }: Props) {
     .sort((a, b) => (a.date < b.date ? 1 : -1))
     .slice(0, 3)
 
-  const message = getEncouragementMessage({
-    balance,
-    monthlySpent,
-    monthlyBudget: state.monthlyBudget,
-    savingsProgress,
-  })
+  // キャラクターメッセージ選択（日付で切り替え）
+  const msgState = getMsgState(savingsProgress, monthlySpent, state.monthlyBudget, balance)
+  const dayIdx = new Date().getDate()
+  const cuteMsg = MESSAGES[msgState].cute[dayIdx % MESSAGES[msgState].cute.length]
+  const coolMsg = MESSAGES[msgState].cool[dayIdx % MESSAGES[msgState].cool.length]
+
+  const goalAchieved = savingsProgress >= 1
 
   return (
     <main className="min-h-screen bg-sky-50 p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
+
+        {/* ヘッダー */}
         <header className="rounded-3xl bg-white p-6 shadow">
           <h1 className="text-2xl font-bold text-sky-700">こども家計ぼダッシュボード</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            おこづかい・つかったお金・ちょきんをわかりやすく見よう
-          </p>
+          <p className="mt-2 text-sm text-slate-600">おこづかい・つかったお金・ちょきんをわかりやすく見よう</p>
         </header>
 
+        {/* サマリーカード */}
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-3xl bg-white p-5 shadow">
-            <p className="text-sm text-slate-500">いまつかえるお金</p>
+            <p className="text-sm font-medium text-slate-600">いまつかえるお金</p>
             <p className="mt-2 text-3xl font-bold text-sky-700">{formatYen(balance)}</p>
           </div>
-
           <div className="rounded-3xl bg-white p-5 shadow">
-            <p className="text-sm text-slate-500">こんげつつかったお金</p>
+            <p className="text-sm font-medium text-slate-600">こんげつつかったお金</p>
             <p className="mt-2 text-3xl font-bold text-rose-500">{formatYen(monthlySpent)}</p>
           </div>
-
           <div className="rounded-3xl bg-white p-5 shadow">
-            <p className="text-sm text-slate-500">ちょきん</p>
+            <p className="text-sm font-medium text-slate-600">ちょきん</p>
             <p className="mt-2 text-3xl font-bold text-emerald-600">{formatYen(state.savings)}</p>
           </div>
-
           <div className="rounded-3xl bg-white p-5 shadow">
-            <p className="text-sm text-slate-500">こんげつあといくらつかえる？</p>
-            <p
-              className={`mt-2 text-3xl font-bold ${
-                remainingBudget < 0 ? "text-red-600" : "text-amber-600"
-              }`}
-            >
+            <p className="text-sm font-medium text-slate-600">こんげつあといくらつかえる？</p>
+            <p className={`mt-2 text-3xl font-bold ${remainingBudget < 0 ? "text-red-600" : "text-amber-600"}`}>
               {formatYen(remainingBudget)}
             </p>
           </div>
         </section>
 
+        {/* ほしいもの目標 & 一言メッセージ */}
         <section className="grid gap-6 xl:grid-cols-2">
-          <div className="rounded-3xl bg-white p-6 shadow">
+
+          {/* ほしいもの目標 */}
+          <div className={`rounded-3xl bg-white p-6 shadow transition ${goalAchieved ? "ring-2 ring-rose-300" : ""}`}>
             <h2 className="text-lg font-bold text-slate-800">ほしいもの もくひょう</h2>
-            <p className="mt-3 text-sm text-slate-600">{state.savingsGoal.title}</p>
-            <p className="mt-2 text-sm text-slate-500">
-              {formatYen(state.savings)} / {formatYen(state.savingsGoal.targetAmount)}
-            </p>
+            <p className="mt-1 text-base font-semibold text-sky-700">{state.savingsGoal.title}</p>
 
-            <div className="mt-4 h-4 w-full overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-emerald-500 transition-all"
-                style={{
-                  width: `${Math.min(savingsProgress * 100, 100)}%`,
-                }}
-              />
-            </div>
+            {goalAchieved ? (
+              <HanamaruStamp />
+            ) : (
+              <>
+                <p className="mt-3 text-sm font-medium text-slate-700">
+                  {formatYen(state.savings)}{" "}
+                  <span className="text-slate-400">/</span>{" "}
+                  {formatYen(state.savingsGoal.targetAmount)}
+                </p>
 
-            <p className="mt-3 text-sm text-slate-700">
-              あと{" "}
-              <span className="font-bold">
-                {formatYen(Math.max(state.savingsGoal.targetAmount - state.savings, 0))}
-              </span>
-            </p>
+                {/* プログレスバー */}
+                <div className="mt-3 h-5 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${Math.min(savingsProgress * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="mt-1 flex justify-between text-xs text-slate-500">
+                  <span>{Math.round(savingsProgress * 100)}%</span>
+                  <span>あと {formatYen(Math.max(state.savingsGoal.targetAmount - state.savings, 0))}</span>
+                </div>
+
+                {/* 進捗に応じたキャラクターコメント */}
+                <div className="mt-4">
+                  <CharacterBubble
+                    charKey={savingsProgress >= 0.7 ? "cool" : "cute"}
+                    message={
+                      savingsProgress >= 0.7
+                        ? MESSAGES.nearGoal.cool[dayIdx % MESSAGES.nearGoal.cool.length]
+                        : MESSAGES.normal.cute[dayIdx % MESSAGES.normal.cute.length]
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
 
+          {/* 一言メッセージ */}
           <div className="rounded-3xl bg-white p-6 shadow">
             <h2 className="text-lg font-bold text-slate-800">ひとことメッセージ</h2>
-            <div className="mt-4 rounded-2xl bg-sky-100 p-4 text-slate-700">
-              {message}
-            </div>
+            <p className="mt-1 text-xs text-slate-500">よさん: {formatYen(state.monthlyBudget)}</p>
 
-            <div className="mt-4 text-sm text-slate-500">
-              よさん: {formatYen(state.monthlyBudget)}
+            <div className="mt-4 space-y-3">
+              <CharacterBubble charKey="cute" message={cuteMsg} />
+              <CharacterBubble charKey="cool" message={coolMsg} />
             </div>
           </div>
         </section>
 
+        {/* カテゴリ & 最近の支出 */}
         <section className="grid gap-6 xl:grid-cols-2">
           <div className="rounded-3xl bg-white p-6 shadow">
             <h2 className="text-lg font-bold text-slate-800">こんげつのつかった内訳</h2>
-
             <div className="mt-4 space-y-4">
               {categoryRows.map((row) => (
                 <div key={row.category}>
@@ -230,9 +296,7 @@ export function KidsFinanceDashboard({ state }: Props) {
                   <div className="h-3 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
                       className="h-full rounded-full bg-sky-500"
-                      style={{
-                        width: `${row.amount === 0 ? 0 : (row.amount / maxCategoryAmount) * 100}%`,
-                      }}
+                      style={{ width: `${row.amount === 0 ? 0 : (row.amount / maxCategoryAmount) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -242,20 +306,14 @@ export function KidsFinanceDashboard({ state }: Props) {
 
           <div className="rounded-3xl bg-white p-6 shadow">
             <h2 className="text-lg font-bold text-slate-800">さいきんのししゅつ</h2>
-
             <div className="mt-4 space-y-3">
               {recentExpenses.length === 0 ? (
                 <p className="text-sm text-slate-500">まだきろくがありません。</p>
               ) : (
                 recentExpenses.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3"
-                  >
+                  <div key={item.id} className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
                     <div>
-                      <p className="font-medium text-slate-800">
-                        {categoryLabels[item.category]}
-                      </p>
+                      <p className="font-medium text-slate-800">{categoryLabels[item.category]}</p>
                       <p className="text-xs text-slate-500">{item.date}</p>
                     </div>
                     <p className="font-bold text-rose-500">{formatYen(item.amount)}</p>
@@ -265,6 +323,7 @@ export function KidsFinanceDashboard({ state }: Props) {
             </div>
           </div>
         </section>
+
       </div>
     </main>
   )

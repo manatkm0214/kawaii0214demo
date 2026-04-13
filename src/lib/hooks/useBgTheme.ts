@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export const BG_KEY = "kakeibo-custom-bg";
 
 export const BG_PRESETS = [
-  { id: "princess-idol", label: "お姫様アイドル", category: "idol", value: "radial-gradient(circle at 18% 16%, rgba(255,255,255,0.95) 0 10px, rgba(251,207,232,0.34) 11px 24px, transparent 25px), radial-gradient(circle at 82% 18%, rgba(255,255,255,0.92) 0 10px, rgba(191,219,254,0.3) 11px 24px, transparent 25px), linear-gradient(145deg, #fff8fc 0%, #ffe4f3 30%, #f5d9ff 62%, #dbeafe 100%)" },
+  { id: "princess-idol", label: "ふわかわリボン", category: "idol", value: "radial-gradient(circle at 18% 16%, rgba(255,255,255,0.95) 0 10px, rgba(251,207,232,0.34) 11px 24px, transparent 25px), radial-gradient(circle at 82% 18%, rgba(255,255,255,0.92) 0 10px, rgba(191,219,254,0.3) 11px 24px, transparent 25px), linear-gradient(145deg, #fff8fc 0%, #ffe4f3 30%, #f5d9ff 62%, #dbeafe 100%)" },
   { id: "seiso-white", label: "清楚ホワイト", category: "seiso", value: "linear-gradient(150deg, #ffffff 0%, #f0f4ff 50%, #e8f0fe 100%)" },
   { id: "seiso-lace", label: "清楚レース", category: "seiso", value: "linear-gradient(150deg, #fffefc 0%, #f8f4ff 34%, #eef6ff 100%)" },
   { id: "atelier-light", label: "おしゃれライト", category: "oshare", value: "linear-gradient(145deg, #fffdfa 0%, #fff4ea 28%, #f5ebff 62%, #dbeafe 100%)" },

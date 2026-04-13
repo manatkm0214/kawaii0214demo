@@ -14,292 +14,133 @@ interface AuthViewProps {
   onGuestLogin?: () => void
 }
 
-/* ===================================================
-   フォーマルドレスの女の子（白×金）
-   =================================================== */
-function GirlFormal() {
+function CuteGirlHero() {
   return (
-    <svg width="120" height="240" viewBox="0 0 130 260" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <svg width="250" height="300" viewBox="0 0 250 300" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <defs>
-        <radialGradient id="af_gSkin" cx="45%" cy="35%" r="60%">
-          <stop offset="0%" stopColor="#FFEEDD" />
-          <stop offset="100%" stopColor="#FFCDA0" />
+        <radialGradient id="girl-skin" cx="45%" cy="32%" r="60%">
+          <stop offset="0%" stopColor="#FFF2E8" />
+          <stop offset="100%" stopColor="#F7C8A7" />
         </radialGradient>
-        <linearGradient id="af_gHair" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#E879F9" />
+        <linearGradient id="girl-hair" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#5B3CC4" />
           <stop offset="50%" stopColor="#A855F7" />
-          <stop offset="100%" stopColor="#7C3AED" />
+          <stop offset="100%" stopColor="#F472B6" />
         </linearGradient>
-        <linearGradient id="af_gHairHL" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.55)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        <linearGradient id="girl-dress" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FFF7FB" />
+          <stop offset="45%" stopColor="#FCE7F3" />
+          <stop offset="100%" stopColor="#DBEAFE" />
         </linearGradient>
-        <radialGradient id="af_gEye" cx="35%" cy="25%" r="65%">
-          <stop offset="0%" stopColor="#F0ABFC" />
-          <stop offset="35%" stopColor="#A855F7" />
-          <stop offset="75%" stopColor="#6D28D9" />
-          <stop offset="100%" stopColor="#2E1065" />
+        <linearGradient id="girl-ribbon" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#FB7185" />
+          <stop offset="100%" stopColor="#EC4899" />
+        </linearGradient>
+        <radialGradient id="girl-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FDF2F8" stopOpacity="0.95" />
+          <stop offset="100%" stopColor="#FDF2F8" stopOpacity="0" />
         </radialGradient>
-        {/* フォーマルガウン（白×金） */}
-        <linearGradient id="af_gGown1" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FFF7ED" />
-          <stop offset="55%" stopColor="#FDE68A" />
-          <stop offset="100%" stopColor="#F9A8D4" />
-        </linearGradient>
-        <linearGradient id="af_gGown2" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FFFBEB" />
-          <stop offset="55%" stopColor="#FFF7ED" />
-          <stop offset="100%" stopColor="#FFF1F2" />
-        </linearGradient>
-        <radialGradient id="af_gGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFFBEB" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#FDE68A" stopOpacity="0" />
+        <radialGradient id="girl-eye" cx="35%" cy="25%" r="65%">
+          <stop offset="0%" stopColor="#F5D0FE" />
+          <stop offset="50%" stopColor="#C084FC" />
+          <stop offset="100%" stopColor="#6D28D9" />
         </radialGradient>
       </defs>
-      <ellipse cx="65" cy="130" rx="60" ry="115" fill="url(#af_gGlow)" />
-      {/* 後ろ髪 */}
-      <path d="M24 72 C6 110 4 168 14 224 C24 234 34 224 34 206 C28 166 32 116 42 76Z" fill="url(#af_gHair)" />
-      <path d="M106 72 C124 110 126 168 116 224 C106 234 96 224 96 206 C102 166 98 116 88 76Z" fill="url(#af_gHair)" />
-      {/* ティアラ（金） */}
-      <path d="M38 26 L44 14 L53 23 L65 7 L77 23 L86 14 L92 26" stroke="#D97706" strokeWidth="2.8" fill="none" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx="65" cy="7"  r="4.5" fill="#FCD34D" />
-      <circle cx="65" cy="7"  r="2"   fill="white" opacity="0.8" />
-      <circle cx="44" cy="14" r="3"   fill="#D97706" />
-      <circle cx="86" cy="14" r="3"   fill="#D97706" />
-      <circle cx="44" cy="14" r="1.4" fill="white" opacity="0.6" />
-      <circle cx="86" cy="14" r="1.4" fill="white" opacity="0.6" />
-      {/* 頭部 */}
-      <ellipse cx="65" cy="55" rx="33" ry="34" fill="url(#af_gSkin)" />
-      {/* 前髪 */}
-      <path d="M30 46 C35 14 64 8 96 46 C84 23 66 17 45 23Z" fill="url(#af_gHair)" />
-      <path d="M32 48 C34 36 39 28 46 31 C41 38 39 46 40 54Z" fill="url(#af_gHair)" />
-      <path d="M98 48 C96 36 91 28 84 31 C89 38 91 46 90 54Z" fill="url(#af_gHair)" />
-      <path d="M48 25 C50 38 50 48 48 58" stroke="url(#af_gHair)" strokeWidth="7" fill="none" strokeLinecap="round" />
-      <path d="M64 18 C64 32 64 48 64 59" stroke="url(#af_gHair)" strokeWidth="7" fill="none" strokeLinecap="round" />
-      <path d="M80 24 C78 38 78 49 80 58" stroke="url(#af_gHair)" strokeWidth="7" fill="none" strokeLinecap="round" />
-      <path d="M41 21 C53 14 68 13 82 19" stroke="url(#af_gHairHL)" strokeWidth="6" strokeLinecap="round" fill="none" />
-      {/* ツインテール */}
-      <path d="M30 58 C14 64 6 84 12 102 C17 112 28 110 31 100 C28 88 31 73 41 65Z" fill="url(#af_gHair)" />
-      <path d="M100 58 C116 64 124 84 118 102 C113 112 102 110 99 100 C102 88 99 73 89 65Z" fill="url(#af_gHair)" />
-      <path d="M28 92 C14 102 10 122 18 138 C24 150 34 146 35 137 C29 126 31 110 39 98Z" fill="url(#af_gHair)" opacity="0.9" />
-      <path d="M102 92 C116 102 120 122 112 138 C106 150 96 146 95 137 C101 126 99 110 91 98Z" fill="url(#af_gHair)" opacity="0.9" />
-      {/* リボン（金） */}
-      <path d="M21 69 L32 76 L21 83Z" fill="#FDE68A" />
-      <path d="M43 69 L32 76 L43 83Z" fill="#D97706" />
-      <circle cx="32" cy="76" r="4" fill="#F59E0B" />
-      <path d="M31 80 L26 93 L35 88Z" fill="#FDF2F8" />
-      <path d="M87 69 L98 76 L87 83Z" fill="#FDE68A" />
-      <path d="M109 69 L98 76 L109 83Z" fill="#D97706" />
-      <circle cx="98" cy="76" r="4" fill="#F59E0B" />
-      <path d="M99 80 L104 93 L95 88Z" fill="#FDF2F8" />
-      {/* 目（左） */}
-      <ellipse cx="50" cy="56" rx="11" ry="12.5" fill="#1E0A3C" />
-      <ellipse cx="50" cy="55" rx="9"  ry="10.5"  fill="url(#af_gEye)" />
-      <ellipse cx="50" cy="57" rx="5" ry="5.8" fill="#2E1065" opacity="0.6" />
-      <ellipse cx="52" cy="50" rx="3.5" ry="2.8" fill="white" />
-      <circle cx="47" cy="59" r="1.8" fill="white" opacity="0.85" />
-      <circle cx="54" cy="55" r="1.2" fill="white" opacity="0.7" />
-      <path d="M40 48 L37 43" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M44 46 L42 41" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M49 45 L49 40" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M54 47 L57 42" stroke="#1E0A3C" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M38 42 Q46 37 55 40" stroke="#6D28D9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      {/* 目（右） */}
-      <ellipse cx="80" cy="56" rx="11" ry="12.5" fill="#1E0A3C" />
-      <ellipse cx="80" cy="55" rx="9"  ry="10.5"  fill="url(#af_gEye)" />
-      <ellipse cx="80" cy="57" rx="5" ry="5.8" fill="#2E1065" opacity="0.6" />
-      <ellipse cx="82" cy="50" rx="3.5" ry="2.8" fill="white" />
-      <circle cx="77" cy="59" r="1.8" fill="white" opacity="0.85" />
-      <circle cx="76" cy="55" r="1.2" fill="white" opacity="0.7" />
-      <path d="M90 48 L93 43" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M86 46 L88 41" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M81 45 L81 40" stroke="#1E0A3C" strokeWidth="2" strokeLinecap="round" />
-      <path d="M76 47 L73 42" stroke="#1E0A3C" strokeWidth="1.6" strokeLinecap="round" />
-      <path d="M75 42 Q84 37 92 42" stroke="#6D28D9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      {/* チーク */}
-      <ellipse cx="38" cy="65" rx="11" ry="6" fill="#FCA5A5" opacity="0.45" />
-      <ellipse cx="92" cy="65" rx="11" ry="6" fill="#FCA5A5" opacity="0.45" />
-      {/* 鼻・口 */}
-      <path d="M62 72 Q65 75 68 72" stroke="#E8C4A0" strokeWidth="1.3" fill="none" />
-      <path d="M55 80 Q65 90 75 80" stroke="#E11D48" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-      {/* 首 */}
-      <rect x="58" y="86" width="14" height="12" rx="5" fill="url(#af_gSkin)" />
-      {/* フォーマルガウン胴体（白×金） */}
-      <path d="M34 100 Q40 90 65 88 Q90 90 96 100 L102 148 Q65 158 28 148Z" fill="url(#af_gGown1)" />
-      <path d="M34 100 Q25 92 19 104 Q27 111 36 108Z" fill="#FDE68A" opacity="0.92" />
-      <path d="M96 100 Q105 92 111 104 Q103 111 94 108Z" fill="#FDE68A" opacity="0.92" />
-      <path d="M48 104 L56 96 L65 105 L74 96 L82 104 L65 116Z" fill="#FFFBEB" />
-      <circle cx="65" cy="105" r="4.5" fill="#D97706" />
-      <circle cx="65" cy="105" r="2" fill="white" opacity="0.75" />
-      {/* ゴールドベルト */}
-      <rect x="32" y="140" width="66" height="10" rx="5" fill="#D97706" opacity="0.9" />
-      <circle cx="65" cy="145" r="6" fill="#F59E0B" />
-      <circle cx="65" cy="145" r="3.5" fill="#FDE68A" />
-      {/* レース刺繍 */}
-      <path d="M34 102 Q50 96 65 98 Q80 96 96 102" stroke="rgba(212,167,0,0.45)" strokeWidth="2" fill="none" />
-      <path d="M38 116 Q50 110 65 112 Q80 110 92 116" stroke="rgba(255,251,235,0.85)" strokeWidth="2.1" fill="none" strokeLinecap="round" />
-      {/* オフショルダー */}
-      <path d="M34 100 Q26 95 20 105" stroke="url(#af_gSkin)" strokeWidth="10" fill="none" strokeLinecap="round" />
-      <path d="M96 100 Q104 95 110 105" stroke="url(#af_gSkin)" strokeWidth="10" fill="none" strokeLinecap="round" />
-      {/* ガウンスカート */}
-      <path d="M28 148 Q14 172 10 195 Q38 184 65 188 Q92 184 120 195 Q116 172 102 148 Q65 158 28 148Z" fill="url(#af_gGown2)" />
-      {/* フリル（金） */}
-      <path d="M14 164 Q28 155 42 164 Q56 173 65 164 Q74 155 88 164 Q102 173 116 164" stroke="#D97706" strokeWidth="2.2" fill="none" strokeLinecap="round" opacity="0.7" />
-      <path d="M11 180 Q26 169 41 180 Q56 191 65 181 Q74 171 89 180 Q104 191 119 180" stroke="#FDE68A" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.8" />
-      {/* 宝石スパークル */}
-      <circle cx="45" cy="187" r="2.5" fill="#FCD34D" opacity="0.8" />
-      <circle cx="85" cy="174" r="2"   fill="#F59E0B" opacity="0.9" />
-      <circle cx="65" cy="190" r="2.5" fill="#FDE68A" opacity="0.8" />
-      {/* 腕 */}
-      <path d="M20 108 C14 124 12 146 16 158" stroke="url(#af_gSkin)" strokeWidth="11" fill="none" strokeLinecap="round" />
-      <path d="M110 108 C116 122 118 142 114 156" stroke="url(#af_gSkin)" strokeWidth="11" fill="none" strokeLinecap="round" />
-      {/* 手に扇子 */}
-      <path d="M13 140 C8 130 6 120 10 112 C14 104 18 106 16 114 C13 122 12 132 14 140Z" fill="#FDE68A" opacity="0.9" />
-      <path d="M10 112 L14 140" stroke="#D97706" strokeWidth="1" />
-      <path d="M8 120 L13 143" stroke="#D97706" strokeWidth="1" opacity="0.6" />
-      {/* 脚 */}
-      <rect x="50" y="187" width="13" height="40" rx="6.5" fill="url(#af_gSkin)" />
-      <rect x="67" y="187" width="13" height="40" rx="6.5" fill="url(#af_gSkin)" />
-      {/* 白いヒール */}
-      <path d="M46 220 Q48 233 58 235 Q66 235 67 228 L66 228 Q66 233 56 231 Q47 229 47 220Z" fill="#FFFBEB" stroke="#D97706" strokeWidth="1" />
-      <path d="M63 220 Q65 233 75 235 Q83 235 84 228 L83 228 Q83 233 73 231 Q64 229 64 220Z" fill="#FFFBEB" stroke="#D97706" strokeWidth="1" />
-      <rect x="62" y="226" width="5" height="10" rx="2.5" fill="#D97706" />
-      <rect x="74" y="226" width="5" height="10" rx="2.5" fill="#D97706" />
-      {/* キラキラ */}
-      <text x="2"   y="24"  fontSize="16" fill="#D97706">✦</text>
-      <text x="110" y="54"  fontSize="13" fill="#F59E0B">★</text>
-      <text x="2"   y="108" fontSize="11" fill="#FCD34D">✧</text>
-      <text x="112" y="185" fontSize="13" fill="#D97706">♦</text>
+
+      <ellipse cx="126" cy="165" rx="86" ry="106" fill="url(#girl-glow)" />
+
+      <path d="M63 112 C40 153 35 215 47 270 C62 278 74 267 72 245 C67 211 74 154 90 114Z" fill="url(#girl-hair)" />
+      <path d="M187 112 C210 153 215 215 203 270 C188 278 176 267 178 245 C183 211 176 154 160 114Z" fill="url(#girl-hair)" />
+      <path d="M62 148 C41 176 38 216 54 245 C69 252 76 241 75 224 C69 201 72 175 88 151Z" fill="url(#girl-hair)" opacity="0.92" />
+      <path d="M188 148 C209 176 212 216 196 245 C181 252 174 241 175 224 C181 201 178 175 162 151Z" fill="url(#girl-hair)" opacity="0.92" />
+
+      <ellipse cx="125" cy="96" rx="52" ry="56" fill="url(#girl-skin)" />
+      <path d="M72 90 C77 41 117 26 177 78 C160 48 132 37 101 45Z" fill="url(#girl-hair)" />
+      <path d="M78 87 C85 62 101 49 120 47 C111 63 109 79 112 95Z" fill="url(#girl-hair)" />
+      <path d="M173 84 C166 60 152 48 133 46 C142 62 144 78 141 93Z" fill="url(#girl-hair)" />
+      <path d="M91 53 C105 45 122 42 139 46" stroke="#E9D5FF" strokeWidth="6" strokeLinecap="round" />
+
+      <path d="M88 43 L105 61 L123 43 L112 34 L106 41 L100 34Z" fill="url(#girl-ribbon)" />
+      <path d="M127 43 L145 61 L162 43 L150 34 L144 41 L138 34Z" fill="url(#girl-ribbon)" />
+      <circle cx="124" cy="53" r="7" fill="#FBBF24" />
+
+      <ellipse cx="106" cy="94" rx="12" ry="13" fill="#2E1065" />
+      <ellipse cx="144" cy="94" rx="12" ry="13" fill="#2E1065" />
+      <ellipse cx="106" cy="93" rx="9" ry="10" fill="url(#girl-eye)" />
+      <ellipse cx="144" cy="93" rx="9" ry="10" fill="url(#girl-eye)" />
+      <circle cx="109" cy="88" r="3.5" fill="white" />
+      <circle cx="147" cy="88" r="3.5" fill="white" />
+      <circle cx="102" cy="98" r="2" fill="white" opacity="0.75" />
+      <circle cx="140" cy="98" r="2" fill="white" opacity="0.75" />
+      <path d="M94 79 Q104 73 116 78" stroke="#5B3CC4" strokeWidth="3" strokeLinecap="round" />
+      <path d="M134 78 Q146 73 156 80" stroke="#5B3CC4" strokeWidth="3" strokeLinecap="round" />
+
+      <ellipse cx="88" cy="108" rx="13" ry="7" fill="#FDA4AF" opacity="0.45" />
+      <ellipse cx="160" cy="108" rx="13" ry="7" fill="#FDA4AF" opacity="0.45" />
+      <ellipse cx="125" cy="110" rx="5" ry="3.5" fill="#FB7185" opacity="0.75" />
+      <path d="M113 124 Q125 137 137 124" stroke="#EC4899" strokeWidth="3" strokeLinecap="round" fill="none" />
+
+      <path d="M82 154 Q95 137 125 136 Q156 137 169 154 L181 232 Q125 248 69 232Z" fill="url(#girl-dress)" />
+      <path d="M83 154 Q96 147 125 148 Q155 147 168 154" stroke="#F9A8D4" strokeWidth="2.5" fill="none" />
+      <path d="M104 156 L116 145 L126 158 L137 145 L149 156 L126 173Z" fill="url(#girl-ribbon)" />
+      <circle cx="126" cy="158" r="5.5" fill="#FDE68A" />
+      <path d="M71 163 C54 176 48 200 53 221" stroke="#FDF2F8" strokeWidth="13" strokeLinecap="round" fill="none" />
+      <path d="M179 163 C196 176 202 200 197 221" stroke="#FDF2F8" strokeWidth="13" strokeLinecap="round" fill="none" />
+
+      <path d="M75 234 Q95 225 125 226 Q156 225 176 234 Q167 269 125 273 Q84 269 75 234Z" fill="#FCE7F3" />
+      <path d="M90 238 Q106 245 125 244 Q145 245 161 238" stroke="#93C5FD" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+
+      <rect x="108" y="230" width="14" height="42" rx="7" fill="url(#girl-skin)" />
+      <rect x="130" y="230" width="14" height="42" rx="7" fill="url(#girl-skin)" />
+      <path d="M100 268 Q111 279 125 277 Q138 279 149 268" stroke="#F472B6" strokeWidth="4" strokeLinecap="round" fill="none" />
     </svg>
   )
 }
 
-/* ===================================================
-   フォーマルスーツの男の子（白×金）
-   =================================================== */
-function BoyFormal() {
+function PlushBuddy() {
   return (
-    <svg width="120" height="240" viewBox="0 0 130 260" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <svg width="132" height="132" viewBox="0 0 132 132" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <defs>
-        <radialGradient id="af_bSkin" cx="45%" cy="35%" r="60%">
-          <stop offset="0%" stopColor="#FFEEDD" />
-          <stop offset="100%" stopColor="#F5C89A" />
+        <radialGradient id="plush-body" cx="45%" cy="35%" r="60%">
+          <stop offset="0%" stopColor="#FFF8F1" />
+          <stop offset="100%" stopColor="#F7D3BD" />
         </radialGradient>
-        <linearGradient id="af_bHair" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#334155" />
-          <stop offset="50%" stopColor="#1E293B" />
-          <stop offset="100%" stopColor="#0F172A" />
-        </linearGradient>
-        <linearGradient id="af_bHairHL" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="rgba(148,163,184,0.6)" />
-          <stop offset="100%" stopColor="rgba(148,163,184,0)" />
-        </linearGradient>
-        <radialGradient id="af_bEye" cx="35%" cy="25%" r="65%">
-          <stop offset="0%" stopColor="#93C5FD" />
-          <stop offset="35%" stopColor="#3B82F6" />
-          <stop offset="75%" stopColor="#1D4ED8" />
-          <stop offset="100%" stopColor="#1E3A5F" />
-        </radialGradient>
-        {/* ホワイトスーツ */}
-        <linearGradient id="af_bSuit" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#F8FAFC" />
-          <stop offset="100%" stopColor="#E2E8F0" />
-        </linearGradient>
-        <radialGradient id="af_bGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#EFF6FF" stopOpacity="0.7" />
-          <stop offset="100%" stopColor="#BFDBFE" stopOpacity="0" />
+        <radialGradient id="plush-belly" cx="50%" cy="40%" r="65%">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor="#FDF2F8" />
         </radialGradient>
       </defs>
-      <ellipse cx="65" cy="130" rx="60" ry="115" fill="url(#af_bGlow)" />
-      {/* 頭部 */}
-      <ellipse cx="65" cy="53" rx="33" ry="34" fill="url(#af_bSkin)" />
-      {/* 髪（後ろ・サイド） */}
-      <path d="M32 46 C30 32 34 20 40 18 C34 24 32 34 34 48Z" fill="url(#af_bHair)" />
-      <path d="M98 46 C100 32 96 20 90 18 C96 24 98 34 96 48Z" fill="url(#af_bHair)" />
-      {/* 前髪・トップ */}
-      <path d="M32 44 C36 14 65 9 94 44 C82 22 65 17 48 22Z" fill="url(#af_bHair)" />
-      <path d="M32 46 C34 36 38 28 44 30 C40 36 38 43 40 50Z" fill="url(#af_bHair)" />
-      <path d="M96 46 C94 36 90 28 84 30 C88 36 90 43 90 50Z" fill="url(#af_bHair)" />
-      <path d="M46 24 C48 34 50 43 52 50" stroke="#334155" strokeWidth="5.5" fill="none" strokeLinecap="round" />
-      <path d="M54 20 C55 30 56 40 56 48"  stroke="#334155" strokeWidth="4"   fill="none" strokeLinecap="round" />
-      <path d="M44 22 C56 16 74 16 86 22" stroke="url(#af_bHairHL)" strokeWidth="4.5" fill="none" strokeLinecap="round" />
-      {/* 目（左） */}
-      <ellipse cx="50" cy="54" rx="9.5" ry="10" fill="#0F172A" />
-      <ellipse cx="50" cy="53" rx="7.5" ry="8"  fill="url(#af_bEye)" />
-      <ellipse cx="50" cy="55" rx="4"   ry="4.5" fill="#1E3A5F" opacity="0.55" />
-      <ellipse cx="52" cy="49" rx="3"   ry="2.2" fill="white" />
-      <circle cx="47" cy="57" r="1.5" fill="white" opacity="0.85" />
-      <path d="M40 46 L37 41" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M44 44 L42 39" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M49 43 L49 38" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M38 40 Q47 35 56 38" stroke="#1E293B" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      {/* 目（右） */}
-      <ellipse cx="80" cy="54" rx="9.5" ry="10" fill="#0F172A" />
-      <ellipse cx="80" cy="53" rx="7.5" ry="8"  fill="url(#af_bEye)" />
-      <ellipse cx="80" cy="55" rx="4"   ry="4.5" fill="#1E3A5F" opacity="0.55" />
-      <ellipse cx="82" cy="49" rx="3"   ry="2.2" fill="white" />
-      <circle cx="77" cy="57" r="1.5" fill="white" opacity="0.85" />
-      <path d="M90 46 L93 41" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M86 44 L88 39" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M81 43 L81 38" stroke="#0F172A" strokeWidth="2"   strokeLinecap="round" />
-      <path d="M74 40 Q83 35 92 40" stroke="#1E293B" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      {/* 鼻・口 */}
-      <path d="M62 70 Q65 73 68 70" stroke="#E8C4A0" strokeWidth="1.3" fill="none" />
-      <path d="M56 78 Q65 87 74 78" stroke="#C0855A" strokeWidth="2"   fill="none" strokeLinecap="round" />
-      {/* 首 */}
-      <rect x="58" y="84" width="14" height="12" rx="5" fill="url(#af_bSkin)" />
-      {/* ホワイトスーツ胴体 */}
-      <path d="M34 98 Q40 88 65 86 Q90 88 96 98 L102 150 Q65 160 28 150Z" fill="url(#af_bSuit)" />
-      {/* 黒ラペル */}
-      <path d="M65 86 L50 102 L60 150" fill="#1E293B" opacity="0.9" />
-      <path d="M65 86 L80 102 L70 150" fill="#1E293B" opacity="0.9" />
-      {/* ゴールドネクタイ */}
-      <path d="M65 88 L59 104 L65 120 L71 104Z" fill="#D97706" />
-      <path d="M65 88 L61 96 L65 106 L69 96Z" fill="#F59E0B" />
-      {/* ポケットチーフ（金） */}
-      <path d="M84 102 L90 98 L92 105 L88 108Z" fill="#FCD34D" />
-      {/* スーツ境界ライン */}
-      <path d="M34 100 Q50 94 65 96 Q80 94 96 100" stroke="rgba(148,163,184,0.5)" strokeWidth="1.5" fill="none" />
-      {/* ズボン */}
-      <path d="M28 150 Q28 170 30 196 Q46 196 55 196 L60 150Z" fill="#F1F5F9" />
-      <path d="M102 150 Q102 170 100 196 Q84 196 75 196 L70 150Z" fill="#F1F5F9" />
-      {/* センタークリース */}
-      <path d="M50 150 L48 196" stroke="rgba(148,163,184,0.4)" strokeWidth="1" />
-      <path d="M80 150 L82 196" stroke="rgba(148,163,184,0.4)" strokeWidth="1" />
-      {/* 腕 */}
-      <path d="M34 104 C18 118 14 140 18 154" stroke="url(#af_bSuit)" strokeWidth="13" fill="none" strokeLinecap="round" />
-      <path d="M96 104 C112 116 116 136 112 152" stroke="url(#af_bSuit)" strokeWidth="13" fill="none" strokeLinecap="round" />
-      {/* カフス（金） */}
-      <ellipse cx="18" cy="154" rx="8" ry="6" fill="url(#af_bSkin)" />
-      <ellipse cx="112" cy="152" rx="8" ry="6" fill="url(#af_bSkin)" />
-      <path d="M10 152 Q14 148 20 150" stroke="#D97706" strokeWidth="2" fill="none" strokeLinecap="round" />
-      <path d="M104 148 Q108 144 116 146" stroke="#D97706" strokeWidth="2" fill="none" strokeLinecap="round" />
-      {/* バラ（左手に持つ） */}
-      <circle cx="13" cy="165" r="9" fill="#FCA5A5" opacity="0.3" />
-      <circle cx="13" cy="165" r="6" fill="#FB7185" />
-      <circle cx="13" cy="165" r="3.5" fill="#F43F5E" />
-      <path d="M10 161 Q13 158 16 161" stroke="#FDE68A" strokeWidth="1" fill="none" />
-      <path d="M13 174 L13 190" stroke="#16A34A" strokeWidth="2" strokeLinecap="round" />
-      <path d="M13 180 L9 177" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" />
-      {/* 足・白い革靴 */}
-      <rect x="29" y="196" width="24" height="14" rx="7" fill="#F8FAFC" stroke="#D97706" strokeWidth="1.2" />
-      <rect x="77" y="196" width="24" height="14" rx="7" fill="#F8FAFC" stroke="#D97706" strokeWidth="1.2" />
-      {/* キラキラ */}
-      <text x="110" y="24"  fontSize="16" fill="#D97706">✦</text>
-      <text x="2"   y="52"  fontSize="13" fill="#F59E0B">★</text>
-      <text x="110" y="80"  fontSize="11" fill="#FCD34D">✧</text>
-      <text x="2"   y="130" fontSize="12" fill="#D97706">♦</text>
+
+      <ellipse cx="66" cy="119" rx="28" ry="7" fill="rgba(244,114,182,0.16)" />
+      <ellipse cx="41" cy="34" rx="16" ry="18" fill="#F9A8D4" />
+      <ellipse cx="91" cy="34" rx="16" ry="18" fill="#F9A8D4" />
+      <ellipse cx="41" cy="36" rx="9" ry="10" fill="#FCE7F3" />
+      <ellipse cx="91" cy="36" rx="9" ry="10" fill="#FCE7F3" />
+
+      <ellipse cx="66" cy="78" rx="34" ry="31" fill="url(#plush-body)" />
+      <ellipse cx="66" cy="82" rx="21" ry="18" fill="url(#plush-belly)" />
+      <circle cx="66" cy="51" r="34" fill="url(#plush-body)" />
+
+      <ellipse cx="53" cy="50" rx="7" ry="8.5" fill="#1F2937" />
+      <ellipse cx="79" cy="50" rx="7" ry="8.5" fill="#1F2937" />
+      <circle cx="56" cy="47" r="2.4" fill="white" />
+      <circle cx="82" cy="47" r="2.4" fill="white" />
+
+      <ellipse cx="45" cy="60" rx="9" ry="5" fill="#FDA4AF" opacity="0.45" />
+      <ellipse cx="87" cy="60" rx="9" ry="5" fill="#FDA4AF" opacity="0.45" />
+      <ellipse cx="66" cy="57" rx="4" ry="3" fill="#FB7185" opacity="0.8" />
+      <path d="M58 67 Q66 75 74 67" stroke="#EC4899" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+
+      <path d="M54 20 L66 31 L78 20 L72 13 L66 18 L60 13Z" fill="#EC4899" />
+      <circle cx="66" cy="26" r="4.5" fill="#FDE68A" />
     </svg>
   )
 }
 
-/* ===================================================
-   AuthView — エレガント統一デザイン
-   =================================================== */
-export default function AuthView({ onAuth, onBack, initialMessage, initialEmail, onGuestLogin }: AuthViewProps) {
+export default function AuthView({ onAuth, onBack, initialMessage, initialEmail, otpEmail, onGuestLogin }: AuthViewProps) {
   const lang = useLang()
   const t = (ja: string, en: string) => (lang === "en" ? en : ja)
-  const [email, setEmail] = useState(initialEmail || "")
+  const [email, setEmail] = useState(initialEmail || otpEmail || "")
 
   function startLogin(mode: "login" | "register", connection?: "google-oauth2" | "line") {
     if (connection) {
@@ -317,61 +158,58 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
     <div
       className="relative min-h-[82vh] overflow-hidden rounded-[36px] px-6 py-8 md:px-8"
       style={{
-        background: "radial-gradient(ellipse at 20% 0%, #fffbeb 0%, #fef3c7 28%, #fdf2f8 62%, #ede9fe 100%)",
-        border: "1.5px solid rgba(217,119,6,0.28)",
-        boxShadow: "0 30px 90px rgba(217,119,6,0.12), 0 0 0 4px rgba(252,211,77,0.06)",
+        background:
+          "radial-gradient(circle at 16% 8%, rgba(255,255,255,0.95) 0%, rgba(254,205,211,0.54) 24%, rgba(243,232,255,0.7) 56%, rgba(219,234,254,0.82) 100%)",
+        border: "1.5px solid rgba(244,114,182,0.22)",
+        boxShadow: "0 30px 90px rgba(236,72,153,0.1), 0 0 0 4px rgba(255,255,255,0.12)",
       }}
     >
-      {/* フレーム装飾 */}
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-5 rounded-[28px]" style={{ border: "1px solid rgba(217,119,6,0.18)" }} />
-        <div className="absolute inset-9 rounded-3xl" style={{ border: "1px solid rgba(252,211,77,0.13)" }} />
-        <div className="absolute left-4  top-4    text-xl animate-float-slow" style={{ color: "rgba(217,119,6,0.55)" }}>✿</div>
-        <div className="absolute right-4 top-4    text-xl animate-float-slow" style={{ color: "rgba(252,211,77,0.7)", animationDelay: "0.4s" }}>✿</div>
-        <div className="absolute left-4  bottom-4 text-xl animate-float-slow" style={{ color: "rgba(167,139,250,0.55)", animationDelay: "0.8s" }}>✿</div>
-        <div className="absolute right-4 bottom-4 text-xl animate-float-slow" style={{ color: "rgba(217,119,6,0.5)", animationDelay: "1.2s" }}>✿</div>
-        <div className="absolute left-[8%]  top-[10%] text-4xl animate-float-slow" style={{ color: "rgba(253,230,138,0.9)" }}>✦</div>
-        <div className="absolute right-[10%] top-[14%] text-3xl animate-float-slow" style={{ color: "rgba(216,180,254,0.8)", animationDelay: "0.6s" }}>★</div>
-        <div className="absolute left-[46%]  top-[8%]  text-2xl animate-float-slow" style={{ color: "rgba(217,119,6,0.75)", animationDelay: "0.3s" }}>✶</div>
-        <div className="absolute left-[28%]  top-[4%]  text-xl animate-float-slow" style={{ animationDelay: "0.5s" }}>🌹</div>
-        <div className="absolute right-[26%] top-[6%]  text-xl animate-float-slow" style={{ animationDelay: "1s" }}>🌹</div>
+        <div className="absolute inset-5 rounded-[28px] border border-white/45" />
+        <div className="absolute inset-9 rounded-3xl border border-rose-200/40" />
+        <div className="absolute -left-12 top-10 h-40 w-40 rounded-full bg-pink-200/40 blur-3xl" />
+        <div className="absolute -right-10 top-6 h-36 w-36 rounded-full bg-sky-200/35 blur-3xl" />
+        <div className="absolute bottom-4 left-[12%] h-28 w-28 rounded-full bg-amber-100/40 blur-3xl" />
+        <div className="absolute bottom-8 right-[14%] h-24 w-24 rounded-full bg-fuchsia-200/30 blur-2xl" />
       </div>
 
-      {/* メインコンテンツ */}
-      <div className="relative z-10 mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1fr_1fr] lg:items-start">
-
-        {/* 左：フォームエリア */}
+      <div className="relative z-10 mx-auto grid max-w-5xl gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
         <div className="space-y-5">
-          <p className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.32em] rounded-full"
-            style={{ background: "linear-gradient(135deg,#FEF9EE,#FFFBEB)", border: "1px solid rgba(217,119,6,0.3)", color: "#92400E" }}>
-            👑 {t("ログイン・会員登録", "Login / Sign up")}
+          <p
+            className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-[0.28em]"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.94), rgba(253,242,248,0.9))",
+              border: "1px solid rgba(244,114,182,0.28)",
+              color: "#BE185D",
+            }}
+          >
+            {t("ログイン・会員登録", "Login / Sign up")}
           </p>
 
           <div>
             <h2
               className="text-3xl font-black tracking-tight md:text-4xl"
-              style={{ color: "#78350F", textShadow: "0 2px 12px rgba(217,119,6,0.18)" }}
+              style={{ color: "#831843", textShadow: "0 2px 12px rgba(236,72,153,0.12)" }}
             >
-              {t("ようこそ", "Welcome back")}
+              {t("かわいく続ける", "A cute start")}
             </h2>
-            <p className="mt-1 text-sm font-semibold tracking-[0.18em] uppercase" style={{ color: "#B45309", opacity: 0.8 }}>
-              ✦ {t("次の認証画面へ進みます", "Proceed to auth screen")}
+            <p className="mt-2 text-sm font-semibold tracking-[0.16em] uppercase" style={{ color: "#DB2777", opacity: 0.82 }}>
+              {t("やさしいログインルーム", "Soft login room")}
             </p>
             <p className="mt-3 text-sm leading-7" style={{ color: "#6B21A8" }}>
               {t(
-                "ログイン、会員登録、Google、LINE は次の認証画面で続けられます。",
-                "Login, sign-up, Google, and LINE continue on the next authentication screen.",
+                "ログイン、会員登録、Google、LINE は次の認証画面で続けられます。トップと同じかわいい雰囲気のまま進めるようにしました。",
+                "Login, sign-up, Google, and LINE continue on the next authentication screen with the same cute mood as the home screen.",
               )}
             </p>
           </div>
 
-          {/* メール入力 */}
           <div
             className="rounded-3xl px-5 py-5"
             style={{
-              background: "linear-gradient(135deg,rgba(255,255,255,0.97),rgba(255,251,235,0.94))",
-              border: "1.5px solid rgba(217,119,6,0.22)",
-              boxShadow: "0 8px 24px -8px rgba(217,119,6,0.12), inset 0 1px 0 rgba(255,255,255,0.9)",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(253,242,248,0.92))",
+              border: "1.5px solid rgba(244,114,182,0.18)",
+              boxShadow: "0 10px 28px -14px rgba(236,72,153,0.16), inset 0 1px 0 rgba(255,255,255,0.92)",
             }}
           >
             {initialMessage && (
@@ -387,51 +225,48 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
             )}
 
             <label className="block">
-              <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: "#92400E" }}>
+              <span className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em]" style={{ color: "#BE185D" }}>
                 <FaEnvelope />
                 {t("メールアドレス", "Email")}
               </span>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@example.com"
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none transition"
                 style={{
-                  border: "1.5px solid rgba(217,119,6,0.3)",
-                  background: "rgba(255,251,235,0.8)",
+                  border: "1.5px solid rgba(244,114,182,0.24)",
+                  background: "rgba(255,255,255,0.82)",
                   color: "#1C1917",
                 }}
               />
             </label>
           </div>
 
-          {/* ボタン群 */}
           <div className="grid gap-3">
             <button
               type="button"
               onClick={() => startLogin("login")}
-              className="rounded-full px-5 py-4 text-sm font-bold tracking-wide transition hover:brightness-105"
+              className="rounded-full px-5 py-4 text-sm font-bold tracking-wide text-white transition hover:brightness-105"
               style={{
-                background: "linear-gradient(135deg,#D97706,#B45309)",
-                color: "white",
-                boxShadow: "0 12px 32px -8px rgba(217,119,6,0.45)",
+                background: "linear-gradient(135deg, #EC4899, #FB7185 52%, #60A5FA 100%)",
+                boxShadow: "0 14px 34px -10px rgba(236,72,153,0.36)",
               }}
             >
-              {t("✨ 次へ進んでログイン", "✨ Continue to login")}
+              {t("ログインへ進む", "Continue to login")}
             </button>
 
             <button
               type="button"
               onClick={() => startLogin("register")}
-              className="rounded-full px-5 py-4 text-sm font-bold transition hover:brightness-105"
+              className="rounded-full px-5 py-4 text-sm font-bold text-white transition hover:brightness-105"
               style={{
-                background: "linear-gradient(135deg,rgba(244,114,182,0.9),rgba(236,72,153,0.95))",
-                color: "white",
-                boxShadow: "0 12px 28px -8px rgba(236,72,153,0.38)",
+                background: "linear-gradient(135deg, #F472B6, #C084FC 52%, #7DD3FC 100%)",
+                boxShadow: "0 14px 30px -12px rgba(192,132,252,0.35)",
               }}
             >
-              {t("🌹 はじめて使う", "🌹 Create account")}
+              {t("会員登録へ進む", "Create account")}
             </button>
 
             <button
@@ -439,10 +274,10 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
               onClick={() => startLogin("login", "google-oauth2")}
               className="rounded-full px-5 py-4 text-sm font-semibold transition hover:brightness-95"
               style={{
-                background: "linear-gradient(135deg,#FFFFFF,#F8FAFC)",
+                background: "linear-gradient(135deg, #FFFFFF, #F8FAFC)",
                 color: "#1C1917",
-                border: "1.5px solid rgba(217,119,6,0.25)",
-                boxShadow: "0 6px 18px -6px rgba(0,0,0,0.12)",
+                border: "1.5px solid rgba(244,114,182,0.18)",
+                boxShadow: "0 8px 20px -12px rgba(15,23,42,0.18)",
               }}
             >
               {t("Googleで続ける", "Continue with Google")}
@@ -451,11 +286,10 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
             <button
               type="button"
               onClick={() => startLogin("login", "line")}
-              className="rounded-full px-5 py-4 text-sm font-semibold transition hover:brightness-105"
+              className="rounded-full px-5 py-4 text-sm font-semibold text-white transition hover:brightness-105"
               style={{
-                background: "linear-gradient(135deg,#16A34A,#15803D)",
-                color: "white",
-                boxShadow: "0 8px 22px -8px rgba(22,163,74,0.4)",
+                background: "linear-gradient(135deg, #22C55E, #16A34A)",
+                boxShadow: "0 10px 24px -10px rgba(22,163,74,0.38)",
               }}
             >
               <span className="inline-flex items-center gap-2">
@@ -468,11 +302,11 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
               <button
                 type="button"
                 onClick={onGuestLogin}
-                className="rounded-full border px-5 py-4 text-sm font-semibold transition hover:brightness-95"
+                className="rounded-full px-5 py-4 text-sm font-semibold transition hover:brightness-95"
                 style={{
-                  background: "linear-gradient(135deg,rgba(255,251,235,0.98),rgba(254,243,199,0.96))",
-                  border: "1.5px solid rgba(217,119,6,0.3)",
-                  color: "#78350F",
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(254,240,245,0.94))",
+                  border: "1.5px solid rgba(244,114,182,0.22)",
+                  color: "#9D174D",
                 }}
               >
                 {t("ゲストで試す", "Try as guest")}
@@ -480,11 +314,10 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
             )}
           </div>
 
-          {/* サブリンク */}
           <div className="grid gap-2 sm:grid-cols-3">
             {[
               { href: "/privacy", label: t("プライバシー", "Privacy") },
-              { href: "/terms",   label: t("利用規約",   "Terms") },
+              { href: "/terms", label: t("利用規約", "Terms") },
               { href: "/auth/reset-password", label: t("パスワード再設定", "Reset") },
             ].map((link) => (
               <Link
@@ -492,9 +325,9 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
                 href={link.href}
                 className="rounded-2xl px-3 py-2.5 text-center text-xs font-semibold transition hover:brightness-95"
                 style={{
-                  background: "linear-gradient(135deg,rgba(255,255,255,0.9),rgba(255,251,235,0.85))",
-                  border: "1px solid rgba(217,119,6,0.2)",
-                  color: "#92400E",
+                  background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(253,242,248,0.86))",
+                  border: "1px solid rgba(244,114,182,0.18)",
+                  color: "#BE185D",
                 }}
               >
                 {link.label}
@@ -506,116 +339,83 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
             type="button"
             onClick={onBack}
             className="w-full rounded-full py-3 text-sm font-semibold transition hover:brightness-95"
-            style={{ background: "rgba(255,255,255,0.7)", border: "1px solid rgba(217,119,6,0.2)", color: "#78350F" }}
+            style={{
+              background: "rgba(255,255,255,0.72)",
+              border: "1px solid rgba(244,114,182,0.18)",
+              color: "#831843",
+            }}
           >
-            {t("← トップへ戻る", "← Back")}
+            {t("トップへ戻る", "Back to home")}
           </button>
         </div>
 
-        {/* 右：キャラクターエリア */}
-        <div className="hidden lg:flex flex-col items-center justify-center gap-6 pt-4">
-          {/* バッジ */}
-          <p className="text-xs font-bold uppercase tracking-[0.28em]" style={{ color: "#92400E" }}>
-            ✦ {t("フォーマルステージ", "Formal Stage")}
+        <div className="hidden lg:flex flex-col items-center justify-center gap-5">
+          <p className="text-xs font-bold uppercase tracking-[0.28em]" style={{ color: "#DB2777" }}>
+            {t("かわいいログインルーム", "Cute Login Room")}
           </p>
 
-          {/* キャラクターペア */}
-          <div className="relative flex items-end justify-center gap-4">
-            {/* 背景グロー */}
-            <div className="absolute inset-0 rounded-full bg-amber-100/60 blur-3xl" />
-            <div className="absolute inset-4 rounded-full bg-pink-100/40 blur-2xl" />
-
-            {/* 男の子 */}
-            <div className="flex flex-col items-center gap-2 group relative">
-              <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-3">
-                <div className="absolute -inset-5 rounded-full blur-2xl"
-                  style={{ background: "radial-gradient(circle,rgba(253,230,138,0.35),transparent 70%)" }} />
-                <BoyFormal />
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-[34px] px-6 py-7"
+            style={{
+              background: "linear-gradient(160deg, rgba(255,255,255,0.94), rgba(253,242,248,0.9) 54%, rgba(239,246,255,0.9) 100%)",
+              border: "1.5px solid rgba(244,114,182,0.18)",
+              boxShadow: "0 24px 60px -28px rgba(236,72,153,0.24)",
+            }}
+          >
+            <div className="absolute left-[-2rem] top-10 h-28 w-28 rounded-full bg-pink-200/35 blur-3xl" />
+            <div className="absolute right-[-1rem] bottom-10 h-24 w-24 rounded-full bg-sky-200/30 blur-2xl" />
+            <div className="relative z-10 flex items-end justify-center gap-3">
+              <div className="relative">
+                <CuteGirlHero />
               </div>
-              <div
-                className="rounded-full px-4 py-1.5 text-xs font-bold tracking-wider"
-                style={{
-                  background: "linear-gradient(135deg,rgba(248,250,252,0.95),rgba(226,232,240,0.9))",
-                  color: "#1E293B",
-                  border: "1px solid rgba(217,119,6,0.3)",
-                  boxShadow: "0 6px 18px -6px rgba(217,119,6,0.28)",
-                }}
-              >
-                ♦ {t("彼", "Him")}
-              </div>
-            </div>
-
-            {/* 中央装飾 */}
-            <div className="flex flex-col items-center gap-2 pb-8 z-10">
-              <div className="text-3xl animate-float-slow">💍</div>
-              <div className="flex gap-1 text-xl">
-                <span className="animate-float-slow text-amber-400">✦</span>
-                <span className="animate-float-slow text-pink-400" style={{ animationDelay: "0.5s" }}>♥</span>
-                <span className="animate-float-slow text-amber-400" style={{ animationDelay: "1s" }}>✦</span>
-              </div>
-            </div>
-
-            {/* 女の子 */}
-            <div className="flex flex-col items-center gap-2 group relative">
-              <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-3">
-                <div className="absolute -inset-5 rounded-full blur-2xl"
-                  style={{ background: "radial-gradient(circle,rgba(244,114,182,0.25),transparent 70%)" }} />
-                <GirlFormal />
-              </div>
-              <div
-                className="rounded-full px-4 py-1.5 text-xs font-bold tracking-wider"
-                style={{
-                  background: "linear-gradient(135deg,rgba(253,242,248,0.95),rgba(251,207,232,0.85))",
-                  color: "#9D174D",
-                  border: "1px solid rgba(244,114,182,0.3)",
-                  boxShadow: "0 6px 18px -6px rgba(236,72,153,0.28)",
-                }}
-              >
-                ♥ {t("彼女", "Her")}
+              <div className="mb-3 flex flex-col items-center gap-2">
+                <div
+                  className="rounded-[24px] px-4 py-3 text-center text-xs leading-6"
+                  style={{
+                    background: "rgba(255,255,255,0.9)",
+                    border: "1px solid rgba(244,114,182,0.18)",
+                    color: "#9D174D",
+                  }}
+                >
+                  {t("やさしい色で、気分よくログイン", "A soft and cheerful start")}
+                </div>
+                <PlushBuddy />
               </div>
             </div>
           </div>
 
-          {/* ステージ台詞 */}
           <div
-            className="rounded-3xl px-6 py-4 text-center text-sm max-w-xs"
+            className="max-w-sm rounded-3xl px-5 py-4 text-center text-sm"
             style={{
-              background: "linear-gradient(135deg,rgba(255,251,235,0.96),rgba(255,245,243,0.92))",
-              border: "1.5px solid rgba(217,119,6,0.25)",
-              boxShadow: "0 8px 24px -8px rgba(217,119,6,0.12)",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.92), rgba(254,240,245,0.9))",
+              border: "1.5px solid rgba(244,114,182,0.16)",
+              boxShadow: "0 10px 24px -16px rgba(236,72,153,0.18)",
             }}
           >
-            <p className="font-bold" style={{ color: "#92400E" }}>
-              {t("「一緒に始めよう」", '"Let\'s start together"')}
+            <p className="font-bold" style={{ color: "#9D174D" }}>
+              {t("かわいい気分のまま、家計ボードへ", "Head into your budget board in a cute mood")}
             </p>
-            <p className="mt-1 text-xs" style={{ color: "#A16207" }}>
-              {t("家計管理で、ふたりの未来を。", "Build your future together.")}
+            <p className="mt-1 text-xs leading-6" style={{ color: "#7E22CE" }}>
+              {t("トップ画面とつながるトーンで、ログイン前の印象もやさしく整えました。", "The login view now matches the softer tone of the home screen.")}
             </p>
           </div>
         </div>
       </div>
 
-      {/* モバイル用キャラクター（小） */}
-      <div className="relative z-10 mt-6 flex items-end justify-between px-0 lg:hidden">
-        <div className="flex flex-col items-center gap-1 group">
-          <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-3">
-            <div className="absolute -inset-4 rounded-full blur-2xl"
-              style={{ background: "radial-gradient(circle,rgba(253,230,138,0.3),transparent 70%)" }} />
-            <BoyFormal />
+      <div className="relative z-10 mt-6 lg:hidden">
+        <div
+          className="flex items-end justify-center gap-3 rounded-[28px] px-4 py-5"
+          style={{
+            background: "linear-gradient(160deg, rgba(255,255,255,0.92), rgba(253,242,248,0.88) 60%, rgba(239,246,255,0.86) 100%)",
+            border: "1px solid rgba(244,114,182,0.18)",
+          }}
+        >
+          <div className="scale-[0.82] origin-bottom">
+            <CuteGirlHero />
           </div>
-          <span className="text-xs font-bold" style={{ color: "#92400E" }}>♦ {t("彼", "Him")}</span>
-        </div>
-        <div className="flex flex-col items-center gap-2 pb-4">
-          <div className="text-2xl animate-float-slow">💍</div>
-          <span className="text-lg animate-float-slow text-amber-400">♥</span>
-        </div>
-        <div className="flex flex-col items-center gap-1 group">
-          <div className="relative transition-transform duration-500 ease-out group-hover:-translate-y-3">
-            <div className="absolute -inset-4 rounded-full blur-2xl"
-              style={{ background: "radial-gradient(circle,rgba(244,114,182,0.25),transparent 70%)" }} />
-            <GirlFormal />
+          <div className="mb-2 scale-[0.9] origin-bottom">
+            <PlushBuddy />
           </div>
-          <span className="text-xs font-bold" style={{ color: "#9D174D" }}>♥ {t("彼女", "Her")}</span>
         </div>
       </div>
     </div>

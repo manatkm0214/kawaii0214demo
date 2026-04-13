@@ -1,6 +1,6 @@
 ﻿
 import Dashboard from "../../lib/components/Dashboard"
-import KakeiboMetrics from "./KakeiboMetrics"
+import EconomicBenchmarkGuide from "@/lib/components/EconomicBenchmarkGuide"
 import type { Budget, Transaction } from "@/lib/utils"
 
 export default function DashboardPage() {
@@ -77,10 +77,9 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen w-full bg-slate-950 px-4 py-8 text-slate-100">
       <div className="mx-auto w-full max-w-7xl space-y-8">
-        <KakeiboMetrics />
+        <EconomicBenchmarkGuide />
         <Dashboard transactions={dummyTransactions} budgets={dummyBudgets} currentMonth="2026-04" />
       </div>
     </div>
   )
 }
-

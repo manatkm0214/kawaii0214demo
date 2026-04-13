@@ -11,30 +11,38 @@ type RequestBody = {
   theme?: "dark" | "light";
 };
 
+type DesignImageErrorCode =
+  | "OPENAI_BILLING_LIMIT"
+  | "OPENAI_CONFIG"
+  | "GEMINI_CONFIG"
+  | "OPENAI_NO_IMAGE"
+  | "GEMINI_NO_IMAGE"
+  | "IMAGE_GENERATION_FAILED";
+
 function buildPrompt(body: RequestBody) {
   const prompt = body.prompt?.trim() || "";
   const characterName = body.characterName?.trim();
   const themeNote =
     body.theme === "dark"
-      ? "dark elegant accent with jewel-like highlights and cinematic lighting"
-      : "bright airy accent with soft sparkle and premium studio lighting";
+      ? "soft evening mood with jewel-like highlights and cozy cinematic lighting"
+      : "bright airy mood with pastel sparkle and soft studio lighting";
 
   return [
     "Create one high-quality character portrait for a household-budget app.",
     "Single character only.",
     "Bust-up composition, centered, clean background.",
-    "Use a semi-realistic stylized illustration style with natural facial proportions, realistic skin shading, detailed hair strands, and polished fashion editorial rendering.",
-    "Keep the result cute and elegant, but less exaggerated than classic anime.",
-    "Prefer elegant but slightly flashy styling with ribbons, frills, jewel accents, and a premium idol-like look.",
-    "When the character is feminine, favor long twin-tails with more realistic hair flow and refined layered bangs.",
-    "Avoid chibi proportions, overly flat cel shading, and excessively oversized anime eyes.",
+    "Use a polished cute illustration style that can support either a semi-realistic girl or a fluffy plush mascot depending on the user's request.",
+    "If the subject is human, keep natural facial proportions, soft skin shading, detailed hair strands, and a warm gentle expression.",
+    "If the subject is a plush mascot, use soft fabric texture, subtle stitching, rounded silhouette, and toy-like charm.",
+    "Prefer ribbons, frills, pastel accessories, and boutique-kawaii styling over princess or fantasy-royal cues.",
+    "Avoid chibi proportions, harsh cel shading, oversized anime eyes, crowns, castles, and video-game princess references.",
     "No text, no watermark, no extra hands, no collage.",
     "Cute polished mobile-app visual, safe for all ages.",
     `Visual mood: ${themeNote}.`,
     characterName ? `Character name or concept: ${characterName}.` : "",
     prompt
       ? `User request: ${prompt}.`
-      : "User request: semi-realistic elegant girl with slightly flashy fashion, realistic twin-tails, refined facial detail, and a premium idol portrait feel.",
+      : "User request: semi-realistic cute girl with ribbon styling, soft smile, pastel fashion, and a cozy polished portrait feel.",
   ]
     .filter(Boolean)
     .join(" ");
@@ -117,25 +125,97 @@ async function generateWithGemini(prompt: string) {
   };
 }
 
+function isOpenAIBillingLimitError(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    message.includes("billing hard limit") ||
+    message.includes("insufficient_quota") ||
+    message.includes("insufficient quota") ||
+    message.includes("quota exceeded")
+  );
+}
+
+function normalizeDesignImageError(error: unknown): { code: DesignImageErrorCode; message: string; status: number } {
+  const message = error instanceof Error ? error.message : "Image generation failed.";
+  const lower = message.toLowerCase();
+
+  if (lower.includes("billing hard limit") || lower.includes("insufficient_quota") || lower.includes("insufficient quota")) {
+    return {
+      code: "OPENAI_BILLING_LIMIT",
+      message: "OpenAI image generation is temporarily unavailable because the billing limit has been reached. Please use Gemini or try again later.",
+      status: 429,
+    };
+  }
+
+  if (lower.includes("openai_api_key")) {
+    return {
+      code: "OPENAI_CONFIG",
+      message: "OpenAI image generation is not configured.",
+      status: 500,
+    };
+  }
+
+  if (lower.includes("gemini_api_key")) {
+    return {
+      code: "GEMINI_CONFIG",
+      message: "Gemini image generation is not configured.",
+      status: 500,
+    };
+  }
+
+  if (lower.includes("openai did not return an image")) {
+    return {
+      code: "OPENAI_NO_IMAGE",
+      message: "OpenAI could not return an image this time. Please try again.",
+      status: 502,
+    };
+  }
+
+  if (lower.includes("gemini did not return an image")) {
+    return {
+      code: "GEMINI_NO_IMAGE",
+      message: "Gemini could not return an image this time. Please try again.",
+      status: 502,
+    };
+  }
+
+  return {
+    code: "IMAGE_GENERATION_FAILED",
+    message,
+    status: 500,
+  };
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as RequestBody;
     const provider: Provider = body.provider === "openai" ? "openai" : "gemini";
     const prompt = buildPrompt(body);
+    let resolvedProvider: Provider = provider;
+    let fallbackNotice: string | undefined;
 
     const generated =
       provider === "openai"
-        ? await generateWithOpenAI(prompt)
+        ? await generateWithOpenAI(prompt).catch(async (error: unknown) => {
+            if (isOpenAIBillingLimitError(error) && process.env.GEMINI_API_KEY?.trim()) {
+              resolvedProvider = "gemini";
+              fallbackNotice = "OPENAI_BILLING_LIMIT_FALLBACK_TO_GEMINI";
+              return generateWithGemini(prompt);
+            }
+            throw error;
+          })
         : await generateWithGemini(prompt);
 
     return NextResponse.json({
       imageUrl: generated.imageUrl,
-      provider,
+      provider: resolvedProvider,
+      requestedProvider: provider,
       model: generated.model,
       prompt,
+      fallbackNotice,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Image generation failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const normalized = normalizeDesignImageError(error);
+    return NextResponse.json({ error: normalized.message, errorCode: normalized.code }, { status: normalized.status });
   }
 }

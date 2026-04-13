@@ -370,24 +370,129 @@ html[data-theme="light"] .metric-tile-accent {
     0 10px 22px -18px rgba(56, 189, 248, 0.14);
 }
 
+html[data-theme="light"] .dashboard-light-copy .text-white,
+html[data-theme="light"] .dashboard-light-copy .text-slate-50,
+html[data-theme="light"] .dashboard-light-copy .text-slate-100,
+html[data-theme="light"] .dashboard-light-copy .text-slate-200,
+html[data-theme="light"] .dashboard-light-copy .text-slate-300,
 html[data-theme="light"] .dashboard-light-copy .text-slate-400,
 html[data-theme="light"] .dashboard-light-copy .text-slate-500,
+html[data-theme="light"] .dashboard-light-copy .text-slate-600,
+html[data-theme="light"] .dashboard-light-copy .text-slate-700,
+html[data-theme="light"] .dashboard-light-copy .text-slate-800,
+html[data-theme="light"] .dashboard-light-copy .text-slate-900,
+html[data-theme="light"] .dashboard-light-copy .text-slate-950,
 html[data-theme="light"] .dashboard-light-copy .text-cyan-600,
+html[data-theme="light"] .dashboard-light-copy .text-cyan-700,
+html[data-theme="light"] .dashboard-light-copy .text-cyan-800,
+html[data-theme="light"] .dashboard-light-copy .text-cyan-900,
 html[data-theme="light"] .dashboard-light-copy .text-cyan-300,
 html[data-theme="light"] .dashboard-light-copy .text-cyan-200,
 html[data-theme="light"] .dashboard-light-copy .text-cyan-100,
+html[data-theme="light"] .dashboard-light-copy .text-emerald-700,
+html[data-theme="light"] .dashboard-light-copy .text-emerald-800,
 html[data-theme="light"] .dashboard-light-copy .text-emerald-300,
 html[data-theme="light"] .dashboard-light-copy .text-emerald-200,
 html[data-theme="light"] .dashboard-light-copy .text-emerald-100,
+html[data-theme="light"] .dashboard-light-copy .text-orange-700,
 html[data-theme="light"] .dashboard-light-copy .text-orange-300,
+html[data-theme="light"] .dashboard-light-copy .text-amber-700,
+html[data-theme="light"] .dashboard-light-copy .text-amber-800,
 html[data-theme="light"] .dashboard-light-copy .text-amber-300,
 html[data-theme="light"] .dashboard-light-copy .text-amber-200,
+html[data-theme="light"] .dashboard-light-copy .text-rose-600,
+html[data-theme="light"] .dashboard-light-copy .text-rose-700,
 html[data-theme="light"] .dashboard-light-copy .text-rose-300,
 html[data-theme="light"] .dashboard-light-copy .text-rose-200,
 html[data-theme="light"] .dashboard-light-copy .text-rose-100,
+html[data-theme="light"] .dashboard-light-copy .text-pink-700,
+html[data-theme="light"] .dashboard-light-copy .text-pink-800,
 html[data-theme="light"] .dashboard-light-copy .text-pink-200,
+html[data-theme="light"] .dashboard-light-copy .text-violet-700,
+html[data-theme="light"] .dashboard-light-copy .text-violet-800,
+html[data-theme="light"] .dashboard-light-copy .text-sky-700,
+html[data-theme="light"] .dashboard-light-copy .text-blue-700,
 html[data-theme="light"] .dashboard-light-copy .text-violet-300 {
-  color: #0f172a !important;
+  color: #000000 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .board-card {
+  background:
+    radial-gradient(circle at top right, rgba(251, 207, 232, 0.16), transparent 32%),
+    radial-gradient(circle at bottom left, rgba(191, 219, 254, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(255, 252, 255, 0.992) 0%, rgba(255, 247, 251, 0.986) 48%, rgba(246, 250, 255, 0.99) 100%) !important;
+  border-color: #64748b !important;
+  border-width: 2px !important;
+  box-shadow:
+    0 16px 28px -24px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+html[data-theme="light"] .dashboard-light-copy .board-tile {
+  background:
+    radial-gradient(circle at top left, rgba(244, 114, 182, 0.08), transparent 30%),
+    radial-gradient(circle at bottom right, rgba(96, 165, 250, 0.1), transparent 32%),
+    linear-gradient(180deg, rgba(255, 250, 253, 0.988) 0%, rgba(251, 247, 255, 0.982) 52%, rgba(247, 250, 255, 0.988) 100%) !important;
+  border-color: #64748b !important;
+  border-width: 2px !important;
+  box-shadow:
+    0 12px 22px -20px rgba(15, 23, 42, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+html[data-theme="light"] .dashboard-light-copy .border-slate-200,
+html[data-theme="light"] .dashboard-light-copy .border-slate-300,
+html[data-theme="light"] .dashboard-light-copy .border-slate-400,
+html[data-theme="light"] .dashboard-light-copy .border-cyan-300,
+html[data-theme="light"] .dashboard-light-copy .border-cyan-400,
+html[data-theme="light"] .dashboard-light-copy .border-emerald-300,
+html[data-theme="light"] .dashboard-light-copy .border-emerald-400,
+html[data-theme="light"] .dashboard-light-copy .border-pink-300,
+html[data-theme="light"] .dashboard-light-copy .border-pink-400,
+html[data-theme="light"] .dashboard-light-copy .border-rose-400 {
+  border-color: #64748b !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .font-medium {
+  font-weight: 600;
+}
+
+html[data-theme="light"] .dashboard-light-copy .text-sm,
+html[data-theme="light"] .dashboard-light-copy .text-xs {
+  font-weight: 700;
+}
+
+html[data-theme="light"] .dashboard-light-copy input,
+html[data-theme="light"] .dashboard-light-copy textarea,
+html[data-theme="light"] .dashboard-light-copy select {
+  border-color: #64748b !important;
+  color: #000000 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy input::placeholder,
+html[data-theme="light"] .dashboard-light-copy textarea::placeholder {
+  color: #334155 !important;
+  opacity: 1;
+}
+
+html[data-theme="light"] .dashboard-light-copy .border-dashed {
+  border-color: #64748b !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .bg-cyan-100 {
+  background-color: rgba(207, 250, 254, 0.62) !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .bg-emerald-100 {
+  background-color: rgba(220, 252, 231, 0.62) !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .bg-amber-100 {
+  background-color: rgba(254, 243, 199, 0.66) !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy .bg-pink-100 {
+  background-color: rgba(252, 231, 243, 0.64) !important;
 }
 
 .recipe-clear-button {
@@ -902,6 +1007,51 @@ html[data-theme="dark"] .idol-card {
 .app-chip:hover {
   border-color: rgba(244, 114, 182, 0.36);
   background: linear-gradient(135deg, rgba(255, 244, 248, 0.98), rgba(254, 242, 248, 0.96), rgba(224, 242, 254, 0.96));
+}
+
+html[data-theme="dark"] .app-chip {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.88));
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+html[data-theme="dark"] .app-chip:hover {
+  background: linear-gradient(135deg, rgba(44, 58, 82, 0.92), rgba(22, 32, 54, 0.92));
+  border-color: rgba(244, 114, 182, 0.42);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .month-switch-group {
+  background: rgba(15, 23, 42, 0.86) !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32) !important;
+}
+
+html[data-theme="dark"] .month-switch-arrow {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .month-switch-arrow:hover {
+  background: rgba(30, 41, 59, 0.82);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .month-switch-current:not(.text-white) {
+  background: rgba(30, 41, 59, 0.72) !important;
+  color: #e2e8f0 !important;
+}
+
+/* Board-themed card/tile — matches InputForm board preset styling */
+.board-card {
+  background: color-mix(in srgb, var(--board-surface, #ffffff) 96%, #ffffff 4%);
+  border-color: var(--board-border, #e2e8f0);
+}
+
+.board-tile {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: var(--board-border, #e2e8f0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
 }
 
 .design-light-shell {

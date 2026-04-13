@@ -509,20 +509,18 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Safe" : "安全",
         note: lang === "en" ? "Your household pace is stable." : "家計の流れはかなり安定しています。",
-        tone: "text-emerald-600",
       };
     }
     if (stats.balance >= 0 && stats.savingRate >= 10) {
       return {
         label: lang === "en" ? "Watch" : "注意",
         note: lang === "en" ? "Stable, but keep watching fixed costs and reserves." : "大きくは崩れていませんが、固定費と備えは要チェックです。",
-        tone: "text-slate-950",
       };
     }
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      tone: "text-rose-600",
+      isRisk: true,
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
@@ -532,20 +530,17 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Comfortable" : "ゆとりあり",
         note: lang === "en" ? "Lifestyle fits your take-home well." : "手取りに対して生活コストの余白があります。",
-        tone: "text-emerald-600",
       };
     }
     if (expenseRatio <= 0.8) {
       return {
         label: lang === "en" ? "Balanced" : "標準",
         note: lang === "en" ? "Current lifestyle is manageable." : "今の生活レベルは概ね回せています。",
-        tone: "text-slate-950",
       };
     }
     return {
       label: lang === "en" ? "Stretched" : "背伸び気味",
       note: lang === "en" ? "Lifestyle costs are pressing against take-home pay." : "生活コストが手取りをかなり圧迫しています。",
-      tone: "text-rose-600",
     };
   }, [lang, stats.expense, stats.income, stats.savingRate]);
 
@@ -625,11 +620,11 @@ export default function Dashboard({
               <h3 className="text-lg font-extrabold text-slate-950">{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
               <span className="text-xl font-extrabold text-slate-950">{defenseProgress}%</span>
             </div>
-            <p className={`mt-3 text-xl font-black ${safetyRating.tone}`}>{safetyRating.label}</p>
+            <p className="mt-3 text-xl font-black" style={{ color: safetyRating.isRisk ? '#dc2626' : '#000000' }}>{safetyRating.label}</p>
             <p className="mt-1 text-base font-extrabold text-black">{safetyRating.note}</p>
             <div className="board-tile border mt-4 rounded-2xl p-3">
               <p className="text-base font-extrabold text-black">{lang === "en" ? "Living level" : "生活レベル"}</p>
-              <p className={`mt-1 text-lg font-black ${lifeLevel.tone}`}>{lifeLevel.label}</p>
+              <p className="mt-1 text-lg font-black text-black">{lifeLevel.label}</p>
               <p className="mt-1 text-base font-extrabold text-black">{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">

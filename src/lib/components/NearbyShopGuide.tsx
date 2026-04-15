@@ -282,7 +282,7 @@ export default function NearbyShopGuide({
               value={area}
               onChange={(event) => onAreaChange(event.target.value)}
               placeholder={t("例: 渋谷 / 横浜 / 新宿駅", "e.g. Shibuya / Yokohama / Shinjuku Station")}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-black outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
           <label className="block">
@@ -293,7 +293,7 @@ export default function NearbyShopGuide({
               placeholder={t("例: 3000", "e.g. 3000")}
               type="number"
               min={0}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-black outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
             />
           </label>
         </div>
@@ -304,7 +304,7 @@ export default function NearbyShopGuide({
             value={customQuery}
             onChange={(event) => setCustomQuery(event.target.value)}
             placeholder={t("例: ベーカリー / 100均 / ペット用品", "e.g. bakery / 100 yen shop / pet supplies")}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm text-black outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100"
           />
           <p className="mt-2 text-xs text-black">
             {t("選んだ店種に加えて、このキーワードでも候補を探します。", "Search will also use this free-form keyword in addition to the selected store type.")}

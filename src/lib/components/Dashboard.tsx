@@ -30,18 +30,14 @@ function AIPageView({
   budgets,
   currentMonth,
   onOpenInput,
-  lang,
-  mode,
-  t,
 }: {
   transactions: Transaction[];
   budgets: Budget[];
   currentMonth: string;
   onOpenInput: () => void;
-  lang: "ja" | "en";
-  mode: string;
-  t: (ja: string, en: string) => string;
 }) {
+  const lang = useLang();
+  const [activeTab, setActiveTab] = useState<'analysis' | 'chat'>('analysis');
   return (
     <div className="space-y-5">
       <div className="board-card border rounded-[28px] px-4 py-4 shadow-sm">
@@ -49,26 +45,40 @@ function AIPageView({
         <h2 className="mt-1 text-lg font-black text-black">
           {lang === "en" ? "AI support" : "AIサポート"}
         </h2>
-        <p className="mt-1 text-sm font-extrabold text-slate-950">
+        <p className="mt-1 text-sm font-extrabold text-black">
           {lang === "en"
-            ? "Use analysis for structured feedback and chat for back-and-forth questions."
-            : "分析で全体像を見て、チャットで気になることをそのまま相談できます。"}
+            ? "You can use three AI features: analysis/advice, savings plan, and chat consultation."
+            : "AI生活分析・AI節約アドバイス・AIチャット相談の三機能が使えます。"}
         </p>
-        <span
-          className={`w-fit shrink-0 rounded-full border px-3 py-1.5 text-xs font-extrabold text-black drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)] ${
-            mode === "save"
-              ? "border-slate-400 bg-amber-100"
-              : mode === "standard"
-                ? "border-slate-400 bg-cyan-100"
-                : "border-slate-400 bg-pink-100"
-          }`}
-        >
-          {mode === "save"
-            ? t("\u7bc0\u7d04\u30e2\u30fc\u30c9", "Save mode")
-            : mode === "standard"
-              ? t("\u6a19\u6e96\u30e2\u30fc\u30c9", "Balanced mode")
-              : t("\u3086\u3068\u308a\u30e2\u30fc\u30c9", "Treat mode")}
-        </span>
+        <div className="mt-4 flex gap-2">
+          <button
+            className={`rounded-full border px-4 py-2 text-sm font-bold transition ${activeTab === 'analysis' ? 'border-cyan-700 bg-cyan-100 text-black' : 'border-slate-400 bg-white text-black hover:border-cyan-400'}`}
+            onClick={() => setActiveTab('analysis')}
+          >
+            {lang === "en" ? "AI Analysis / Advice" : "AI分析・アドバイス"}
+          </button>
+          <button
+            className={`rounded-full border px-4 py-2 text-sm font-bold transition ${activeTab === 'chat' ? 'border-cyan-700 bg-cyan-100 text-black' : 'border-slate-400 bg-white text-black hover:border-cyan-400'}`}
+            onClick={() => setActiveTab('chat')}
+          >
+            {lang === "en" ? "AI Chat Consultation" : "AIチャット相談"}
+          </button>
+        </div>
+      </div>
+      <div>
+        {activeTab === 'analysis' ? (
+          <AIAnalysis
+            transactions={transactions}
+            currentMonth={currentMonth}
+            onOpenInput={onOpenInput}
+          />
+        ) : (
+          <AIChat
+            transactions={transactions}
+            budgets={budgets}
+            currentMonth={currentMonth}
+          />
+        )}
       </div>
     </div>
   );
@@ -509,20 +519,26 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Safe" : "安全",
         note: lang === "en" ? "Your household pace is stable." : "家計の流れはかなり安定しています。",
-        color: '#16a34a',
+        textColor: "#000000",
+        borderColor: "#16a34a",
+        backgroundColor: "#86efac",
       };
     }
     if (stats.balance >= 0 && stats.savingRate >= 10) {
       return {
         label: lang === "en" ? "Watch" : "注意",
         note: lang === "en" ? "Stable, but keep watching fixed costs and reserves." : "大きくは崩れていませんが、固定費と備えは要チェックです。",
-        color: '#000000',
+        textColor: "#000000",
+        borderColor: "#d97706",
+        backgroundColor: "#fcd34d",
       };
     }
     return {
       label: lang === "en" ? "Risk" : "要改善",
       note: lang === "en" ? "Balance or savings pace needs attention." : "差額か貯蓄ペースに改善余地があります。",
-      color: '#dc2626',
+      textColor: "#000000",
+      borderColor: "#e11d48",
+      backgroundColor: "#fda4af",
     };
   }, [lang, stats.balance, stats.expense, stats.reserveStock, stats.savingRate]);
 
@@ -532,17 +548,26 @@ export default function Dashboard({
       return {
         label: lang === "en" ? "Comfortable" : "ゆとりあり",
         note: lang === "en" ? "Lifestyle fits your take-home well." : "手取りに対して生活コストの余白があります。",
+        textColor: "#000000",
+        borderColor: "#7c3aed",
+        backgroundColor: "#c4b5fd",
       };
     }
     if (expenseRatio <= 0.8) {
       return {
         label: lang === "en" ? "Balanced" : "標準",
         note: lang === "en" ? "Current lifestyle is manageable." : "今の生活レベルは概ね回せています。",
+        textColor: "#000000",
+        borderColor: "#0284c7",
+        backgroundColor: "#7dd3fc",
       };
     }
     return {
       label: lang === "en" ? "Stretched" : "背伸び気味",
       note: lang === "en" ? "Lifestyle costs are pressing against take-home pay." : "生活コストが手取りをかなり圧迫しています。",
+      textColor: "#000000",
+      borderColor: "#ea580c",
+      backgroundColor: "#fb923c",
     };
   }, [lang, stats.expense, stats.income, stats.savingRate]);
 
@@ -617,23 +642,57 @@ export default function Dashboard({
         </div>
 
         <div className="space-y-3">
-          <div className="board-card border shadow-sm h-full rounded-[28px] p-4">
+          <div className="board-card safety-contrast-card border shadow-sm h-full rounded-[28px] p-4">
             <div className="flex items-center justify-between">
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#000000', margin: 0 }}>{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
-              <span style={{ fontSize: '1.25rem', fontWeight: 900, color: '#000000' }}>{defenseProgress}%</span>
+              <h3 style={{ fontSize: "1.35rem", fontWeight: 900, color: "#111827", margin: 0, lineHeight: 1.1, letterSpacing: "-0.02em" }}>{lang === "en" ? "Safety and lifestyle" : "安全度と生活レベル"}</h3>
+              <span style={{ fontSize: "1.75rem", fontWeight: 900, color: "#111827", lineHeight: 1 }}>{defenseProgress}%</span>
             </div>
-            <p style={{ marginTop: '0.75rem', fontSize: '1.25rem', fontWeight: 900, color: safetyRating.color }}>{safetyRating.label}</p>
-            <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>{safetyRating.note}</p>
-            <div className="board-tile border mt-4 rounded-2xl p-3">
-              <p style={{ fontSize: '1rem', fontWeight: 900, color: '#000000' }}>{lang === "en" ? "Living level" : "生活レベル"}</p>
-              <p style={{ marginTop: '0.25rem', fontSize: '1.125rem', fontWeight: 900, color: '#000000' }}>{lifeLevel.label}</p>
-              <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>{lifeLevel.note}</p>
+            <div className="mt-3">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  borderRadius: "9999px",
+                  border: `3px solid ${safetyRating.borderColor}`,
+                  background: safetyRating.backgroundColor,
+                  color: safetyRating.textColor,
+                  padding: "0.56rem 1.1rem",
+                  fontSize: "1.35rem",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                }}
+              >
+                {safetyRating.label}
+              </span>
+            </div>
+            <p style={{ marginTop: "0.55rem", fontSize: "1.05rem", fontWeight: 700, color: "#374151", lineHeight: 1.5 }}>{safetyRating.note}</p>
+            <div className="board-tile safety-contrast-tile mt-4 rounded-2xl border p-3">
+              <p style={{ fontSize: "1.1rem", fontWeight: 800, color: "#111827", lineHeight: 1.15, letterSpacing: "-0.01em" }}>{lang === "en" ? "Living level" : "生活レベル"}</p>
+              <div className="mt-2">
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    borderRadius: "9999px",
+                    border: `3px solid ${lifeLevel.borderColor}`,
+                    background: lifeLevel.backgroundColor,
+                    color: lifeLevel.textColor,
+                    padding: "0.56rem 1.1rem",
+                    fontSize: "1.35rem",
+                    fontWeight: 900,
+                    lineHeight: 1,
+                  }}
+                >
+                  {lifeLevel.label}
+                </span>
+              </div>
+              <p style={{ marginTop: "0.55rem", fontSize: "1.05rem", fontWeight: 700, color: "#374151", lineHeight: 1.5 }}>{lifeLevel.note}</p>
             </div>
             <div className="mt-4 h-3 rounded-full bg-cyan-100">
               <div className="h-3 rounded-full bg-cyan-400" style={{ width: `${defenseProgress}%` }} />
             </div>
-            <p style={{ marginTop: '0.75rem', fontSize: '1rem', fontWeight: 900, color: '#000000' }}>{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
-            <p style={{ marginTop: '0.25rem', fontSize: '1rem', fontWeight: 800, color: '#000000' }}>
+            <p style={{ marginTop: "0.75rem", fontSize: "1.05rem", fontWeight: 800, color: "#111827", lineHeight: 1.3 }}>{formatCurrency(stats.reserveStock)} / {formatCurrency(defenseGoal)}</p>
+            <p style={{ marginTop: '0.25rem', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280' }}>
               {lang === "en" ? "Calculated from current saving goal or six months of expenses." : "現在の貯蓄目標、または支出6か月分を基準に計算しています。"}
             </p>
 
@@ -679,7 +738,7 @@ export default function Dashboard({
           <div className="flex flex-col gap-3">
             <div>
               <h3 className="text-lg font-extrabold text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{lang === "en" ? "AI daily support" : "AI生活サポート"}</h3>
-              <p className="mt-1 text-base font-extrabold text-slate-950 drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">
+              <p className="mt-1 text-base font-extrabold text-black drop-shadow-[0_1px_0_rgba(0,0,0,0.12)]">
                 {lang === "en"
                   ? "Recipe ideas and nearby store guidance are grouped here so they are easier to scan on desktop."
                   : "食事の提案と近くのお店案内をここにまとめて、パソコンでも見やすくしています。"}
@@ -756,7 +815,7 @@ export default function Dashboard({
               onClick={() => setActivePage(tab.key)}
               className={`rounded-full border px-3.5 py-1.5 text-sm font-semibold transition ${
                 activePage === tab.key
-                  ? "border-slate-950 bg-cyan-500 text-white shadow-sm"
+                  ? "border-slate-950 bg-cyan-500 text-black shadow-sm"
                   : "border-slate-400 bg-white/90 text-black hover:border-slate-500 hover:text-black"
               }`}
             >
@@ -800,9 +859,6 @@ export default function Dashboard({
             budgets={budgets}
             currentMonth={currentMonth}
             onOpenInput={() => setActivePage("input")}
-            lang={lang}
-            mode={supportMode}
-            t={(ja: string, en: string) => (lang === "en" ? en : ja)}
           />
         )}
         {activePage === "annual" && <AnnualReportFull transactions={transactions} currentMonth={currentMonth} />}
@@ -813,25 +869,25 @@ export default function Dashboard({
             <KidsFinanceDashboard state={kidsState} />
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
-                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids income" : "こどもの収入"}</h3>
+                <h3 className="text-base font-bold text-black">{lang === "en" ? "Kids income" : "こどもの収入"}</h3>
                 <div className="mt-3">
                   <KidsIncomeForm onAdd={(item: KidsIncome) => setKidsState((prev) => ({ ...prev, incomes: [...prev.incomes, item] }))} />
                 </div>
               </div>
               <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
-                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids expense" : "こどもの支出"}</h3>
+                <h3 className="text-base font-bold text-black">{lang === "en" ? "Kids expense" : "こどもの支出"}</h3>
                 <div className="mt-3">
                   <KidsExpenseForm onAdd={(item: KidsExpense) => setKidsState((prev) => ({ ...prev, expenses: [...prev.expenses, item] }))} />
                 </div>
               </div>
               <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
-                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids savings" : "こどもの貯蓄"}</h3>
+                <h3 className="text-base font-bold text-black">{lang === "en" ? "Kids savings" : "こどもの貯蓄"}</h3>
                 <div className="mt-3">
                   <KidsSavingForm onAdd={(item) => setKidsState((prev) => ({ ...prev, savings: prev.savings + item.amount }))} />
                 </div>
               </div>
               <div className="rounded-[28px] border border-slate-700 bg-slate-950 p-4">
-                <h3 className="text-base font-bold text-white">{lang === "en" ? "Kids goal" : "こどもの目標"}</h3>
+                <h3 className="text-base font-bold text-black">{lang === "en" ? "Kids goal" : "こどもの目標"}</h3>
                 <div className="mt-3">
                   <KidsGoalForm
                     currentGoal={kidsState.savingsGoal}

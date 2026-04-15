@@ -185,7 +185,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">AI Chat</p>
             <h2 className="mt-1 text-lg font-black text-white">{t("家計の相談チャット", "Budget support chat")}</h2>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-black">
               {t("節約、予算、投資、生活防衛資金の考え方を会話形式で相談できます。", "Ask about saving, budgeting, investing, and emergency funds in a simple chat.")}
             </p>
           </div>
@@ -200,7 +200,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
                 className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
                   provider === option.key
                     ? `${option.color} text-white shadow-sm`
-                    : "border border-slate-600 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                    : "border border-slate-600 bg-slate-800 text-black hover:bg-slate-700"
                 }`}
               >
                 {option.label}
@@ -218,7 +218,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
           >
             <span className={`absolute h-4.5 w-4.5 rounded-full bg-white shadow transition-all ${useContext ? "left-6" : "left-1"}`} />
           </button>
-          <div className="text-xs text-slate-300">
+          <div className="text-xs text-black">
             <p className="font-semibold text-white">{t("今月データを共有", "Share monthly data")}</p>
             <p>{t("オンにすると、今月の予算や支出を含めて答えます。", "When enabled, replies include this month's budget and spending context.")}</p>
           </div>
@@ -230,7 +230,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
           <div className="metric-tile rounded-[24px] border border-dashed border-cyan-500/40 px-4 py-6 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-800 text-2xl text-cyan-200 shadow-sm">AI</div>
             <p className="mt-3 text-sm font-bold text-white">{t("気になることをそのまま聞いてください", "Ask whatever is on your mind")}</p>
-            <p className="mt-1 text-xs text-slate-300">
+            <p className="mt-1 text-xs text-black">
               {t("短い質問でも大丈夫です。家計の状況に合わせて整理しながら答えます。", "Short questions are fine. The chat will organize advice around your household situation.")}
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -287,7 +287,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
               type="button"
               onClick={() => void sendMessage(prompt)}
               disabled={loading}
-              className="shrink-0 rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs text-slate-200 transition hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-40"
+              className="shrink-0 rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs text-black transition hover:border-cyan-400 hover:text-cyan-200 disabled:opacity-40"
             >
               {prompt}
             </button>
@@ -330,7 +330,7 @@ export default function AIChat({ transactions, budgets, currentMonth }: Props) {
           <button
             type="button"
             onClick={() => setMessages([])}
-            className="mt-2 text-xs font-medium text-slate-400 transition hover:text-slate-200"
+            className="mt-2 text-xs font-medium text-black transition hover:text-black"
           >
             {t("チャットをクリア", "Clear chat")}
           </button>

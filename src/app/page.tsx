@@ -206,10 +206,6 @@ export default function Home() {
     return window.sessionStorage.getItem("kakeibo-splash-seen") !== "1";
   });
   const [agreedPrivacy, setAgreedPrivacy] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") return "light";
-    return window.localStorage.getItem("kakeibo-theme") === "dark" ? "dark" : "light";
-  });
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -239,9 +235,6 @@ export default function Home() {
     return `Balance ${monthLabel}\n収入: ${formatCurrency(income)}\n支出: ${formatCurrency(expense)}\n貯蓄: ${formatCurrency(saving)}\n差額: ${formatCurrency(balance)}`;
   }, [currentMonth, lang, monthLabel, transactions]);
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  }, []);
 
   const clearHouseholdLocalState = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -309,10 +302,9 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem("kakeibo-theme", theme);
-    document.documentElement.setAttribute("data-theme", theme);
-    document.documentElement.classList.toggle("dark", theme === "dark");
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", "light");
+    document.documentElement.classList.remove("dark");
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -770,8 +762,7 @@ export default function Home() {
       <button type="button" onClick={handleShare} className="app-chip">{lang === "en" ? "Share" : "共有"}</button>
       <button type="button" onClick={() => window.print()} className="app-chip">{lang === "en" ? "Print" : "印刷"}</button>
       <button type="button" onClick={exportCSV} className="app-chip">CSV</button>
-      <button type="button" onClick={toggleTheme} className="app-chip">{theme === "dark" ? (lang === "en" ? "Light" : "ライト") : (lang === "en" ? "Dark" : "ダーク")}</button>
-      <Link href="/settings" className="app-chip">{lang === "en" ? "Settings" : "設定"}</Link>
+<Link href="/settings" className="app-chip">{lang === "en" ? "Settings" : "設定"}</Link>
       <button type="button" onClick={() => setShowAccountSettings(true)} className="app-chip">{lang === "en" ? "Account" : "アカウント"}</button>
     </div>
   );

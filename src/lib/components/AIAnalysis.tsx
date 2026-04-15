@@ -304,7 +304,7 @@ export default function AIAnalysis({
     <div className="animate-fade-in flex flex-col gap-4">
       <div className="metric-shell mt-6 flex flex-col gap-4 rounded-[28px] p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-bold text-slate-300">{t("モード", "Mode")}</span>
+          <span className="text-sm font-bold text-black">{t("モード", "Mode")}</span>
           {([
             { key: "normal", label: t("通常", "Normal") },
             { key: "kids", label: t("こども", "Kids") },
@@ -314,7 +314,7 @@ export default function AIAnalysis({
               key={item.key}
               type="button"
               className={`rounded-lg border-2 px-3 py-2 text-sm font-bold ${
-                mode === item.key ? "border-emerald-400 bg-emerald-950 text-emerald-200" : "border-slate-600 bg-slate-800 text-slate-200"
+                mode === item.key ? "border-emerald-400 bg-emerald-950 text-emerald-200" : "border-slate-600 bg-slate-800 text-black"
               }`}
               onClick={() => {
                 setMode(item.key);
@@ -349,12 +349,12 @@ export default function AIAnalysis({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-bold text-slate-300">{t("AIプロバイダー", "AI provider")}</span>
+          <span className="text-sm font-bold text-black">{t("AIプロバイダー", "AI provider")}</span>
           {AI_PROVIDERS.map((p) => (
             <button
               key={p.key}
               type="button"
-              className={`rounded-lg px-3 py-2 text-sm font-bold ${provider === p.key ? `${p.color} text-white` : "border border-slate-600 bg-slate-800 text-slate-200"}`}
+              className={`rounded-lg px-3 py-2 text-sm font-bold ${provider === p.key ? `${p.color} text-white` : "border border-slate-600 bg-slate-800 text-black"}`}
               onClick={() => setAIProvider(p.key)}
               disabled={loading}
             >
@@ -364,10 +364,10 @@ export default function AIAnalysis({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm font-bold text-slate-300">{t("分析の種類", "Analysis type")}</span>
+          <span className="text-sm font-bold text-black">{t("分析の種類", "Analysis type")}</span>
           <button
             type="button"
-            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "analysis" ? "bg-emerald-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "analysis" ? "bg-emerald-600 text-white" : "border border-slate-600 bg-slate-800 text-black"}`}
             onClick={() => setAnalysisType("analysis")}
             disabled={loading}
           >
@@ -375,7 +375,7 @@ export default function AIAnalysis({
           </button>
           <button
             type="button"
-            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "saving" ? "bg-cyan-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "saving" ? "bg-cyan-600 text-white" : "border border-slate-600 bg-slate-800 text-black"}`}
             onClick={() => setAnalysisType("saving")}
             disabled={loading}
           >
@@ -383,7 +383,7 @@ export default function AIAnalysis({
           </button>
           <button
             type="button"
-            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "advice" ? "bg-pink-600 text-white" : "border border-slate-600 bg-slate-800 text-slate-200"}`}
+            className={`rounded-lg px-3 py-2 text-sm font-bold ${analysisType === "advice" ? "bg-pink-600 text-white" : "border border-slate-600 bg-slate-800 text-black"}`}
             onClick={() => setAnalysisType("advice")}
             disabled={loading}
           >
@@ -422,8 +422,8 @@ export default function AIAnalysis({
           <div className="metric-tile rounded-2xl border border-cyan-800 p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-bold text-cyan-100">{t("入力欄へ反映", "Reflect to input")}</p>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="text-sm font-bold text-black">{t("入力欄へ反映", "Reflect to input")}</p>
+                <p className="mt-1 text-xs text-black">
                   {t("AI提案をそのまま入力欄へ送って、あとから金額やカテゴリを整えられます。", "Send an AI suggestion into the input form, then adjust the amount or category.")}
                 </p>
               </div>
@@ -436,8 +436,8 @@ export default function AIAnalysis({
                   onClick={() => handleApplySuggestion(item.draft)}
                   className="w-full rounded-2xl border border-cyan-800 bg-slate-900 px-4 py-3 text-left transition hover:border-cyan-500 hover:bg-slate-800"
                 >
-                  <p className="text-sm font-semibold text-cyan-100">{item.label}</p>
-                  <p className="mt-1 text-xs text-slate-400">{item.note}</p>
+                  <p className="text-sm font-semibold text-black">{item.label}</p>
+                  <p className="mt-1 text-xs text-black">{item.note}</p>
                 </button>
               ))}
             </div>
@@ -445,7 +445,7 @@ export default function AIAnalysis({
         )}
 
         {result && (
-          <div className="metric-tile mt-2 whitespace-pre-wrap rounded-2xl border border-slate-600 p-4 text-slate-100">
+          <div className="metric-tile mt-2 whitespace-pre-wrap rounded-2xl border border-slate-600 p-4 text-black">
             {result}
           </div>
         )}

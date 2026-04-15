@@ -31,7 +31,7 @@ export default function EconomicBenchmarkGuide() {
         <h2 className="mt-1 text-xl font-black tracking-tight text-black md:text-3xl">
           {t("家計の指標と基準", "Household indicators and benchmarks")}
         </h2>
-        <p className="mt-2 max-w-3xl text-[15px] font-medium leading-7 text-black">
+        <p className="mt-2 max-w-3xl text-[15px] font-semibold leading-7 text-black">
           {t(
             "Inputフォームと同じ基準を一覧で確認できるページです。今の家計がどこにいるかを、指標・配分プリセット・カテゴリ目安の3方向から見比べられます。",
             "This page uses the same references as the input form so you can compare your budget from three angles: indicators, preset ratios, and category guidelines.",

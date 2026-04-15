@@ -20,7 +20,7 @@ import { KidsSavingForm } from "./KidsSavingForm";
 import { KidsGoalForm } from "./KidsGoalForm";
 import type { KidsSavingsGoal } from "../types/kids-finance";
 import type { Budget, Profile, Transaction } from "@/lib/utils";
-import { formatCurrency, getCategoryLabel } from "@/lib/utils";
+import { formatCurrency, getCategoryLabel, PASSIVE_INCOME_CATEGORIES } from "@/lib/utils";
 import { useLang } from "@/lib/hooks/useLang";
 
 type ActivePage = "input" | "charts" | "calendar" | "goals" | "ai" | "annual" | "benchmarks" | "senior" | "kids";
@@ -241,11 +241,7 @@ export default function Dashboard({
       })
       .reduce((sum, item) => sum + item.amount, 0);
     const passiveIncome = monthly
-      .filter((item) => item.type === "income")
-      .filter((item) => {
-        const label = getCategoryLabel(item.category, "en");
-        return label === "Investment income" || label === "Pension" || label === "Extra income";
-      })
+      .filter((item) => item.type === "income" && PASSIVE_INCOME_CATEGORIES.includes(item.category as typeof PASSIVE_INCOME_CATEGORIES[number]))
       .reduce((sum, item) => sum + item.amount, 0);
     const balance = income - expense - saving - investment;
     const savingRate = income > 0 ? Math.round(((saving + investment) / income) * 100) : 0;

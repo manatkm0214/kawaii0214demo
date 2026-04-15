@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CATEGORIES, CATEGORY_LABELS, PAYMENT_METHODS, PAYMENT_METHOD_LABELS,
-  TransactionType, Transaction, Budget, formatCurrency,
+  TransactionType, Transaction, Budget, formatCurrency, PASSIVE_INCOME_CATEGORIES,
 } from "../../lib/utils";
 import { useLang } from "../../lib/hooks/useLang";
 import { useAIProvider, setAIProvider, AI_PROVIDERS } from "../../lib/hooks/useAIProvider";
@@ -24,7 +24,6 @@ const TRANSACTION_TABS: { key: TransactionType; ja: string; en: string }[] = [
 ];
 
 const WASTE_CATEGORIES = ["娯楽", "レジャー", "趣味", "美容・衣服", "サブスク"];
-const PASSIVE_CATEGORIES = ["副業", "事業収入", "投資収入"];
 
 const ALLOCATION_PRESETS = [
   { nameJa: "標準",        nameEn: "Standard",     saving: 20, expense: 70, investment: 10, descJa: "安定収入・バランス重視",   descEn: "Stable income, balanced" },
@@ -200,7 +199,7 @@ export default function InputBoardCustomize() {
     const investment = curr.filter((tx) => tx.type === "investment").reduce((s, tx) => s + tx.amount, 0);
     const fixedExp   = curr.filter((tx) => tx.type === "expense" && tx.is_fixed).reduce((s, tx) => s + tx.amount, 0);
     const wasteExp   = curr.filter((tx) => tx.type === "expense" && WASTE_CATEGORIES.includes(tx.category)).reduce((s, tx) => s + tx.amount, 0);
-    const passiveInc = curr.filter((tx) => tx.type === "income" && PASSIVE_CATEGORIES.includes(tx.category)).reduce((s, tx) => s + tx.amount, 0);
+    const passiveInc = curr.filter((tx) => tx.type === "income" && (PASSIVE_INCOME_CATEGORIES as readonly string[]).includes(tx.category)).reduce((s, tx) => s + tx.amount, 0);
 
     // 節約率: 予算 - 実績 ÷ 予算
     const budget = budgets.filter((b) => b.month === cm).reduce((s, b) => s + b.amount, 0);

@@ -48,6 +48,9 @@ export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], { j
   その他: { ja: "その他", en: "Other" },
 };
 
+/** 受動収入として集計するカテゴリ（Dashboard・InputBoard 共通） */
+export const PASSIVE_INCOME_CATEGORIES = ["副業", "事業収入", "投資収入", "年金"] as const;
+
 export const CATEGORIES: Record<TransactionType, string[]> = {
   income: [
     "給与",

@@ -12,7 +12,7 @@ type ContactPayload = {
 function buildAdminEmail(payload: Required<Omit<ContactPayload, "lang">> & { lang: string }) {
   const isEn = payload.lang === "en"
   const escapedMessage = payload.message.replace(/\n/g, "<br />")
-  const title = isEn ? "未来設計ノート — New Inquiry" : "未来設計ノート お問い合わせ"
+  const title = isEn ? "かわいい家計簿 — New Inquiry" : "かわいい家計簿 お問い合わせ"
   const labels = isEn
     ? { name: "Name", email: "Email", subject: "Subject", message: "Message" }
     : { name: "お名前", email: "メールアドレス", subject: "件名", message: "内容" }
@@ -45,7 +45,7 @@ function buildReplyEmail(payload: Required<Omit<ContactPayload, "lang">> & { lan
         <p style="color: #64748b; font-size: 13px;"><strong>Subject:</strong> ${payload.subject}</p>
         <p style="color: #64748b; font-size: 13px;"><strong>Message:</strong><br />${payload.message.replace(/\n/g, "<br />")}</p>
         <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-        <p style="color: #94a3b8; font-size: 12px;">未来設計ノート</p>
+        <p style="color: #94a3b8; font-size: 12px;">かわいい家計簿</p>
       </div>
     `
   }
@@ -58,7 +58,7 @@ function buildReplyEmail(payload: Required<Omit<ContactPayload, "lang">> & { lan
       <p style="color: #64748b; font-size: 13px;"><strong>件名:</strong> ${payload.subject}</p>
       <p style="color: #64748b; font-size: 13px;"><strong>内容:</strong><br />${payload.message.replace(/\n/g, "<br />")}</p>
       <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-      <p style="color: #94a3b8; font-size: 12px;">未来設計ノート</p>
+      <p style="color: #94a3b8; font-size: 12px;">かわいい家計簿</p>
     </div>
   `
 }

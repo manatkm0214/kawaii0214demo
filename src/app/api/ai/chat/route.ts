@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConfiguredSecret } from "@/lib/ai/provider-env";
 
-type ChatProvider = "openai" | "gemini" | "claude";
+type ChatProvider = "openai" | "gemini";
 
 type ChatMessage = {
   role: "user" | "assistant";
@@ -110,45 +110,13 @@ async function requestGemini(prompt: string): Promise<ProviderResponse> {
   return { reply, provider: "gemini" };
 }
 
-async function requestClaude(prompt: string): Promise<ProviderResponse> {
-  const apiKey = getConfiguredSecret("ANTHROPIC_API_KEY");
-  const model = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 1200,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  const raw = (await response.json()) as {
-    content?: Array<{ type?: string; text?: string }>;
-    error?: { message?: string };
-  };
-
-  const reply = raw.content?.find((item) => item.type === "text")?.text?.trim();
-  if (!response.ok || !reply) {
-    throw new Error(raw.error?.message || "Claude chat response could not be generated.");
-  }
-  return { reply, provider: "claude" };
-}
-
 async function requestByProvider(provider: ChatProvider, prompt: string) {
   if (provider === "gemini") return requestGemini(prompt);
-  if (provider === "claude") return requestClaude(prompt);
   return requestOpenAI(prompt);
 }
 
 function getProviderOrder(preferred: ChatProvider): ChatProvider[] {
-  const ordered: ChatProvider[] = [preferred, "openai", "gemini", "claude"];
+  const ordered: ChatProvider[] = [preferred, "openai", "gemini"];
   return ordered.filter((provider, index) => ordered.indexOf(provider) === index);
 }
 

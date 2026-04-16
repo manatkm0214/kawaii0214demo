@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getConfiguredSecret } from "@/lib/ai/provider-env";
 
-type AIProvider = "openai" | "gemini" | "claude";
+type AIProvider = "openai" | "gemini";
 
 type AIRequestBody = {
   provider?: AIProvider;
@@ -305,46 +305,13 @@ async function requestGemini(prompt: string): Promise<ProviderResponse> {
   return { text, provider: "gemini" };
 }
 
-async function requestClaude(prompt: string): Promise<ProviderResponse> {
-  const apiKey = getConfiguredSecret("ANTHROPIC_API_KEY");
-  const model = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
-
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 2048,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  const raw = (await response.json()) as Record<string, unknown>;
-  const parsed = raw as {
-    content?: Array<{ type?: string; text?: string }>;
-  };
-  const text = parsed.content?.find((item) => item.type === "text")?.text?.trim() ?? "";
-
-  if (!response.ok || !text) {
-    throw new Error(extractErrorMessage(raw) || "Claude response could not be generated.");
-  }
-
-  return { text, provider: "claude" };
-}
-
 async function requestByProvider(provider: AIProvider, prompt: string) {
   if (provider === "gemini") return requestGemini(prompt);
-  if (provider === "claude") return requestClaude(prompt);
   return requestOpenAI(prompt);
 }
 
 function getProviderOrder(preferred: AIProvider): AIProvider[] {
-  const ordered: AIProvider[] = [preferred, "openai", "gemini", "claude"];
+  const ordered: AIProvider[] = [preferred, "openai", "gemini"];
   return ordered.filter((provider, index) => ordered.indexOf(provider) === index);
 }
 

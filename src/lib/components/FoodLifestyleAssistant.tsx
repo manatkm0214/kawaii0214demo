@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatCurrency, type Transaction } from "@/lib/utils";
 import { useLang } from "@/lib/hooks/useLang";
-import { useAIProvider } from "@/lib/hooks/useAIProvider";
+import { AI_PROVIDERS, setAIProvider, useAIProvider, type AIProvider } from "@/lib/hooks/useAIProvider";
 
 type PantryItem = {
   id: string;
@@ -308,6 +308,16 @@ export default function FoodLifestyleAssistant({
   const [result, setResult] = useState<AssistantResponse>(FALLBACK_RESPONSE[locale]);
   const [loading, setLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+  const [lastRequestedProvider, setLastRequestedProvider] = useState<AIProvider | null>(null);
+  const [responseProvider, setResponseProvider] = useState<AIProvider | null>(null);
+
+  const selectedProviderMeta = AI_PROVIDERS.find((provider) => provider.key === aiProvider) ?? AI_PROVIDERS[0];
+  const requestedProviderMeta = lastRequestedProvider
+    ? (AI_PROVIDERS.find((provider) => provider.key === lastRequestedProvider) ?? selectedProviderMeta)
+    : null;
+  const responseProviderMeta = responseProvider
+    ? (AI_PROVIDERS.find((provider) => provider.key === responseProvider) ?? selectedProviderMeta)
+    : null;
 
   useEffect(() => {
     setResult(FALLBACK_RESPONSE[locale]);
@@ -336,12 +346,15 @@ export default function FoodLifestyleAssistant({
     async (nextItems: PantryItem[], nextArea: string) => {
       if (nextItems.length === 0) {
         setResult(FALLBACK_RESPONSE[locale]);
+        setLastRequestedProvider(null);
+        setResponseProvider(null);
         return;
       }
 
       const local = buildLocalResponse(nextItems, locale, mode);
       setResult(local);
       setAiError("");
+      setLastRequestedProvider(aiProvider);
       setLoading(true);
 
       try {
@@ -366,13 +379,15 @@ export default function FoodLifestyleAssistant({
           }),
         });
 
-        const payload = (await response.json()) as { error?: string; result?: string };
+        const payload = (await response.json()) as { error?: string; result?: string; provider?: AIProvider };
         if (!response.ok || !payload.result) {
           throw new Error(payload.error ?? t("AI応答を取得できませんでした", "Could not get AI response"));
         }
 
         setResult(parseAssistantResponse(payload.result, locale));
+        setResponseProvider(payload.provider ?? aiProvider);
       } catch (e) {
+        setResponseProvider(null);
         setAiError(e instanceof Error ? e.message : t("AIレシピの取得に失敗しました", "Failed to get AI recipes"));
       } finally {
         setLoading(false);
@@ -424,6 +439,8 @@ export default function FoodLifestyleAssistant({
     setExpiresInDays("");
     setResult(FALLBACK_RESPONSE[locale]);
     setAiError("");
+    setLastRequestedProvider(null);
+    setResponseProvider(null);
   }
 
   return (
@@ -433,6 +450,39 @@ export default function FoodLifestyleAssistant({
           <h3 className="text-lg font-black text-black drop-shadow-[0_2px_0_rgba(0,0,0,0.22)]">{t("\u0041\u0049\u98df\u4e8b\u30a2\u30b7\u30b9\u30c8", "Food AI assistant")}</h3>
           <p style={{ marginTop: "0.25rem", fontSize: "1rem", fontWeight: 900, color: "#000000", textShadow: "0 1px 0 rgba(0,0,0,0.14)" }}>
             {t("\u98df\u6750\u3092\u307e\u3068\u3081\u3066\u5165\u308c\u308b\u3068\u3001\u307e\u305a\u3059\u3050\u5019\u88dc\u3092\u51fa\u3057\u3001\u305d\u306e\u5f8c\u306b AI \u306e\u63d0\u6848\u3067\u66f4\u65b0\u3057\u307e\u3059\u3002", "Add pantry items to get instant local recipes first, then refine them with AI.")}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-black uppercase tracking-[0.18em] text-black">AI</span>
+            {AI_PROVIDERS.map((provider) => (
+              <button
+                key={provider.key}
+                type="button"
+                onClick={() => setAIProvider(provider.key)}
+                disabled={loading}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
+                  aiProvider === provider.key
+                    ? `${provider.color} text-white shadow-sm`
+                    : "border border-slate-300 bg-white text-black hover:border-slate-400"
+                }`}
+              >
+                {provider.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs font-semibold text-slate-700">
+            {loading
+              ? t(`${selectedProviderMeta.label} でAI更新中です。`, `Refreshing with ${selectedProviderMeta.label}.`)
+              : responseProviderMeta && requestedProviderMeta && responseProviderMeta.key !== requestedProviderMeta.key
+                ? t(
+                    `${requestedProviderMeta.label} を選択し、${responseProviderMeta.label} で応答しました。`,
+                    `Selected ${requestedProviderMeta.label}; responded with ${responseProviderMeta.label}.`,
+                  )
+                : responseProviderMeta
+                  ? t(`${responseProviderMeta.label} が応答しました。`, `${responseProviderMeta.label} responded.`)
+                  : t(
+                      `${selectedProviderMeta.label} を使うように選べます。`,
+                      `Choose which AI to use. Currently selected: ${selectedProviderMeta.label}.`,
+                    )}
           </p>
         </div>
         <span

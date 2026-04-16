@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getConfiguredSecret } from "@/lib/ai/provider-env";
 
 type ChatProvider = "openai" | "gemini" | "claude";
 
@@ -12,6 +13,11 @@ type ChatRequestBody = {
   lang?: "ja" | "en";
   context?: string;
   messages?: ChatMessage[];
+};
+
+type ProviderResponse = {
+  reply: string;
+  provider: ChatProvider;
 };
 
 function buildConversationPrompt(lang: "ja" | "en", context: string | undefined, messages: ChatMessage[]) {
@@ -48,8 +54,8 @@ function buildConversationPrompt(lang: "ja" | "en", context: string | undefined,
     .join("\n\n");
 }
 
-async function requestOpenAI(prompt: string) {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+async function requestOpenAI(prompt: string): Promise<ProviderResponse> {
+  const apiKey = getConfiguredSecret("OPENAI_API_KEY");
   const model = process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
 
@@ -75,11 +81,11 @@ async function requestOpenAI(prompt: string) {
   if (!response.ok || !reply) {
     throw new Error(raw.error?.message || "OpenAI chat response could not be generated.");
   }
-  return reply;
+  return { reply, provider: "openai" };
 }
 
-async function requestGemini(prompt: string) {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+async function requestGemini(prompt: string): Promise<ProviderResponse> {
+  const apiKey = getConfiguredSecret("GEMINI_API_KEY");
   const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
@@ -101,11 +107,11 @@ async function requestGemini(prompt: string) {
     throw new Error(raw.error?.message || "Gemini chat response could not be generated.");
   }
   const reply = rawReply.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
-  return reply;
+  return { reply, provider: "gemini" };
 }
 
-async function requestClaude(prompt: string) {
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+async function requestClaude(prompt: string): Promise<ProviderResponse> {
+  const apiKey = getConfiguredSecret("ANTHROPIC_API_KEY");
   const model = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
 
@@ -132,7 +138,18 @@ async function requestClaude(prompt: string) {
   if (!response.ok || !reply) {
     throw new Error(raw.error?.message || "Claude chat response could not be generated.");
   }
-  return reply;
+  return { reply, provider: "claude" };
+}
+
+async function requestByProvider(provider: ChatProvider, prompt: string) {
+  if (provider === "gemini") return requestGemini(prompt);
+  if (provider === "claude") return requestClaude(prompt);
+  return requestOpenAI(prompt);
+}
+
+function getProviderOrder(preferred: ChatProvider): ChatProvider[] {
+  const ordered: ChatProvider[] = [preferred, "openai", "gemini", "claude"];
+  return ordered.filter((provider, index) => ordered.indexOf(provider) === index);
 }
 
 export async function POST(request: NextRequest) {
@@ -155,14 +172,22 @@ export async function POST(request: NextRequest) {
     }
 
     const prompt = buildConversationPrompt(lang, body.context, messages);
-    const reply =
-      provider === "gemini"
-        ? await requestGemini(prompt)
-        : provider === "claude"
-          ? await requestClaude(prompt)
-          : await requestOpenAI(prompt);
+    const errors: string[] = [];
 
-    return NextResponse.json({ reply });
+    for (const candidate of getProviderOrder(provider)) {
+      try {
+        const result = await requestByProvider(candidate, prompt);
+        return NextResponse.json({ reply: result.reply, provider: result.provider });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Chat request failed.";
+        errors.push(`${candidate}: ${message}`);
+      }
+    }
+
+    return NextResponse.json(
+      { error: errors.join(" / ") || "Chat request failed." },
+      { status: 502 },
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Chat request failed.";
     return NextResponse.json({ error: message }, { status: 500 });

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getConfiguredSecret } from "@/lib/ai/provider-env";
 
 type AIProvider = "openai" | "gemini" | "claude";
 
@@ -242,7 +243,7 @@ function extractErrorMessage(raw: unknown): string | null {
 }
 
 async function requestOpenAI(prompt: string): Promise<ProviderResponse> {
-  const apiKey = process.env.OPENAI_API_KEY?.trim();
+  const apiKey = getConfiguredSecret("OPENAI_API_KEY");
   const model = process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured.");
 
@@ -273,7 +274,7 @@ async function requestOpenAI(prompt: string): Promise<ProviderResponse> {
 }
 
 async function requestGemini(prompt: string): Promise<ProviderResponse> {
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const apiKey = getConfiguredSecret("GEMINI_API_KEY");
   const model = process.env.GEMINI_MODEL?.trim() || "gemini-2.0-flash";
   if (!apiKey) throw new Error("GEMINI_API_KEY is not configured.");
 
@@ -305,7 +306,7 @@ async function requestGemini(prompt: string): Promise<ProviderResponse> {
 }
 
 async function requestClaude(prompt: string): Promise<ProviderResponse> {
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const apiKey = getConfiguredSecret("ANTHROPIC_API_KEY");
   const model = process.env.ANTHROPIC_MODEL?.trim() || "claude-sonnet-4-6";
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not configured.");
 

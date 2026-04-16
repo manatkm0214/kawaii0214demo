@@ -263,6 +263,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
         body: JSON.stringify({
           type: "calendar_advice",
           provider: aiProvider,
+          lang,
           data: {
             currentMonth: viewMonth,
             monthlyData: stripStats.map((item) => ({

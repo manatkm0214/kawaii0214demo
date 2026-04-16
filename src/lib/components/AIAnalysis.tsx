@@ -266,14 +266,42 @@ export default function AIAnalysis({
       if (analysisType === "saving") apiType = "savings_plan";
       if (analysisType === "advice") apiType = "life_advice";
 
+      const income = data.filter((tx) => tx.type === "income").reduce((s, tx) => s + tx.amount, 0);
+      const expense = data.filter((tx) => tx.type === "expense").reduce((s, tx) => s + tx.amount, 0);
+      const saving = data.filter((tx) => tx.type === "saving").reduce((s, tx) => s + tx.amount, 0);
+      const investment = data.filter((tx) => tx.type === "investment").reduce((s, tx) => s + tx.amount, 0);
+      const fixedExpenses = data.filter((tx) => tx.type === "expense" && tx.is_fixed).reduce((s, tx) => s + tx.amount, 0);
+      const variableExpenses = expense - fixedExpenses;
+      const savingRate = income > 0 ? Math.round(((saving + investment) / income) * 100) : 0;
+      const fixedRate = expense > 0 ? Math.round((fixedExpenses / expense) * 100) : 0;
+      const categoryExpenses: Record<string, number> = {};
+      for (const tx of data.filter((tx) => tx.type === "expense")) {
+        categoryExpenses[tx.category] = (categoryExpenses[tx.category] ?? 0) + tx.amount;
+      }
+
+      const statsData = {
+        currentMonth,
+        income,
+        expense,
+        saving,
+        investment,
+        savingRate,
+        fixedRate,
+        fixedExpenses,
+        variableExpenses,
+        takeHome: income,
+        categoryExpenses,
+        goal: t("生活費を抑えて貯蓄を増やす", "Reduce living expenses and increase savings"),
+      };
+
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider,
+          lang,
           type: apiType,
-          data,
-          mode,
+          data: statsData,
         }),
       });
 

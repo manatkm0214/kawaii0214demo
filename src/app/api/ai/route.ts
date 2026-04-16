@@ -6,6 +6,7 @@ type AIProvider = "openai" | "gemini";
 type AIRequestBody = {
   provider?: AIProvider;
   type: string;
+  lang?: "ja" | "en";
   data: Record<string, unknown>;
 };
 
@@ -14,7 +15,10 @@ type ProviderResponse = {
   provider: AIProvider;
 };
 
-function buildPrompt(type: string, data: Record<string, unknown>) {
+function buildPrompt(type: string, data: Record<string, unknown>, lang: "ja" | "en" = "ja") {
+  const langInstruction = lang === "ja"
+    ? "すべての回答・出力テキストを日本語で書いてください。"
+    : "Write all output text in English.";
   const d = data;
   const arr = (value: unknown) => (Array.isArray(value) ? value : []);
   const obj = (value: unknown) => (typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {});
@@ -35,6 +39,7 @@ Return only the category name.`;
     const allocationActual = obj(d.allocationActual);
     return `You are a household budget analyst.
 Analyze the monthly data and return JSON only.
+${langInstruction}
 
 Data:
 - income: ${d.income ?? ""}
@@ -67,6 +72,7 @@ Return:
   if (type === "savings_plan") {
     return `You create a practical savings plan for a household.
 Return JSON only.
+${langInstruction}
 
 Goal: ${d.goal ?? ""}
 Fixed expenses: ${d.fixedExpenses ?? ""}
@@ -86,6 +92,7 @@ Return:
   if (type === "annual") {
     return `You are a yearly household budget analyst.
 Past 12 months data: ${JSON.stringify(d.monthlyData ?? {})}
+${langInstruction}
 
 Return JSON only:
 {
@@ -100,6 +107,7 @@ Return JSON only:
   if (type === "life_advice") {
     return `You provide practical lifestyle advice from household budget data.
 Return JSON only.
+${langInstruction}
 
 Current month: ${d.currentMonth ?? ""}
 Income: ${d.income ?? ""}
@@ -210,6 +218,7 @@ Suggest the most relevant subset. Include at least 3 categories per type. Return
     return `You are a calendar-based household budget advisor.
 Use yearly cashflow and this month's data to suggest timing-aware advice.
 Return JSON only.
+${langInstruction}
 
 Current month: ${d.currentMonth ?? ""}
 Monthly data for 12 months: ${JSON.stringify(d.monthlyData ?? {})}
@@ -318,7 +327,8 @@ function getProviderOrder(preferred: AIProvider): AIProvider[] {
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as AIRequestBody;
   const provider = body.provider ?? "openai";
-  const prompt = buildPrompt(body.type, body.data ?? {});
+  const lang = body.lang === "en" ? "en" : "ja";
+  const prompt = buildPrompt(body.type, body.data ?? {}, lang);
 
   if (!prompt) {
     return NextResponse.json({ error: "Unsupported AI request type." }, { status: 400 });

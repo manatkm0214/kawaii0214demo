@@ -388,11 +388,14 @@ export default function Calendar({ transactions, currentMonth }: Props) {
                 </div>
               )}
               {aiResult.upcoming_warnings?.length > 0 && (
-                <div>
-                  <p className="mb-2 text-sm uppercase tracking-[0.16em] text-slate-400">{t("気をつけたい点", "Warnings")}</p>
+                <div className="rounded-2xl border border-amber-400/60 bg-amber-950/70 px-3 py-3">
+                  <p className="mb-2 text-sm font-bold text-amber-300">⚠ {t("気をつけたい点", "Warnings")}</p>
                   <div className="space-y-2">
                     {aiResult.upcoming_warnings.map((warning) => (
-                      <div key={warning} className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-amber-100">{warning}</div>
+                      <div key={warning} className="flex gap-2 rounded-xl border border-amber-500/40 bg-amber-900/50 px-3 py-2 text-amber-100">
+                        <span className="mt-0.5 shrink-0 text-amber-400">•</span>
+                        <span>{warning}</span>
+                      </div>
                     ))}
                   </div>
                 </div>

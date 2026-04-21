@@ -585,7 +585,7 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("カテゴリ", "Category")}</span>
           {recentCategories.length > 0 && (
-            <span className="text-xs text-slate-400">{t("最近", "Recent")}</span>
+            <span className="text-xs text-slate-600">{t("最近", "Recent")}</span>
           )}
         </div>
 

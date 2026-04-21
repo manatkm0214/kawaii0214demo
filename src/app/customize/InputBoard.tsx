@@ -356,7 +356,7 @@ export default function InputBoardCustomize() {
         </p>
 
         {dataLoading ? (
-          <p className="mt-4 text-xs text-slate-400">{t("読み込み中...", "Loading...")}</p>
+          <p className="mt-4 text-xs text-slate-600">{t("読み込み中...", "Loading...")}</p>
         ) : metrics.income === 0 && metrics.expense === 0 ? (
           <p className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs text-amber-700">
             {t("今月のデータがありません。入力すると自動で更新されます。", "No data for this month. Data updates automatically after input.")}
@@ -611,13 +611,13 @@ export default function InputBoardCustomize() {
                     <p className="text-xs text-slate-500">{lang === "en" ? target.noteEn : target.noteJa}</p>
                   </div>
                   <div className="flex items-center gap-2 text-right">
-                    <span className="text-xs text-slate-400">{t("推奨", "Target")}: {target.low}〜{target.high}%</span>
+                    <span className="text-xs text-slate-600">{t("推奨", "Target")}: {target.low}〜{target.high}%</span>
                     {actual !== null ? (
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-bold ${toneClass(status!)}`}>
                         {actual}%
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-300">{t("データなし", "No data")}</span>
+                      <span className="text-xs text-slate-500">{t("データなし", "No data")}</span>
                     )}
                   </div>
                 </div>
@@ -765,7 +765,7 @@ export default function InputBoardCustomize() {
                 key={cat}
                 type="button"
                 onClick={() => toggleCategory(tab, cat)}
-                className={`rounded-2xl border px-3 py-3 text-left text-sm font-medium transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-400 line-through"}`}
+                className={`rounded-2xl border px-3 py-3 text-left text-sm font-medium transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-600 line-through"}`}
               >
                 {display}
               </button>
@@ -786,7 +786,7 @@ export default function InputBoardCustomize() {
                 key={u.factor}
                 type="button"
                 onClick={() => toggleUnit(u.factor)}
-                className={`rounded-full border px-5 py-2 text-sm font-semibold transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-400 line-through"}`}
+                className={`rounded-full border px-5 py-2 text-sm font-semibold transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-600 line-through"}`}
               >
                 {lang === "en" ? u.labelEn : u.labelJa}
               </button>
@@ -809,7 +809,7 @@ export default function InputBoardCustomize() {
                 key={method}
                 type="button"
                 onClick={() => togglePayment(method)}
-                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-400 line-through"}`}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${isOn ? "border-cyan-600 bg-cyan-50 text-cyan-900" : "border-slate-200 bg-slate-50 text-slate-600 line-through"}`}
               >
                 {display}
               </button>

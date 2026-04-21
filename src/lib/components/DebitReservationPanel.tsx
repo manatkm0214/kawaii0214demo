@@ -155,14 +155,14 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
       {/* 未決済リスト */}
       {pendingItems.length > 0 && (
         <div className="mt-3 space-y-2">
-          <p className="text-xs font-bold text-slate-500">{t("未引き落とし", "Pending debits")}</p>
+          <p className="text-xs font-bold text-slate-700">{t("未引き落とし", "Pending debits")}</p>
           {pendingItems.map((item) => (
             <div key={item.id} className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-black truncate">
                   {item.description || getCategoryLabel(item.category, lang)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-700">
                   {item.card_name} · {t(`引落: ${item.debit_month}`, `Debit: ${item.debit_month}`)}
                 </p>
               </div>
@@ -177,7 +177,7 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
               <button
                 type="button"
                 onClick={() => void handleDelete(item.id)}
-                className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-400 hover:bg-slate-100"
+                className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
               >
                 ✕
               </button>
@@ -189,29 +189,29 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
       {/* 決済済みリスト（折りたたみ） */}
       {settledItems.length > 0 && (
         <details className="mt-2">
-          <summary className="cursor-pointer text-xs font-bold text-slate-400 hover:text-slate-600">
+          <summary className="cursor-pointer text-xs font-bold text-slate-600 hover:text-slate-600">
             {t(`引落済 ${settledItems.length}件`, `${settledItems.length} settled`)}
           </summary>
           <div className="mt-2 space-y-1">
             {settledItems.map((item) => (
               <div key={item.id} className="flex items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2 opacity-60">
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-500 truncate line-through">
+                  <p className="text-xs text-slate-700 truncate line-through">
                     {item.description || getCategoryLabel(item.category, lang)}
                   </p>
                 </div>
-                <span className="text-xs text-slate-400 line-through">{formatCurrency(item.amount)}</span>
+                <span className="text-xs text-slate-600 line-through">{formatCurrency(item.amount)}</span>
                 <button
                   type="button"
                   onClick={() => void handleSettle(item.id, false)}
-                  className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-400 hover:bg-slate-100"
+                  className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
                 >
                   {t("戻す", "Undo")}
                 </button>
                 <button
                   type="button"
                   onClick={() => void handleDelete(item.id)}
-                  className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-400 hover:bg-slate-100"
+                  className="shrink-0 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-100"
                 >
                   ✕
                 </button>
@@ -294,7 +294,7 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-500 hover:bg-slate-50"
+              className="rounded-full border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
               {t("キャンセル", "Cancel")}
             </button>

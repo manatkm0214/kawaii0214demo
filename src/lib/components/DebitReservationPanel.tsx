@@ -1,4 +1,7 @@
 "use client";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { ja, enUS } from "date-fns/locale";
 
 import { useEffect, useState } from "react";
 import { formatCurrency, getCategoryLabel, type DebitReservation } from "@/lib/utils";
@@ -39,7 +42,11 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
   const [description, setDescription] = useState("");
   const [cardName, setCardName] = useState(CARD_OPTIONS[0]);
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0]);
-  const [debitMonth, setDebitMonth] = useState(() => nextMonth(currentMonth));
+  // DatePicker用: 月初日付で管理
+  const [debitMonth, setDebitMonth] = useState<Date>(() => {
+    const [y, m] = nextMonth(currentMonth).split("-").map(Number);
+    return new Date(y, m - 1, 1);
+  });
 
   useEffect(() => {
     setLoading(true);
@@ -264,10 +271,13 @@ export default function DebitReservationPanel({ currentMonth, onPendingTotalChan
             </label>
             <label className="block">
               <span className="text-xs font-bold text-black">{t("引落予定月", "Debit month")}</span>
-              <input
-                type="month"
-                value={debitMonth}
-                onChange={(e) => setDebitMonth(e.target.value)}
+              <DatePicker
+                selected={debitMonth}
+                onChange={(date: Date | null) => date && setDebitMonth(date)}
+                dateFormat="yyyy-MM"
+                showMonthYearPicker
+                showFullMonthYearPicker
+                locale={lang === "en" ? enUS : ja}
                 className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-black outline-none focus:border-cyan-400"
               />
             </label>

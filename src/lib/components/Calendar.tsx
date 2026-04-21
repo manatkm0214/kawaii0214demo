@@ -360,7 +360,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
       </div>
 
       {(showAI || aiLoading || aiError) && (
-        <div className="rounded-[24px] border border-cyan-800 bg-cyan-950 p-4">
+          <div className="rounded-3xl border border-cyan-800 bg-cyan-950 p-4">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-base font-bold text-cyan-100">{t("AIからの提案", "AI suggestions")}</h3>
             <div className="flex items-center gap-3">
@@ -419,7 +419,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
 
       {viewMode === "grid" ? (
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[24px] border border-slate-700 bg-slate-900 overflow-hidden">
+          <div className="rounded-3xl border border-slate-700 bg-slate-900 overflow-hidden">
             <div className="grid grid-cols-7 border-b border-white/10">
               {WEEKDAYS[lang].map((weekday) => (
                 <div key={weekday} className="py-2 text-center text-sm font-medium text-slate-400">{weekday}</div>
@@ -458,7 +458,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-4">
+            <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4">
               <h3 className="text-base font-bold text-white">{t("月のサマリー", "Monthly summary")}</h3>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 {[
@@ -475,7 +475,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-4">
+            <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-base font-bold text-white">{selectedDay ? selectedDay.replace(/-/g, "/") : t("日付をえらぶ", "Select a date")}</h3>
                 {selectedDay && (
@@ -583,7 +583,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
                   key={monthKey}
                   type="button"
                   onClick={() => { setViewMonth(monthKey); setViewMode("grid"); setSelectedDay(null) }}
-                  className={`rounded-[24px] border p-4 text-left transition ${monthKey === viewMonth ? "border-cyan-500 bg-cyan-950" : "border-slate-700 bg-slate-900 hover:border-slate-500"}`}
+                  className={`rounded-3xl border p-4 text-left transition ${monthKey === viewMonth ? "border-cyan-500 bg-cyan-950" : "border-slate-700 bg-slate-900 hover:border-slate-500"}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-sm font-semibold text-white">{formatMonthLabel(monthKey)}</p>
@@ -605,7 +605,7 @@ export default function Calendar({ transactions, currentMonth }: Props) {
             })}
           </div>
 
-          <div className="rounded-[24px] border border-slate-700 bg-slate-900 p-4">
+          <div className="rounded-3xl border border-slate-700 bg-slate-900 p-4">
             <h3 className="text-base font-bold text-white">{t("1年のまとめ", "Annual summary")}</h3>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
               {[

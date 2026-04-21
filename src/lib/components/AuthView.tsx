@@ -142,7 +142,7 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
   const t = (ja: string, en: string) => (lang === "en" ? en : ja)
   const [email, setEmail] = useState(initialEmail || otpEmail || "")
 
-  function startLogin(mode: "login" | "register", connection?: "google-oauth2" | "line") {
+  function startLogin(mode: "login" | "register", connection?: "google-oauth2" | "custom:line") {
     if (connection) {
       window.location.href = `/auth/login?connection=${encodeURIComponent(connection)}`
       return
@@ -285,7 +285,7 @@ export default function AuthView({ onAuth, onBack, initialMessage, initialEmail,
 
             <button
               type="button"
-              onClick={() => startLogin("login", "line")}
+              onClick={() => startLogin("login", "custom:line")}
               className="rounded-full px-5 py-4 text-sm font-semibold text-white transition hover:brightness-105"
               style={{
                 background: "linear-gradient(135deg, #22C55E, #16A34A)",

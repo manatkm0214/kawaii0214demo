@@ -69,7 +69,7 @@ function PrivacyTermsDialog({ onAgree, onBack }: { onAgree: () => void; onBack?:
   const [checked, setChecked] = useState(false);
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950 p-4">
+    <div className="fixed inset-0 z-80 flex items-center justify-center bg-slate-950 p-4">
       <div className="hero-stage w-full max-w-md rounded-[30px] p-6">
         <div className="hero-badge px-3 py-1.5 text-xs font-semibold tracking-[0.24em]">
           {lang === "en" ? "CHECK" : "確認"}
@@ -134,8 +134,8 @@ function NameSetupDialog({
   const titlePreview = buildBoardTitle(value, lang);
 
   return (
-    <div className="fixed inset-0 z-[82] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-      <div className="hero-stage w-full max-w-lg rounded-[32px] p-6">
+    <div className="fixed inset-0 z-82 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div className="hero-stage w-full max-w-lg rounded-4xl p-6">
         <div className="hero-badge px-3 py-1.5 text-xs font-semibold tracking-[0.24em]">
           {lang === "en" ? "NAME" : "名前"}
         </div>
@@ -159,7 +159,7 @@ function NameSetupDialog({
           />
         </label>
 
-        <div className="idol-glass mt-4 rounded-[24px] px-4 py-4">
+        <div className="idol-glass mt-4 rounded-3xl px-4 py-4">
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-pink-800">{lang === "en" ? "Cute Kakeibo Preview" : "かわいい家計簿プレビュー"}</p>
           <p className="mt-2 text-lg font-black text-slate-900">{titlePreview}</p>
         </div>
@@ -770,7 +770,7 @@ export default function Home() {
   if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center px-4 text-slate-300">
-        <div className="rounded-[32px] border border-slate-700 bg-slate-900 px-6 py-5 text-sm shadow-2xl shadow-slate-950/30">
+        <div className="rounded-4xl border border-slate-700 bg-slate-900 px-6 py-5 text-sm shadow-2xl shadow-slate-950/30">
           {lang === "en" ? "Loading your board..." : "ボードを読み込んでいます..."}
         </div>
       </div>
@@ -794,7 +794,7 @@ export default function Home() {
           >
             <div className="pointer-events-none absolute inset-0" aria-hidden>
               <div className="absolute inset-3 rounded-[34px] border border-white/45" />
-              <div className="absolute inset-x-[12%] bottom-[-7.5rem] h-52 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.52)_0%,rgba(186,230,253,0.3)_30%,rgba(255,255,255,0)_74%)] blur-2xl" />
+              <div className="absolute inset-x-[12%] -bottom-30 h-52 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.52)_0%,rgba(186,230,253,0.3)_30%,rgba(255,255,255,0)_74%)] blur-2xl" />
               <div className="absolute left-[6%] top-[18%] text-2xl text-rose-300/80 animate-float-slow">♡</div>
               <div className="absolute left-[14%] top-[10%] text-3xl text-fuchsia-300/75 animate-float-slow" style={{ animationDelay: "0.4s" }}>✦</div>
               <div className="absolute right-[14%] top-[12%] text-2xl text-sky-300/80 animate-float-slow" style={{ animationDelay: "0.7s" }}>🎀</div>
@@ -885,7 +885,7 @@ export default function Home() {
       )}
 
       {showAuthView && (
-        <div className="fixed inset-0 z-[70] overflow-y-auto bg-slate-950 p-4">
+        <div className="fixed inset-0 z-70 overflow-y-auto bg-slate-950 p-4">
           <div className="mx-auto max-w-3xl">
             <AuthView
               onAuth={syncSessionToHome}
@@ -900,7 +900,7 @@ export default function Home() {
       )}
 
       {showPresetSetup && (
-        <div className="fixed inset-0 z-[75] overflow-y-auto bg-slate-950 p-4">
+        <div className="fixed inset-0 z-75 overflow-y-auto bg-slate-950 p-4">
           <div className="mx-auto max-w-5xl">
             <PresetSetup
               mode={profile ? "edit" : "create"}
@@ -912,7 +912,7 @@ export default function Home() {
       )}
 
       {showAccountSettings && user && (
-        <div className="fixed inset-0 z-[76] overflow-y-auto bg-slate-950 p-4">
+        <div className="fixed inset-0 z-76 overflow-y-auto bg-slate-950 p-4">
           <AccountSettings
             user={user}
             profile={profile}
@@ -927,7 +927,7 @@ export default function Home() {
 
       <div className="mx-auto flex max-w-7xl flex-col gap-4">
         {authNotice && (
-          <div className={`rounded-[24px] px-4 py-3 text-sm ${authNotice.type === "success" ? "border border-emerald-800 bg-emerald-950 text-emerald-100" : "border border-rose-800 bg-rose-950 text-rose-100"}`}>
+          <div className={`rounded-3xl px-4 py-3 text-sm ${authNotice.type === "success" ? "border border-emerald-800 bg-emerald-950 text-emerald-100" : "border border-rose-800 bg-rose-950 text-rose-100"}`}>
             {authNotice.text}
           </div>
         )}
@@ -1018,7 +1018,7 @@ export default function Home() {
 
         <main className="app-panel holo-frame rounded-[34px] px-3 py-3 md:px-4 md:py-4">
           {dataLoading ? (
-            <div className="flex min-h-[420px] items-center justify-center text-sm text-slate-300">
+            <div className="flex min-h-105 items-center justify-center text-sm text-slate-300">
               {lang === "en" ? "Refreshing your data..." : "データを更新しています..."}
             </div>
           ) : (

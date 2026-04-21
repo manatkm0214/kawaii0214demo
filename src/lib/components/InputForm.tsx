@@ -499,7 +499,7 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
       style={boardStyle}
     >
       {/* タブ */}
-      <div className="relative z-10 flex flex-wrap gap-2 rounded-[24px] border p-1.5" style={surfaceStyle}>
+      <div className="relative z-10 flex flex-wrap gap-2 rounded-3xl border p-1.5" style={surfaceStyle}>
         {TAB_LABELS.map((item) => (
           <button
             key={item.key}
@@ -509,7 +509,7 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
               setCategory("");
               setSuggestedCategories([]);
             }}
-            className={`${INTERACTIVE_BUTTON} flex min-w-[72px] flex-1 items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-sm font-semibold transition ${
+            className={`${INTERACTIVE_BUTTON} flex min-w-18 flex-1 items-center justify-center gap-1.5 rounded-2xl px-3 py-2.5 text-sm font-semibold transition ${
               tab === item.key
                 ? "bg-cyan-500 text-white shadow-md"
                 : "text-slate-600 hover:bg-white hover:text-slate-900"

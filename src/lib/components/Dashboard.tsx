@@ -606,16 +606,16 @@ export default function Dashboard({
       <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-3">
           <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
-            <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {[
                 { label: lang === "en" ? "Income" : "収入", value: formatCurrency(stats.income), tone: "text-black" },
                 { label: lang === "en" ? "Expense" : "支出", value: formatCurrency(stats.expense), tone: "text-black" },
                 { label: lang === "en" ? "Saving" : "貯蓄", value: formatCurrency(stats.saving + stats.investment), tone: "text-black" },
                 { label: lang === "en" ? "Balance" : "差額", value: formatCurrency(stats.balance), tone: "text-black" },
               ].map((card) => (
-                <div key={card.label} className="flex h-full min-h-32 flex-col justify-between rounded-3xl board-tile border p-4 shadow-sm bg-white">
+                <div key={card.label} className="flex h-full min-h-32 flex-col justify-between rounded-3xl board-tile border p-4 shadow-sm bg-white min-w-0">
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-black">{card.label}</p>
-                  <p className="mt-3 text-2xl font-black text-black">{card.value}</p>
+                  <p className="mt-3 text-2xl font-black text-black break-all">{card.value}</p>
                 </div>
               ))}
             </div>
@@ -633,7 +633,7 @@ export default function Dashboard({
                         <p className={`mt-3 text-2xl font-black ${spendable >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                           {formatCurrency(spendable)}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                        <p className="mt-1 text-xs font-semibold text-slate-700">
                           {carryoverAmount > 0
                             ? lang === "en"
                               ? `Incl. ${formatCurrency(carryoverAmount)} carryover · ${forecast.daysRemaining} days left`
@@ -650,7 +650,7 @@ export default function Dashboard({
                         <p className={`mt-3 text-2xl font-black ${(daily ?? 0) >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
                           {daily !== null ? formatCurrency(daily) : "—"}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                        <p className="mt-1 text-xs font-semibold text-slate-700">
                           {lang === "en"
                             ? `Remaining ÷ ${forecast.daysRemaining} days`
                             : `残高 ÷ 残り ${forecast.daysRemaining} 日`}
@@ -700,7 +700,7 @@ export default function Dashboard({
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Spent today" : "今日の使用額"}</p>
+                  <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Spent today" : "今日の使用額"}</p>
                   <p className={`mt-2 text-xl font-black ${todayStats.todaySpent > 0 ? "text-rose-700" : "text-slate-400"}`}>
                     {todayStats.todaySpent > 0 ? formatCurrency(todayStats.todaySpent) : "—"}
                   </p>
@@ -715,7 +715,7 @@ export default function Dashboard({
                   return (
                     <>
                       <div className={`rounded-3xl border p-3 ${todayLeft >= 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
-                        <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Left for today" : "今日あと使える"}</p>
+                        <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Left for today" : "今日あと使える"}</p>
                         <p className={`mt-2 text-xl font-black ${todayLeft >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                           {formatCurrency(todayLeft)}
                         </p>
@@ -726,11 +726,11 @@ export default function Dashboard({
                         )}
                       </div>
                       <div className={`rounded-3xl border p-3 ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "border-cyan-200 bg-cyan-50" : "border-rose-200 bg-rose-50"}`}>
-                        <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Tomorrow's budget" : "明日の予算"}</p>
+                        <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Tomorrow's budget" : "明日の予算"}</p>
                         <p className={`mt-2 text-xl font-black ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
                           {tomorrowBudget !== null ? formatCurrency(tomorrowBudget) : "—"}
                         </p>
-                        <p className="mt-1 text-xs text-slate-400">
+                        <p className="mt-1 text-xs font-semibold text-slate-600">
                           {lang === "en" ? "Auto-adjusted for today's use" : "今日の使用分を自動反映"}
                         </p>
                       </div>

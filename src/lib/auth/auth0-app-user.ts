@@ -9,6 +9,16 @@ export interface AppSessionUser {
   supabaseUserId: string
 }
 
+let warnedMissingAuth0ProfileColumns = false
+
+function warnMissingAuth0ProfileColumns(context: string) {
+  if (warnedMissingAuth0ProfileColumns) return
+  warnedMissingAuth0ProfileColumns = true
+  console.warn(
+    `[auth0-profile-binding] ${context}; apply supabase_auth0_profile_binding_migration.sql to enable stable Auth0 subject binding.`
+  )
+}
+
 async function findSupabaseAuthUserByEmail(email: string) {
   const supabaseAdmin = getSupabaseAdmin()
   let page = 1
@@ -61,15 +71,59 @@ async function ensureSupabaseAuthUser(email: string, name: string | null) {
   return data.user.id
 }
 
-async function ensureProfile(userId: string, name: string | null) {
+function isMissingAuth0ProfileColumnError(error: { message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? ""
+  return message.includes("column") && (message.includes("auth0_sub") || message.includes("email"))
+}
+
+async function findProfileIdByAuth0Sub(auth0Sub: string) {
   const supabaseAdmin = getSupabaseAdmin()
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("auth0_sub", auth0Sub)
+    .maybeSingle()
+
+  if (error) {
+    if (isMissingAuth0ProfileColumnError(error)) {
+      warnMissingAuth0ProfileColumns("profiles.auth0_sub/email columns are missing")
+      return null
+    }
+    throw new Error(`Could not look up profile binding: ${error.message}`)
+  }
+
+  return (data as { id?: string } | null)?.id ?? null
+}
+
+async function ensureProfile(userId: string, name: string | null, email: string, auth0Sub: string) {
+  const supabaseAdmin = getSupabaseAdmin()
+  const profilePayload = {
+    id: userId,
+    display_name: name,
+    email,
+    auth0_sub: auth0Sub,
+  }
+
   const { error } = await supabaseAdmin.from("profiles").upsert(
-    {
-      id: userId,
-      display_name: name,
-    } as never,
+    profilePayload as never,
     { onConflict: "id" }
   )
+
+  if (isMissingAuth0ProfileColumnError(error)) {
+    warnMissingAuth0ProfileColumns("profile upsert fell back to legacy columns")
+    const fallback = await supabaseAdmin.from("profiles").upsert(
+      {
+        id: userId,
+        display_name: name,
+      } as never,
+      { onConflict: "id" }
+    )
+
+    if (fallback.error) {
+      throw new Error(`Could not prepare profile: ${fallback.error.message}`)
+    }
+    return
+  }
 
   if (error) {
     throw new Error(`Could not prepare profile: ${error.message}`)
@@ -87,13 +141,24 @@ export async function getAppSessionUser(): Promise<AppSessionUser | null> {
     throw new Error("Auth0 session is missing an email address")
   }
 
+  if (session.user.email_verified !== true) {
+    throw new Error("Auth0 session email is not verified")
+  }
+
   const name = typeof session.user.name === "string" && session.user.name.trim() ? session.user.name.trim() : null
   const picture = typeof session.user.picture === "string" && session.user.picture.trim() ? session.user.picture : null
-  const supabaseUserId = await ensureSupabaseAuthUser(email, name)
-  await ensureProfile(supabaseUserId, name)
+  const auth0Sub = typeof session.user.sub === "string" ? session.user.sub : ""
+
+  if (!auth0Sub) {
+    throw new Error("Auth0 session is missing a subject")
+  }
+
+  const linkedProfileId = await findProfileIdByAuth0Sub(auth0Sub)
+  const supabaseUserId = linkedProfileId ?? await ensureSupabaseAuthUser(email, name)
+  await ensureProfile(supabaseUserId, name, email, auth0Sub)
 
   return {
-    auth0Sub: session.user.sub,
+    auth0Sub,
     email,
     name,
     picture,

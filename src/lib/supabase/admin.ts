@@ -1,3 +1,5 @@
+import "server-only"
+
 import { createClient } from "@supabase/supabase-js"
 
 type SupabaseAdminClient = ReturnType<typeof createClient>

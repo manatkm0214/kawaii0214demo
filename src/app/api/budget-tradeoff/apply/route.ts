@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 /**
  * POST /api/budget-tradeoff/apply
@@ -9,15 +10,20 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
  * returns: { applied: [{ target_category, reduced_by, new_budget }] }
  */
 export async function POST(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as {
+  const parsed = await readJsonBody<{
     category?: string;
     amount?: number;
     month?: string;
-  };
+  }>(request, 8_000);
+  if (parsed.response) return parsed.response;
+  const body = parsed.data;
 
   const category = (body.category ?? "").trim();
   const amount = Math.round(Number(body.amount));

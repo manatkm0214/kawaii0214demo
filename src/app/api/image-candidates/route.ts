@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
+import { rateLimit, readJsonBody, requireSameOrigin } from "@/lib/server/security";
+import { fetchPublicHttpUrl, readResponseText, validatePublicHttpUrl } from "@/lib/server/ssrf";
 
 type Candidate = {
   url: string;
@@ -7,15 +10,7 @@ type Candidate = {
 
 const ABSOLUTE_IMAGE_RE = /\.(png|jpe?g|gif|webp|avif|svg)(\?.*)?$/i;
 
-function normalizeUrl(value: string) {
-  try {
-    const url = new URL(value);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    return url;
-  } catch {
-    return null;
-  }
-}
+export const runtime = "nodejs";
 
 function resolveCandidate(base: URL, raw: string) {
   const trimmed = raw.trim();
@@ -107,8 +102,21 @@ function socialFallbackCandidates(pageUrl: URL) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as { url?: string };
-    const pageUrl = normalizeUrl(body.url || "");
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+
+    const user = await getAppSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimitError = rateLimit(request, "image-candidates", 20, 10 * 60 * 1000, user.supabaseUserId);
+    if (rateLimitError) return rateLimitError;
+
+    const parsed = await readJsonBody<{ url?: string }>(request, 4_000);
+    if (parsed.response) return parsed.response;
+
+    const pageUrl = await validatePublicHttpUrl(parsed.data.url || "", { allowHttp: true });
     if (!pageUrl) {
       return NextResponse.json({ error: "valid_url_required" }, { status: 400 });
     }
@@ -119,14 +127,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const response = await fetch(pageUrl.toString(), {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (compatible; KakeiboBoard/1.0)",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+    const response = await fetchPublicHttpUrl(
+      pageUrl,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; KakeiboBoard/1.0)",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+          "Accept-Language": "ja,en-US;q=0.9,en;q=0.8",
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+      { allowHttp: true, maxRedirects: 2 },
+    );
 
     if (!response.ok) {
       return NextResponse.json(
@@ -149,7 +161,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const html = await response.text();
+    const html = await readResponseText(response, 1_000_000);
     const candidates = uniqueCandidates([
       ...socialFallbackCandidates(pageUrl),
       ...extractMetaCandidates(html, pageUrl),

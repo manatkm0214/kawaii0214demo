@@ -13,11 +13,11 @@ export async function GET() {
       user,
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown session error"
+    console.error("[session] load failed:", error)
     return NextResponse.json(
       {
         authenticated: false,
-        error: message,
+        error: "Could not load session",
       },
       { status: 500 }
     )

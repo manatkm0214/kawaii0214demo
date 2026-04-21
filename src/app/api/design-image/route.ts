@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
+import { boundedText, rateLimit, readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 type Provider = "openai" | "gemini";
 
@@ -179,7 +181,26 @@ function normalizeDesignImageError(error: unknown): { code: DesignImageErrorCode
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as RequestBody;
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+
+    const user = await getAppSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimitError = rateLimit(request, "design-image", 5, 60 * 60 * 1000, user.supabaseUserId);
+    if (rateLimitError) return rateLimitError;
+
+    const parsed = await readJsonBody<RequestBody>(request, 10_000);
+    if (parsed.response) return parsed.response;
+
+    const body: RequestBody = {
+      provider: parsed.data.provider === "openai" ? "openai" : "gemini",
+      prompt: boundedText(parsed.data.prompt, 500),
+      characterName: boundedText(parsed.data.characterName, 80),
+      theme: parsed.data.theme === "dark" ? "dark" : "light",
+    };
     const provider: Provider = body.provider === "openai" ? "openai" : "gemini";
     const prompt = buildPrompt(body);
     let resolvedProvider: Provider = provider;
@@ -202,7 +223,6 @@ export async function POST(request: NextRequest) {
       provider: resolvedProvider,
       requestedProvider: provider,
       model: generated.model,
-      prompt,
       fallbackNotice,
     });
   } catch (error) {

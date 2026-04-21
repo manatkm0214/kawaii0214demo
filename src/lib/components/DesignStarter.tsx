@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import Image from "next/image";
 import { BG_KEY, BG_PRESETS } from "@/lib/hooks/useBgTheme";
 import { CHARACTER_BG_KEY, useCharacterImage } from "@/lib/hooks/useCharacterImage";

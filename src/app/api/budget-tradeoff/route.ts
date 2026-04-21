@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 export async function GET() {
   const supabaseAdmin = getSupabaseAdmin();
@@ -18,15 +19,20 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as {
+  const parsed = await readJsonBody<{
     trigger_category?: string;
     target_category?: string;
     reduce_ratio?: number;
-  };
+  }>(request, 8_000);
+  if (parsed.response) return parsed.response;
+  const body = parsed.data;
 
   const trigger = (body.trigger_category ?? "").trim().slice(0, 50);
   const target = (body.target_category ?? "").trim().slice(0, 50);
@@ -50,11 +56,16 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as { id?: string; is_active?: boolean };
+  const parsed = await readJsonBody<{ id?: string; is_active?: boolean }>(request, 4_000);
+  if (parsed.response) return parsed.response;
+  const body = parsed.data;
   const id = typeof body.id === "string" ? body.id.trim() : "";
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -71,6 +82,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

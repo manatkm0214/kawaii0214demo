@@ -16,7 +16,11 @@ export default function LeaveAccountPage() {
   async function handleLeave() {
     setStep("loading")
     try {
-      const response = await fetch("/api/account/leave", { method: "POST" })
+      const response = await fetch("/api/account/leave", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm: confirmText }),
+      })
       const payload = await response.json()
       if (!response.ok) {
         throw new Error(typeof payload?.error === "string" ? payload.error : t("エラーが発生しました。", "An error occurred."))

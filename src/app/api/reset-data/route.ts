@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server"
 import { getAppSessionUser } from "@/lib/auth/auth0-app-user"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { requireSameOrigin } from "@/lib/server/security"
 
-export async function POST() {
+export async function POST(request: Request) {
+  const originError = requireSameOrigin(request)
+  if (originError) return originError
+
   const supabaseAdmin = getSupabaseAdmin()
   const user = await getAppSessionUser()
   if (!user) {

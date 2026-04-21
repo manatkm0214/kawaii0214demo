@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
 import { getConfiguredSecret } from "@/lib/ai/provider-env";
+import { isPlainRecord, rateLimit, readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 type AIProvider = "openai" | "gemini";
 
@@ -325,10 +327,25 @@ function getProviderOrder(preferred: AIProvider): AIProvider[] {
 }
 
 export async function POST(req: NextRequest) {
-  const body = (await req.json()) as AIRequestBody;
-  const provider = body.provider ?? "openai";
+  const originError = requireSameOrigin(req);
+  if (originError) return originError;
+
+  const user = await getAppSessionUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitError = rateLimit(req, "ai", 20, 10 * 60 * 1000, user.supabaseUserId);
+  if (rateLimitError) return rateLimitError;
+
+  const parsed = await readJsonBody<AIRequestBody>(req, 64_000);
+  if (parsed.response) return parsed.response;
+
+  const body = parsed.data;
+  const provider = body.provider === "gemini" ? "gemini" : "openai";
   const lang = body.lang === "en" ? "en" : "ja";
-  const prompt = buildPrompt(body.type, body.data ?? {}, lang);
+  const data = isPlainRecord(body.data) ? body.data : {};
+  const prompt = buildPrompt(body.type, data, lang);
 
   if (!prompt) {
     return NextResponse.json({ error: "Unsupported AI request type." }, { status: 400 });
@@ -346,8 +363,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  return NextResponse.json(
-    { error: errors.join(" / ") || "AI response could not be generated." },
-    { status: 502 },
-  );
+  console.warn("[ai] provider errors:", errors.join(" / "));
+  return NextResponse.json({ error: "AI response could not be generated." }, { status: 502 });
 }

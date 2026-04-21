@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getAppSessionUser } from "@/lib/auth/auth0-app-user"
 import { getSupabaseAdmin } from "@/lib/supabase/admin"
+import { readJsonBody, requireSameOrigin } from "@/lib/server/security"
 
 const PRESET_CATEGORY_ALIASES: Record<string, string[]> = {
   "衣服・美容": ["衣服・美容", "美容・衣服", "Beauty / clothes", "鄒主ｮｹ繝ｻ陦｣譛・"],
@@ -30,19 +31,25 @@ interface PresetPayload {
 }
 
 export async function POST(request: Request) {
+  const originError = requireSameOrigin(request)
+  if (originError) return originError
+
   const supabaseAdmin = getSupabaseAdmin()
   const user = await getAppSessionUser()
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const body = (await request.json()) as PresetPayload
+  const parsed = await readJsonBody<PresetPayload>(request, 32_000)
+  if (parsed.response) return parsed.response
+
+  const body = parsed.data
   const currentMonth = typeof body.currentMonth === "string" ? body.currentMonth : ""
   const categoryRatios = Array.isArray(body.categoryRatios) ? body.categoryRatios : []
   const categories = Array.isArray(body.categories) ? body.categories : []
   const profile = body.profile
 
-  if (!currentMonth || !profile || categoryRatios.length === 0 || categories.length === 0) {
+  if (!/^\d{4}-\d{2}$/.test(currentMonth) || !profile || categoryRatios.length === 0 || categories.length === 0 || categories.length > 50) {
     return NextResponse.json({ error: "Invalid preset payload" }, { status: 400 })
   }
 

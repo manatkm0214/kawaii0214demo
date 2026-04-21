@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
+import { boundedText, rateLimit, readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 type PlaceKind =
   | "budget"
@@ -17,6 +19,7 @@ type PlaceKind =
 
 const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+const CUSTOM_QUERY_RE = /^[\p{L}\p{N}\s._・ー-]{1,40}$/u;
 
 function escapeRegex(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -186,21 +189,41 @@ async function geocodeArea(area: string) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as {
+    const originError = requireSameOrigin(req);
+    if (originError) return originError;
+
+    const user = await getAppSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimitError = rateLimit(req, "nearby-shops", 30, 10 * 60 * 1000, user.supabaseUserId);
+    if (rateLimitError) return rateLimitError;
+
+    const parsed = await readJsonBody<{
       lat?: number;
       lon?: number;
       radius?: number;
       kind?: PlaceKind;
       area?: string;
       customQuery?: string;
-    };
+    }>(req, 4_000);
+    if (parsed.response) return parsed.response;
+
+    const body = parsed.data;
 
     let lat = Number(body.lat);
     let lon = Number(body.lon);
     let sourceLabel = "";
+    const area = boundedText(body.area, 100);
+    const customQuery = boundedText(body.customQuery, 40);
 
-    if ((!Number.isFinite(lat) || !Number.isFinite(lon)) && typeof body.area === "string" && body.area.trim()) {
-      const geocoded = await geocodeArea(body.area.trim());
+    if (customQuery && !CUSTOM_QUERY_RE.test(customQuery)) {
+      return NextResponse.json({ error: "invalid custom query" }, { status: 400 });
+    }
+
+    if ((!Number.isFinite(lat) || !Number.isFinite(lon)) && area) {
+      const geocoded = await geocodeArea(area);
       if (!geocoded) {
         return NextResponse.json({ error: "area could not be resolved" }, { status: 404 });
       }
@@ -209,7 +232,7 @@ export async function POST(req: NextRequest) {
       sourceLabel = geocoded.label;
     }
 
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
       return NextResponse.json({ error: "lat/lon or area required" }, { status: 400 });
     }
 
@@ -231,7 +254,7 @@ export async function POST(req: NextRequest) {
     ];
     const kind = allowedKinds.includes(body.kind as PlaceKind) ? (body.kind as PlaceKind) : "budget";
 
-    const query = buildQuery(lat, lon, radius, kind, typeof body.customQuery === "string" ? body.customQuery : undefined);
+    const query = buildQuery(lat, lon, radius, kind, customQuery || undefined);
     const response = await fetch(OVERPASS_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=UTF-8" },

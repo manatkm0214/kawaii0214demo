@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 const MONTH_RE = /^\d{4}-\d{2}$/;
 
@@ -21,18 +22,23 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as {
+  const parsed = await readJsonBody<{
     amount?: number;
     description?: string;
     card_name?: string;
     category?: string;
     month_charged?: string;
     debit_month?: string;
-  };
+  }>(request, 8_000);
+  if (parsed.response) return parsed.response;
+  const body = parsed.data;
 
   const amount = Math.round(Number(body.amount));
   const month_charged = typeof body.month_charged === "string" ? body.month_charged.trim() : "";
@@ -65,11 +71,16 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await request.json()) as { id?: string; is_settled?: boolean };
+  const parsed = await readJsonBody<{ id?: string; is_settled?: boolean }>(request, 4_000);
+  if (parsed.response) return parsed.response;
+  const body = parsed.data;
   const id = typeof body.id === "string" ? body.id.trim() : "";
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
@@ -88,6 +99,9 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
   const supabaseAdmin = getSupabaseAdmin();
   const user = await getAppSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

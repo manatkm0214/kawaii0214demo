@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAppSessionUser } from "@/lib/auth/auth0-app-user";
 import { getConfiguredSecret } from "@/lib/ai/provider-env";
+import { rateLimit, readJsonBody, requireSameOrigin } from "@/lib/server/security";
 
 type ChatProvider = "openai" | "gemini";
 
@@ -122,8 +124,22 @@ function getProviderOrder(preferred: ChatProvider): ChatProvider[] {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as ChatRequestBody;
-    const provider = body.provider ?? "openai";
+    const originError = requireSameOrigin(request);
+    if (originError) return originError;
+
+    const user = await getAppSessionUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rateLimitError = rateLimit(request, "ai-chat", 30, 10 * 60 * 1000, user.supabaseUserId);
+    if (rateLimitError) return rateLimitError;
+
+    const parsed = await readJsonBody<ChatRequestBody>(request, 64_000);
+    if (parsed.response) return parsed.response;
+
+    const body = parsed.data;
+    const provider = body.provider === "gemini" ? "gemini" : "openai";
     const lang = body.lang === "en" ? "en" : "ja";
     const messages = Array.isArray(body.messages)
       ? body.messages.filter(
@@ -133,13 +149,16 @@ export async function POST(request: NextRequest) {
             typeof message.content === "string" &&
             message.content.trim().length > 0,
         )
+        .slice(-20)
+        .map((message) => ({ ...message, content: message.content.slice(0, 2_000) }))
       : [];
 
     if (messages.length === 0) {
       return NextResponse.json({ error: "No chat messages were provided." }, { status: 400 });
     }
 
-    const prompt = buildConversationPrompt(lang, body.context, messages);
+    const context = typeof body.context === "string" ? body.context.slice(0, 3_000) : undefined;
+    const prompt = buildConversationPrompt(lang, context, messages);
     const errors: string[] = [];
 
     for (const candidate of getProviderOrder(provider)) {
@@ -152,12 +171,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json(
-      { error: errors.join(" / ") || "Chat request failed." },
-      { status: 502 },
-    );
+    console.warn("[ai-chat] provider errors:", errors.join(" / "));
+    return NextResponse.json({ error: "Chat request failed." }, { status: 502 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Chat request failed.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error("[ai-chat] request failed:", error);
+    return NextResponse.json({ error: "Chat request failed." }, { status: 500 });
   }
 }

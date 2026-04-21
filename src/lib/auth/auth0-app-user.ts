@@ -76,6 +76,11 @@ function isMissingAuth0ProfileColumnError(error: { message?: string } | null) {
   return message.includes("column") && (message.includes("auth0_sub") || message.includes("email"))
 }
 
+function readDisplayName(profile: { display_name?: string | null } | null) {
+  const displayName = typeof profile?.display_name === "string" ? profile.display_name.trim() : ""
+  return displayName || null
+}
+
 async function findProfileIdByAuth0Sub(auth0Sub: string) {
   const supabaseAdmin = getSupabaseAdmin()
   const { data, error } = await supabaseAdmin
@@ -97,9 +102,20 @@ async function findProfileIdByAuth0Sub(auth0Sub: string) {
 
 async function ensureProfile(userId: string, name: string | null, email: string, auth0Sub: string) {
   const supabaseAdmin = getSupabaseAdmin()
+  const { data: existingProfile, error: existingProfileError } = await supabaseAdmin
+    .from("profiles")
+    .select("display_name")
+    .eq("id", userId)
+    .maybeSingle()
+
+  if (existingProfileError) {
+    throw new Error(`Could not look up profile: ${existingProfileError.message}`)
+  }
+
+  const displayName = readDisplayName(existingProfile as { display_name?: string | null } | null) ?? name
   const profilePayload = {
     id: userId,
-    display_name: name,
+    display_name: displayName,
     email,
     auth0_sub: auth0Sub,
   }
@@ -114,7 +130,7 @@ async function ensureProfile(userId: string, name: string | null, email: string,
     const fallback = await supabaseAdmin.from("profiles").upsert(
       {
         id: userId,
-        display_name: name,
+        display_name: displayName,
       } as never,
       { onConflict: "id" }
     )
@@ -145,7 +161,7 @@ export async function getAppSessionUser(): Promise<AppSessionUser | null> {
 
   // LINEはemail_verifiedをtrueにしない & メールを提供しない場合がある
   // sub (LINE UID等) をフォールバックメールとして使用
-  const isLineProvider = auth0Sub.startsWith("line|") || auth0Sub.startsWith("custom:line|")
+  const isLineProvider = auth0Sub.startsWith("line|")
   const email = rawEmail || (isLineProvider ? `${auth0Sub.replace(/[^a-zA-Z0-9]/g, "_")}@line.placeholder` : "")
 
   if (!email) {

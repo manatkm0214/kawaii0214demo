@@ -167,12 +167,12 @@ export default function BudgetSurplusPanel({ currentMonth, balance, onCarryoverL
                 className={`rounded-2xl border p-3 text-left transition ${
                   allocation === opt.key
                     ? "border-cyan-400 bg-cyan-50"
-                    : "border-slate-200 bg-white hover:border-slate-400"
+                    : "border-slate-300 bg-white hover:border-slate-500"
                 }`}
               >
                 <span className="text-xl">{opt.icon}</span>
                 <p className="mt-1 text-sm font-bold text-black">{opt.label}</p>
-                <p className="mt-0.5 text-xs text-slate-700">{opt.desc}</p>
+                <p className="mt-0.5 text-xs font-semibold text-slate-800">{opt.desc}</p>
               </button>
             ))}
           </div>

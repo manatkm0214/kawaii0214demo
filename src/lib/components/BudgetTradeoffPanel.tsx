@@ -112,7 +112,7 @@ export default function BudgetTradeoffPanel() {
             <div
               key={rule.id}
               className={`flex items-center gap-2 rounded-2xl border px-3 py-2 ${
-                rule.is_active ? "border-cyan-200 bg-cyan-50" : "border-slate-100 bg-slate-50 opacity-50"
+                rule.is_active ? "border-cyan-300 bg-cyan-50" : "border-slate-300 bg-slate-100 opacity-60"
               }`}
             >
               <div className="flex-1 min-w-0">
@@ -124,7 +124,7 @@ export default function BudgetTradeoffPanel() {
                     -{Math.round(rule.reduce_ratio * 100)}%
                   </span>
                 </p>
-                <p className="text-xs text-slate-700">
+                <p className="text-xs font-semibold text-slate-800">
                   {t(
                     `${getCategoryLabel(rule.trigger_category, lang)}で使った額の${Math.round(rule.reduce_ratio * 100)}%を${getCategoryLabel(rule.target_category, lang)}予算から削減`,
                     `${Math.round(rule.reduce_ratio * 100)}% of ${getCategoryLabel(rule.trigger_category, "en")} spending reduces ${getCategoryLabel(rule.target_category, "en")} budget`,
@@ -155,14 +155,14 @@ export default function BudgetTradeoffPanel() {
       )}
 
       {showForm ? (
-        <div className="mt-3 space-y-3 rounded-2xl border border-slate-200 p-3">
+        <div className="mt-3 space-y-3 rounded-2xl border border-slate-300 p-3">
           <div>
             <p className="text-xs font-bold text-black mb-2">
               {t("ルール設定", "Rule setup")}
             </p>
             <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr]">
               <label className="block">
-                <span className="text-xs text-slate-700">{t("このカテゴリで使ったら", "When spending in")}</span>
+                <span className="text-xs font-semibold text-slate-800">{t("このカテゴリで使ったら", "When spending in")}</span>
                 <select
                   value={trigger}
                   onChange={(e) => setTrigger(e.target.value)}
@@ -173,7 +173,7 @@ export default function BudgetTradeoffPanel() {
               </label>
               <div className="flex items-end pb-2 text-slate-600 font-bold">→</div>
               <label className="block">
-                <span className="text-xs text-slate-700">{t("この予算を削減", "Reduce this budget")}</span>
+                <span className="text-xs font-semibold text-slate-800">{t("この予算を削減", "Reduce this budget")}</span>
                 <select
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
@@ -191,7 +191,7 @@ export default function BudgetTradeoffPanel() {
             <span className="text-xs font-bold text-black">
               {t(`削減割合: ${ratio}%`, `Reduction ratio: ${ratio}%`)}
             </span>
-            <p className="text-xs text-slate-700 mb-1">
+            <p className="text-xs font-semibold text-slate-800 mb-1">
               {t(
                 `例: 娯楽で¥10,000使ったら食費予算を¥${Math.round(10000 * ratio / 100).toLocaleString()}削減`,
                 `e.g. ¥${Math.round(10000 * ratio / 100).toLocaleString()} reduced for each ¥10,000 spent`,

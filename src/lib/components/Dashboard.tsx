@@ -1,6 +1,9 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
+import BudgetSurplusPanel from "./BudgetSurplusPanel";
+import DebitReservationPanel from "./DebitReservationPanel";
+import BudgetTradeoffPanel from "./BudgetTradeoffPanel";
 import Charts from "./Charts";
 import Calendar from "./Calendar";
 import GoalsAndDebt from "./GoalsAndDebt";
@@ -201,6 +204,9 @@ export default function Dashboard({
 }) {
   const lang = useLang();
   const [activePage, setActivePage] = useState<ActivePage>("input");
+  const [carryoverAmount, setCarryoverAmount] = useState(0);
+  const [pendingDebitTotal, setPendingDebitTotal] = useState(0);
+  const [tradeoffNotice, setTradeoffNotice] = useState<{ target_category: string; reduced_by: number }[]>([]);
   const [goalGeneration, setGoalGeneration] = useState<"general" | "kids" | "senior">("general");
   const [sharedArea, setSharedArea] = useState("");
   const [supportMode, setSupportMode] = useState<"save" | "standard" | "luxury">("standard");
@@ -288,7 +294,7 @@ export default function Dashboard({
       const investmentRate = stats.income > 0 ? Math.round((stats.investment / stats.income) * 100) : 0;
       const emergencyMonths = stats.expense > 0 ? Number((stats.reserveStock / stats.expense).toFixed(1)) : 0;
       const wasteRate = stats.expense > 0 ? Math.round((stats.waste / stats.expense) * 100) : 0;
-      const passiveIncomeRate = stats.expense > 0 ? Math.round((stats.passiveIncome / stats.expense) * 100) : 0;
+      const passiveIncomeRate = stats.income > 0 ? Math.round((stats.passiveIncome / stats.income) * 100) : 0;
       const budgetTotal = stats.budgetProgress.reduce((sum, item) => sum + item.amount, 0);
       const budgetUsageRate = budgetTotal > 0 ? Math.round((stats.expense / budgetTotal) * 100) : 0;
       const savingEfficiency =
@@ -384,8 +390,8 @@ export default function Dashboard({
                 ? `Preset passive-income goal: ${formatCurrency(passiveIncomeGoal)}`
                 : `配分プリセットの受動収入目標: ${formatCurrency(passiveIncomeGoal)}`
               : lang === "en"
-                ? "Passive income share against monthly expenses"
-                : "月間支出に対する受動収入の割合",
+                ? "Passive income share of total income"
+                : "総収入に対する受動収入の割合",
           ok: passiveIncomeGoal > 0 ? stats.passiveIncome >= passiveIncomeGoal : passiveIncomeRate >= 10,
         },
         {
@@ -460,12 +466,18 @@ export default function Dashboard({
       ? Math.round(recentBalances.reduce((sum, value) => sum + value, 0) / recentBalances.length)
       : stats.balance;
 
+    const daysRemaining = isCurrentMonth ? Math.max(daysInMonth - now.getDate(), 0) : 0;
+    const dailyRemaining = daysRemaining > 0 ? Math.round(stats.balance / daysRemaining) : null;
+
     return {
       projectedIncome,
       projectedExpense,
       projectedSaving,
       projectedBalance,
       annualProjection: averageBalance * 12,
+      daysRemaining,
+      dailyRemaining,
+      isCurrentMonth,
     };
   }, [currentMonth, stats.balance, stats.expense, stats.income, stats.investment, stats.saving, transactions]);
 
@@ -569,13 +581,33 @@ export default function Dashboard({
 
   const t = LABELS[lang];
 
+  // トレードオフルール適用通知
+  useEffect(() => {
+    function handleTradeoff(e: Event) {
+      const applied = (e as CustomEvent<{ target_category: string; reduced_by: number }[]>).detail;
+      if (!applied?.length) return;
+      setTradeoffNotice(applied);
+      window.setTimeout(() => setTradeoffNotice([]), 6000);
+    }
+    window.addEventListener("kakeibo-tradeoff-applied", handleTradeoff);
+    return () => window.removeEventListener("kakeibo-tradeoff-applied", handleTradeoff);
+  }, []);
+
+  // 今日の支出
+  const todayStats = useMemo(() => {
+    const today = new Date().toISOString().split("T")[0];
+    const todayTx = transactions.filter((tx) => tx.date === today && tx.type === "expense");
+    const todaySpent = todayTx.reduce((sum, tx) => sum + tx.amount, 0);
+    return { todaySpent };
+  }, [transactions]);
+
   return (
     <div className="dashboard-light-copy space-y-4 bg-[linear-gradient(120deg,#f8fafc_0%,#fce7f3_60%,#e0f2fe_100%)] bg-no-repeat bg-fixed">
       <div className="grid gap-3 xl:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-3">
           <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
             <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-              {[ 
+              {[
                 { label: lang === "en" ? "Income" : "収入", value: formatCurrency(stats.income), tone: "text-black" },
                 { label: lang === "en" ? "Expense" : "支出", value: formatCurrency(stats.expense), tone: "text-black" },
                 { label: lang === "en" ? "Saving" : "貯蓄", value: formatCurrency(stats.saving + stats.investment), tone: "text-black" },
@@ -587,7 +619,129 @@ export default function Dashboard({
                 </div>
               ))}
             </div>
+            {forecast.isCurrentMonth && (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {(() => {
+                  const spendable = stats.balance + carryoverAmount - pendingDebitTotal;
+                  const daily = forecast.daysRemaining > 0 ? Math.round(spendable / forecast.daysRemaining) : null;
+                  return (
+                    <>
+                      <div className={`flex flex-col justify-between rounded-3xl border p-4 shadow-sm ${spendable >= 0 ? "bg-emerald-50 border-emerald-300" : "bg-rose-50 border-rose-300"}`}>
+                        <p className="text-sm font-black uppercase tracking-[0.18em] text-black">
+                          {lang === "en" ? "Monthly remaining" : "今月あと使える額"}
+                        </p>
+                        <p className={`mt-3 text-2xl font-black ${spendable >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                          {formatCurrency(spendable)}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                          {carryoverAmount > 0
+                            ? lang === "en"
+                              ? `Incl. ${formatCurrency(carryoverAmount)} carryover · ${forecast.daysRemaining} days left`
+                              : `繰越 ${formatCurrency(carryoverAmount)} 含む · 残り ${forecast.daysRemaining} 日`
+                            : lang === "en"
+                              ? `${forecast.daysRemaining} days left this month`
+                              : `残り ${forecast.daysRemaining} 日`}
+                        </p>
+                      </div>
+                      <div className={`flex flex-col justify-between rounded-3xl border p-4 shadow-sm ${(daily ?? 0) >= 0 ? "bg-cyan-50 border-cyan-300" : "bg-rose-50 border-rose-300"}`}>
+                        <p className="text-sm font-black uppercase tracking-[0.18em] text-black">
+                          {lang === "en" ? "Daily budget" : "1日あたり使える額"}
+                        </p>
+                        <p className={`mt-3 text-2xl font-black ${(daily ?? 0) >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
+                          {daily !== null ? formatCurrency(daily) : "—"}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-slate-500">
+                          {lang === "en"
+                            ? `Remaining ÷ ${forecast.daysRemaining} days`
+                            : `残高 ÷ 残り ${forecast.daysRemaining} 日`}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
           </div>
+
+          <BudgetSurplusPanel
+            currentMonth={currentMonth}
+            balance={stats.balance}
+            onCarryoverLoaded={setCarryoverAmount}
+          />
+
+          <DebitReservationPanel
+            currentMonth={currentMonth}
+            onPendingTotalChange={setPendingDebitTotal}
+          />
+
+          {/* トレードオフルール適用通知 */}
+          {tradeoffNotice.length > 0 && (
+            <div className="board-card rounded-[28px] border border-amber-300 bg-amber-50 p-4">
+              <p className="text-sm font-black text-amber-800">
+                {lang === "en" ? "Budget tradeoff applied" : "予算トレードオフ自動適用"}
+              </p>
+              <ul className="mt-2 space-y-1">
+                {tradeoffNotice.map((item, i) => (
+                  <li key={i} className="text-xs text-amber-700">
+                    {lang === "en"
+                      ? `${item.target_category} budget reduced by ${formatCurrency(item.reduced_by)}`
+                      : `${item.target_category} の予算を ${formatCurrency(item.reduced_by)} 削減しました`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 今日の使用額・明日の予算 */}
+          {forecast.isCurrentMonth && (
+            <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-black">
+                {lang === "en" ? "Today & tomorrow" : "今日・明日の予算"}
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Spent today" : "今日の使用額"}</p>
+                  <p className={`mt-2 text-xl font-black ${todayStats.todaySpent > 0 ? "text-rose-700" : "text-slate-400"}`}>
+                    {todayStats.todaySpent > 0 ? formatCurrency(todayStats.todaySpent) : "—"}
+                  </p>
+                </div>
+                {(() => {
+                  const spendable = stats.balance + carryoverAmount - pendingDebitTotal;
+                  const baseDaily = forecast.daysRemaining > 0 ? Math.round(spendable / forecast.daysRemaining) : 0;
+                  const todayLeft = baseDaily - todayStats.todaySpent;
+                  const tomorrowBudget = forecast.daysRemaining > 1
+                    ? Math.round((spendable - todayStats.todaySpent) / (forecast.daysRemaining - 1))
+                    : null;
+                  return (
+                    <>
+                      <div className={`rounded-3xl border p-3 ${todayLeft >= 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
+                        <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Left for today" : "今日あと使える"}</p>
+                        <p className={`mt-2 text-xl font-black ${todayLeft >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                          {formatCurrency(todayLeft)}
+                        </p>
+                        {todayLeft < 0 && (
+                          <p className="mt-1 text-xs font-semibold text-rose-500">
+                            {lang === "en" ? "Over budget — deducted from tomorrow" : "使いすぎ → 明日に繰り越し"}
+                          </p>
+                        )}
+                      </div>
+                      <div className={`rounded-3xl border p-3 ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "border-cyan-200 bg-cyan-50" : "border-rose-200 bg-rose-50"}`}>
+                        <p className="text-xs font-bold text-slate-500">{lang === "en" ? "Tomorrow's budget" : "明日の予算"}</p>
+                        <p className={`mt-2 text-xl font-black ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
+                          {tomorrowBudget !== null ? formatCurrency(tomorrowBudget) : "—"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {lang === "en" ? "Auto-adjusted for today's use" : "今日の使用分を自動反映"}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          <BudgetTradeoffPanel />
 
           <div className="grid items-stretch gap-3 lg:grid-cols-2">
             <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">

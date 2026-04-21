@@ -119,6 +119,127 @@ function FieldRow({
   );
 }
 
+function GoalSimulator({
+  reserveStock,
+  monthlySaving,
+  currentMonth,
+  lang,
+}: {
+  reserveStock: number;
+  monthlySaving: number;
+  currentMonth: string;
+  lang: string;
+}) {
+  const t = (ja: string, en: string) => (lang === "en" ? en : ja);
+  const [goalAmount, setGoalAmount] = useState(0);
+  const [customMonthly, setCustomMonthly] = useState(0);
+
+  const monthly = customMonthly > 0 ? customMonthly : monthlySaving;
+  const gap = Math.max(0, goalAmount - reserveStock);
+  const monthsNeeded = goalAmount > 0 && monthly > 0 ? Math.ceil(gap / monthly) : null;
+
+  const achieveDate = useMemo(() => {
+    if (monthsNeeded === null) return null;
+    const [y, m] = currentMonth.split("-").map(Number);
+    const d = new Date(y, m - 1 + monthsNeeded, 1);
+    return `${d.getFullYear()}年${d.getMonth() + 1}月`;
+  }, [monthsNeeded, currentMonth]);
+
+  const milestones = useMemo(() => {
+    if (!goalAmount || !monthly) return [];
+    const rows: { pct: number; months: number; date: string; amount: number }[] = [];
+    for (const pct of [25, 50, 75, 100]) {
+      const target = Math.round((goalAmount * pct) / 100);
+      const remaining = Math.max(0, target - reserveStock);
+      const months = monthly > 0 ? Math.ceil(remaining / monthly) : 0;
+      const [y, m] = currentMonth.split("-").map(Number);
+      const d = new Date(y, m - 1 + months, 1);
+      const date = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+      rows.push({ pct, months, date, amount: target });
+    }
+    return rows;
+  }, [goalAmount, monthly, reserveStock, currentMonth]);
+
+  return (
+    <SectionCard title={t("目標達成シミュレーター", "Goal achievement simulator")}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="text-xs text-slate-400">{t("目標金額 (円)", "Goal amount (¥)")}</label>
+          <input
+            type="number"
+            min={0}
+            value={goalAmount || ""}
+            onChange={(e) => setGoalAmount(Math.max(0, Number(e.target.value) || 0))}
+            placeholder="1000000"
+            className="mt-1 w-full rounded-xl border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+          />
+        </div>
+        <div>
+          <label className="text-xs text-slate-400">
+            {t("月間積立額 (空欄=実績値)", "Monthly saving (blank = actual)")}
+          </label>
+          <input
+            type="number"
+            min={0}
+            value={customMonthly || ""}
+            onChange={(e) => setCustomMonthly(Math.max(0, Number(e.target.value) || 0))}
+            placeholder={String(monthlySaving)}
+            className="mt-1 w-full rounded-xl border border-slate-600 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400"
+          />
+        </div>
+      </div>
+
+      {goalAmount > 0 && (
+        <>
+          <div className="mt-3 rounded-2xl border border-cyan-700 bg-slate-950 p-3">
+            <p className="text-xs text-slate-400">{t("現在の貯蓄残高", "Current savings")}</p>
+            <p className="mt-0.5 text-sm font-semibold text-white">{formatCurrency(reserveStock)}</p>
+            <p className="mt-2 text-xs text-slate-400">{t("月間積立ペース", "Monthly saving pace")}</p>
+            <p className="mt-0.5 text-sm font-semibold text-white">{formatCurrency(monthly)}</p>
+          </div>
+
+          {monthsNeeded !== null && achieveDate ? (
+            <>
+              <div className={`mt-3 rounded-2xl border p-3 ${monthsNeeded === 0 ? "border-emerald-500 bg-emerald-950" : "border-cyan-600 bg-slate-950"}`}>
+                <p className="text-xs text-slate-400">{t("目標達成予定", "Expected achievement")}</p>
+                <p className="mt-1 text-2xl font-black text-white">
+                  {monthsNeeded === 0 ? t("達成済み！", "Already achieved!") : achieveDate}
+                </p>
+                {monthsNeeded > 0 && (
+                  <p className="mt-1 text-xs text-slate-400">
+                    {t(`あと約 ${monthsNeeded} か月`, `About ${monthsNeeded} months to go`)}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-3 space-y-1">
+                <p className="text-xs font-semibold text-slate-400">{t("マイルストーン", "Milestones")}</p>
+                {milestones.map((m) => (
+                  <div key={m.pct} className="flex items-center gap-2">
+                    <div className="w-10 shrink-0 text-xs text-slate-500">{m.pct}%</div>
+                    <div className="flex-1 h-2 rounded-full bg-slate-800">
+                      <div
+                        className={`h-2 rounded-full ${reserveStock >= m.amount ? "bg-emerald-500" : "bg-cyan-600"}`}
+                        style={{ width: `${Math.min(100, reserveStock >= m.amount ? 100 : Math.round((reserveStock / m.amount) * 100))}%` }}
+                      />
+                    </div>
+                    <div className="w-28 shrink-0 text-right text-xs text-slate-400">{m.date}</div>
+                    <div className="w-24 shrink-0 text-right text-xs text-slate-300">{formatCurrency(m.amount)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="mt-3 text-xs text-slate-400">
+              {t("月間積立額を入力するか、貯蓄実績を記録してください。", "Enter a monthly saving amount or record saving transactions.")}
+            </p>
+          )}
+        </>
+      )}
+    </SectionCard>
+  );
+}
+
 function GeneralGoals({ transactions, currentMonth, profile }: Props) {
   const lang = useLang();
   const t = (ja: string, en: string) => (lang === "en" ? en : ja);
@@ -274,6 +395,13 @@ function GeneralGoals({ transactions, currentMonth, profile }: Props) {
           <span>{formatCurrency(defenseGoal)}</span>
         </div>
       </SectionCard>
+
+      <GoalSimulator
+        reserveStock={stats.reserveStock}
+        monthlySaving={stats.totalSaving}
+        currentMonth={currentMonth}
+        lang={lang}
+      />
     </div>
   );
 }

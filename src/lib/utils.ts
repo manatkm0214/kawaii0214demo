@@ -26,6 +26,19 @@ export interface Budget {
   created_at: string;
 }
 
+export type SurplusAllocation = "saving" | "carryover" | "expense";
+
+export interface BudgetSurplus {
+  id: string;
+  user_id: string;
+  month: string;
+  amount: number;
+  allocation: SurplusAllocation;
+  target_category: string | null;
+  note: string;
+  created_at: string;
+}
+
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -38,15 +51,45 @@ export interface Profile {
   created_at: string;
 }
 
-export const PAYMENT_METHODS = ["カード", "現金", "口座振替", "QR決済", "その他"] as const;
+export const PAYMENT_METHODS = [
+  "カード",
+  "現金",
+  "口座振替",
+  "QR決済",
+  "PayPay",
+  "Suica/IC",
+  "nanaco",
+  "WAON",
+  "その他",
+] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<(typeof PAYMENT_METHODS)[number], { ja: string; en: string }> = {
   カード: { ja: "カード", en: "Card" },
   現金: { ja: "現金", en: "Cash" },
   口座振替: { ja: "口座振替", en: "Bank transfer" },
   QR決済: { ja: "QR決済", en: "QR payment" },
+  PayPay: { ja: "PayPay", en: "PayPay" },
+  "Suica/IC": { ja: "Suica/IC", en: "Suica/IC" },
+  nanaco: { ja: "nanaco", en: "nanaco" },
+  WAON: { ja: "WAON", en: "WAON" },
   その他: { ja: "その他", en: "Other" },
 };
+
+/** チャージ系支払い方法（チャージ額入力を表示する） */
+export const CHARGE_PAYMENT_METHODS: ReadonlyArray<string> = ["PayPay", "Suica/IC", "nanaco", "WAON", "QR決済"];
+
+export interface DebitReservation {
+  id: string;
+  user_id: string;
+  amount: number;
+  description: string;
+  card_name: string;
+  category: string;
+  month_charged: string;
+  debit_month: string;
+  is_settled: boolean;
+  created_at: string;
+}
 
 /** 受動収入として集計するカテゴリ（Dashboard・InputBoard 共通） */
 export const PASSIVE_INCOME_CATEGORIES = ["副業", "事業収入", "投資収入", "年金"] as const;

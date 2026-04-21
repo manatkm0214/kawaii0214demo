@@ -67,11 +67,11 @@ export const HOUSEHOLD_INDICATORS = [
     key: "passiveIncomeRate",
     labelJa: "受動収入率",
     labelEn: "Passive Income Rate",
-    formulaJa: "受動収入÷支出×100",
-    formulaEn: "Passive Income ÷ Expenses × 100",
+    formulaJa: "受動収入÷収入×100",
+    formulaEn: "Passive Income ÷ Income × 100",
     ideal: "10%以上で優秀",
-    descriptionJa: "支出に対する受動収入の割合。10%以上で優秀。",
-    descriptionEn: "The ratio of passive income to expenses. 10% or more is excellent.",
+    descriptionJa: "収入に対する受動収入の割合。10%以上で優秀。",
+    descriptionEn: "The ratio of passive income to total income. 10% or more is excellent.",
   },
   {
     key: "incomeStability",
@@ -219,7 +219,7 @@ export const CATEGORY_EXPENSE_GUIDELINES = [
 ];
 import { useEffect, useState } from "react";
 import { AI_INPUT_DRAFT_EVENT, type AIInputDraft } from "@/lib/aiInputDraft";
-import { CATEGORY_LABELS, CATEGORIES, getCategoryLabel, getPaymentMethodLabel, PAYMENT_METHODS, TabType, Transaction, TransactionType } from "@/lib/utils";
+import { CATEGORY_LABELS, CATEGORIES, CHARGE_PAYMENT_METHODS, getCategoryLabel, getPaymentMethodLabel, PAYMENT_METHODS, TabType, Transaction, TransactionType } from "@/lib/utils";
 import { useLang } from "@/lib/hooks/useLang";
 import { useAIProvider } from "@/lib/hooks/useAIProvider";
 import { useBoardTheme } from "@/lib/hooks/useBoardTheme";
@@ -462,6 +462,24 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
     setSuggestedCategories([]);
     setSavedFlash(true);
     window.setTimeout(() => setSavedFlash(false), 1800);
+
+    // 支出の場合: トレードオフルールを非同期で適用（失敗しても無視）
+    if ((tab === "expense" || tab === "fixed") && category) {
+      const txMonth = date.slice(0, 7);
+      fetch("/api/budget-tradeoff/apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category, amount: realAmount, month: txMonth }),
+      })
+        .then((r) => r.json())
+        .then((d: { applied?: { target_category: string; reduced_by: number }[] }) => {
+          if (d.applied && d.applied.length > 0) {
+            window.dispatchEvent(new CustomEvent("kakeibo-tradeoff-applied", { detail: d.applied }));
+            window.dispatchEvent(new Event("kakeibo-data-updated"));
+          }
+        })
+        .catch(() => undefined);
+    }
   }
 
   // CSS変数からボード背景を取得しスタイルとして適用
@@ -653,6 +671,21 @@ export default function InputForm({ onSuccess, recentTransactions }: Props) {
           ))}
         </div>
       </div>
+
+      {/* PAY/ICチャージ額入力 */}
+      {CHARGE_PAYMENT_METHODS.includes(payment) && (
+        <div className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3">
+          <p className="text-xs font-bold text-cyan-700">
+            {t(`${payment} チャージ・残高メモ`, `${payment} charge / balance note`)}
+          </p>
+          <p className="mt-0.5 text-xs text-cyan-600">
+            {t(
+              "金額欄にチャージした額を入力すると予算から差し引かれます。支出として記録する場合はそのまま保存してください。",
+              "Enter the charge amount to deduct from budget. Save as-is to record as an expense.",
+            )}
+          </p>
+        </div>
+      )}
 
       {/* 日付・固定費 */}
       <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-center">

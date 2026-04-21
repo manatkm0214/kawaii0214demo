@@ -222,7 +222,7 @@ export default function InputBoardCustomize() {
     const defenseRate  = defenseTarget > 0 ? pct(cumulativeSaving, defenseTarget) : null;
 
     // 受動収入率
-    const passiveRate  = pct(passiveInc, expense);
+    const passiveRate  = pct(passiveInc, income);
 
     // 収支安定性（過去3ヶ月の収支標準偏差）
     const balances = [0, 1, 2].map((i) => {
@@ -472,7 +472,7 @@ export default function InputBoardCustomize() {
               return (
                 <MetricCard
                   label={t("受動収入率", "Passive income rate")}
-                  formula={t("受動収入÷支出×100", "Passive income÷Expense×100")}
+                  formula={t("受動収入÷収入×100", "Passive income÷Income×100")}
                   value={`${v}%`}
                   ideal={t("10%以上で優秀", "10%+ is excellent")}
                   tone={toneVal}
@@ -524,7 +524,7 @@ export default function InputBoardCustomize() {
                 { label: t("節約率", "Budget adherence"),       formula: t("(予算-実績)÷予算×100", "(B-A)÷B×100"),        good: t("0%以上", "0%+"),            warn: t("−10〜0%", "−10 to 0%"),    bad: t("−10%未満", "<−10%") },
                 { label: t("先取り貯金達成度", "Pay-first"),    formula: t("貯金÷目標×100", "Saving÷Goal×100"),            good: t("100%以上", "100%+"),        warn: t("70〜99%", "70-99%"),       bad: t("70%未満", "<70%") },
                 { label: t("防衛資金達成度", "Emergency fund"), formula: t("累計貯金÷目標×100", "Savings÷Target×100"),     good: t("100%以上", "100%+"),        warn: t("50〜99%", "50-99%"),       bad: t("50%未満", "<50%") },
-                { label: t("受動収入率", "Passive income"),     formula: t("受動収入÷支出×100", "Passive÷Expense×100"),    good: t("10%以上", "10%+"),          warn: t("5〜9%", "5-9%"),           bad: t("5%未満", "<5%") },
+                { label: t("受動収入率", "Passive income"),     formula: t("受動収入÷収入×100", "Passive÷Income×100"),    good: t("10%以上", "10%+"),          warn: t("5〜9%", "5-9%"),           bad: t("5%未満", "<5%") },
                 { label: t("収支安定性", "Stability"),          formula: t("過去3ヶ月の標準偏差", "3-month std dev"),       good: t("3万未満", "<¥30k"),          warn: t("3〜8万", "¥30k-80k"),      bad: t("8万超", ">¥80k") },
               ].map((row) => (
                 <tr key={row.label} className="border-t border-slate-100 bg-white">

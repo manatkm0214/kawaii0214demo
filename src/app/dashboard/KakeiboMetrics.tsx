@@ -39,9 +39,9 @@ const METRICS = [
   },
   {
     label: "受動収入率",
-    formula: "受動収入 ÷ 支出 × 100",
+    formula: "受動収入 ÷ 収入 × 100",
     ideal: "10%以上で優秀",
-    description: "支出に対する副業・配当等の受動収入割合。"
+    description: "収入に対する副業・配当等の受動収入割合。"
   },
   {
     label: "収支安定性",

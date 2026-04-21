@@ -136,22 +136,30 @@ export async function getAppSessionUser(): Promise<AppSessionUser | null> {
     return null
   }
 
-  const email = typeof session.user.email === "string" ? session.user.email.trim().toLowerCase() : ""
-  if (!email) {
-    throw new Error("Auth0 session is missing an email address")
-  }
-
-  if (session.user.email_verified !== true) {
-    throw new Error("Auth0 session email is not verified")
-  }
-
-  const name = typeof session.user.name === "string" && session.user.name.trim() ? session.user.name.trim() : null
-  const picture = typeof session.user.picture === "string" && session.user.picture.trim() ? session.user.picture : null
+  const rawEmail = typeof session.user.email === "string" ? session.user.email.trim().toLowerCase() : ""
   const auth0Sub = typeof session.user.sub === "string" ? session.user.sub : ""
 
   if (!auth0Sub) {
     throw new Error("Auth0 session is missing a subject")
   }
+
+  // LINEはemail_verifiedをtrueにしない & メールを提供しない場合がある
+  // sub (LINE UID等) をフォールバックメールとして使用
+  const isLineProvider = auth0Sub.startsWith("line|") || auth0Sub.startsWith("custom:line|")
+  const email = rawEmail || (isLineProvider ? `${auth0Sub.replace(/[^a-zA-Z0-9]/g, "_")}@line.placeholder` : "")
+
+  if (!email) {
+    throw new Error("Auth0 session is missing an email address")
+  }
+
+  // LINE・ソーシャルログインはemail_verifiedがfalseでも許可
+  const emailVerified = session.user.email_verified === true || isLineProvider || !rawEmail
+  if (!emailVerified) {
+    throw new Error("Auth0 session email is not verified")
+  }
+
+  const name = typeof session.user.name === "string" && session.user.name.trim() ? session.user.name.trim() : null
+  const picture = typeof session.user.picture === "string" && session.user.picture.trim() ? session.user.picture : null
 
   const linkedProfileId = await findProfileIdByAuth0Sub(auth0Sub)
   const supabaseUserId = linkedProfileId ?? await ensureSupabaseAuthUser(email, name)

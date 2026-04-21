@@ -153,7 +153,7 @@ export default function BudgetSurplusPanel({ currentMonth, balance, onCarryoverL
       </div>
 
       {balance <= 0 ? (
-        <p className="mt-3 text-sm text-slate-700">
+        <p className="mt-3 text-sm font-semibold text-black">
           {t("差額がプラスになると振り分けを選べます。", "Allocate when monthly balance turns positive.")}
         </p>
       ) : (
@@ -172,7 +172,7 @@ export default function BudgetSurplusPanel({ currentMonth, balance, onCarryoverL
               >
                 <span className="text-xl">{opt.icon}</span>
                 <p className="mt-1 text-sm font-bold text-black">{opt.label}</p>
-                <p className="mt-0.5 text-xs font-semibold text-slate-800">{opt.desc}</p>
+                <p className="mt-0.5 text-xs font-semibold text-black">{opt.desc}</p>
               </button>
             ))}
           </div>

@@ -25,6 +25,7 @@ import type { KidsSavingsGoal } from "../types/kids-finance";
 import type { Budget, Profile, Transaction } from "@/lib/utils";
 import { formatCurrency, getCategoryLabel, PASSIVE_INCOME_CATEGORIES } from "@/lib/utils";
 import { useLang } from "@/lib/hooks/useLang";
+import { buildFixedCostFlags, loadHiddenFixedCostFlagIds, loadReviewedFixedCostFlagIds } from "@/lib/fixed-cost-flags";
 
 type ActivePage = "input" | "charts" | "calendar" | "goals" | "ai" | "annual" | "benchmarks" | "senior" | "kids";
 
@@ -211,6 +212,8 @@ export default function Dashboard({
   const [sharedArea, setSharedArea] = useState("");
   const [supportMode, setSupportMode] = useState<"save" | "standard" | "luxury">("standard");
   const [lifestyleSuggestions, setLifestyleSuggestions] = useState<LifestyleSuggestion[]>([]);
+  const [reviewedFixedCostFlagIds, setReviewedFixedCostFlagIds] = useState<string[]>(() => loadReviewedFixedCostFlagIds());
+  const [hiddenFixedCostFlagIds, setHiddenFixedCostFlagIds] = useState<string[]>(() => loadHiddenFixedCostFlagIds());
 
   const defaultSavingsGoal: KidsSavingsGoal = { title: "", targetAmount: 0, currentAmount: 0 };
   const [kidsState, setKidsState] = useState<KidsFinanceState>(() => {
@@ -231,6 +234,22 @@ export default function Dashboard({
     if (typeof window === "undefined") return;
     window.localStorage.setItem("kakeibo-kids-state", JSON.stringify(kidsState));
   }, [kidsState]);
+
+  useEffect(() => {
+    function handleFixedCostFlagsUpdated(event: Event) {
+      const detail = (event as CustomEvent<string[] | { reviewedIds?: string[]; hiddenIds?: string[] }>).detail;
+      if (Array.isArray(detail)) {
+        setReviewedFixedCostFlagIds(detail);
+        setHiddenFixedCostFlagIds(loadHiddenFixedCostFlagIds());
+        return;
+      }
+      setReviewedFixedCostFlagIds(Array.isArray(detail?.reviewedIds) ? detail.reviewedIds : loadReviewedFixedCostFlagIds());
+      setHiddenFixedCostFlagIds(Array.isArray(detail?.hiddenIds) ? detail.hiddenIds : loadHiddenFixedCostFlagIds());
+    }
+
+    window.addEventListener("kakeibo-fixed-cost-flags-updated", handleFixedCostFlagsUpdated);
+    return () => window.removeEventListener("kakeibo-fixed-cost-flags-updated", handleFixedCostFlagsUpdated);
+  }, []);
 
   const stats = useMemo(() => {
     const monthly = transactions.filter((item) => item.date.startsWith(currentMonth));
@@ -593,6 +612,29 @@ export default function Dashboard({
     return () => window.removeEventListener("kakeibo-tradeoff-applied", handleTradeoff);
   }, []);
 
+  // 隠れた支出（その他カテゴリ）
+  const hiddenExpenses = useMemo(() => {
+    return transactions.filter(
+      (tx) => tx.type === "expense" && tx.date.startsWith(currentMonth) && tx.category === "その他"
+    );
+  }, [transactions, currentMonth]);
+
+  // 手取り → 自由なお金（収益分岐点）
+  const breakEven = useMemo(() => {
+    const FIXED_CATS = ["住居", "水道・光熱費", "通信費", "保険", "税金", "サブスク"];
+    const SURVIVAL_CATS = ["食費", "医療費", "日用品", "交通費"];
+    const monthTx = transactions.filter((tx) => tx.date.startsWith(currentMonth) && tx.type === "expense");
+    const fixed = monthTx.filter((tx) => FIXED_CATS.includes(tx.category)).reduce((s, tx) => s + tx.amount, 0);
+    const survival = monthTx.filter((tx) => SURVIVAL_CATS.includes(tx.category)).reduce((s, tx) => s + tx.amount, 0);
+    const free = stats.income - fixed - survival;
+    return { fixed, survival, free, fixedCats: FIXED_CATS, survivalCats: SURVIVAL_CATS };
+  }, [transactions, currentMonth, stats.income]);
+
+  const fixedCostFlags = useMemo(
+    () => buildFixedCostFlags(transactions, currentMonth, reviewedFixedCostFlagIds, hiddenFixedCostFlagIds),
+    [transactions, currentMonth, reviewedFixedCostFlagIds, hiddenFixedCostFlagIds]
+  );
+
   // 今日の支出
   const todayStats = useMemo(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -633,7 +675,7 @@ export default function Dashboard({
                         <p className={`mt-3 text-2xl font-black ${spendable >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                           {formatCurrency(spendable)}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                        <p className="mt-1 text-xs font-semibold text-black">
                           {carryoverAmount > 0
                             ? lang === "en"
                               ? `Incl. ${formatCurrency(carryoverAmount)} carryover · ${forecast.daysRemaining} days left`
@@ -650,7 +692,7 @@ export default function Dashboard({
                         <p className={`mt-3 text-2xl font-black ${(daily ?? 0) >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
                           {daily !== null ? formatCurrency(daily) : "—"}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-slate-700">
+                        <p className="mt-1 text-xs font-semibold text-black">
                           {lang === "en"
                             ? `Remaining ÷ ${forecast.daysRemaining} days`
                             : `残高 ÷ 残り ${forecast.daysRemaining} 日`}
@@ -699,9 +741,9 @@ export default function Dashboard({
                 {lang === "en" ? "Today & tomorrow" : "今日・明日の予算"}
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-3xl border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Spent today" : "今日の使用額"}</p>
-                  <p className={`mt-2 text-xl font-black ${todayStats.todaySpent > 0 ? "text-rose-700" : "text-slate-400"}`}>
+                <div className="rounded-3xl border border-slate-300 bg-slate-50 p-3">
+                  <p className="text-xs font-bold text-black">{lang === "en" ? "Spent today" : "今日の使用額"}</p>
+                  <p className={`mt-2 text-xl font-black ${todayStats.todaySpent > 0 ? "text-rose-700" : "text-slate-500"}`}>
                     {todayStats.todaySpent > 0 ? formatCurrency(todayStats.todaySpent) : "—"}
                   </p>
                 </div>
@@ -714,23 +756,23 @@ export default function Dashboard({
                     : null;
                   return (
                     <>
-                      <div className={`rounded-3xl border p-3 ${todayLeft >= 0 ? "border-emerald-200 bg-emerald-50" : "border-rose-200 bg-rose-50"}`}>
-                        <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Left for today" : "今日あと使える"}</p>
+                      <div className={`rounded-3xl border p-3 ${todayLeft >= 0 ? "border-emerald-300 bg-emerald-50" : "border-rose-300 bg-rose-50"}`}>
+                        <p className="text-xs font-bold text-black">{lang === "en" ? "Left for today" : "今日あと使える"}</p>
                         <p className={`mt-2 text-xl font-black ${todayLeft >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                           {formatCurrency(todayLeft)}
                         </p>
                         {todayLeft < 0 && (
-                          <p className="mt-1 text-xs font-semibold text-rose-500">
+                          <p className="mt-1 text-xs font-semibold text-rose-600">
                             {lang === "en" ? "Over budget — deducted from tomorrow" : "使いすぎ → 明日に繰り越し"}
                           </p>
                         )}
                       </div>
-                      <div className={`rounded-3xl border p-3 ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "border-cyan-200 bg-cyan-50" : "border-rose-200 bg-rose-50"}`}>
-                        <p className="text-xs font-bold text-slate-700">{lang === "en" ? "Tomorrow's budget" : "明日の予算"}</p>
+                      <div className={`rounded-3xl border p-3 ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "border-cyan-300 bg-cyan-50" : "border-rose-300 bg-rose-50"}`}>
+                        <p className="text-xs font-bold text-black">{lang === "en" ? "Tomorrow's budget" : "明日の予算"}</p>
                         <p className={`mt-2 text-xl font-black ${tomorrowBudget !== null && tomorrowBudget >= 0 ? "text-cyan-700" : "text-rose-700"}`}>
                           {tomorrowBudget !== null ? formatCurrency(tomorrowBudget) : "—"}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-slate-600">
+                        <p className="mt-1 text-xs font-semibold text-black">
                           {lang === "en" ? "Auto-adjusted for today's use" : "今日の使用分を自動反映"}
                         </p>
                       </div>
@@ -742,6 +784,148 @@ export default function Dashboard({
           )}
 
           <BudgetTradeoffPanel />
+
+          {/* 隠れた支出・雑費の強制可視化 */}
+          {hiddenExpenses.length > 0 && (
+            <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-black">
+                {lang === "en" ? "Hidden misc expenses" : "見えない雑費の強制可視化"}
+              </p>
+              <p className="mt-1 text-sm font-bold text-black">
+                {lang === "en"
+                  ? `${hiddenExpenses.length} uncategorized items this month`
+                  : `今月「その他」に流れた支出 ${hiddenExpenses.length}件`}
+              </p>
+              <div className="mt-3 space-y-1">
+                {hiddenExpenses.slice(0, 5).map((tx) => (
+                  <div key={tx.id} className="flex items-center justify-between rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-black truncate">{tx.memo || (lang === "en" ? "No description" : "説明なし")}</p>
+                      <p className="text-xs font-semibold text-black">{tx.date}</p>
+                    </div>
+                    <span className="shrink-0 text-sm font-black text-amber-800">{formatCurrency(tx.amount)}</span>
+                  </div>
+                ))}
+                {hiddenExpenses.length > 5 && (
+                  <p className="text-xs font-bold text-black pl-1">
+                    {lang === "en" ? `+${hiddenExpenses.length - 5} more items` : `他 ${hiddenExpenses.length - 5}件`}
+                  </p>
+                )}
+              </div>
+              <div className="mt-3 rounded-2xl border border-amber-300 bg-amber-100 px-3 py-2 flex items-center justify-between">
+                <p className="text-sm font-bold text-black">{lang === "en" ? "Total misc" : "雑費合計"}</p>
+                <span className="text-lg font-black text-amber-900">
+                  {formatCurrency(hiddenExpenses.reduce((s, tx) => s + tx.amount, 0))}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 収益分岐点・手取り → 自由なお金 */}
+          {stats.income > 0 && (
+            <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-black">
+                {lang === "en" ? "Free money after essentials" : "収益分岐点・自由なお金"}
+              </p>
+              <p className="mt-1 text-sm font-bold text-black">
+                {lang === "en"
+                  ? "Take-home income minus survival costs"
+                  : "手取りから固定費・生存コストを引いた自由なお金"}
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-300 bg-slate-50 px-3 py-3">
+                  <p className="text-xs font-bold text-black">{lang === "en" ? "Take-home" : "手取り収入"}</p>
+                  <p className="mt-1 text-lg font-black text-black">{formatCurrency(stats.income)}</p>
+                </div>
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-3">
+                  <p className="text-xs font-bold text-black">{lang === "en" ? "Fixed + survival" : "固定費＋生存コスト"}</p>
+                  <p className="mt-1 text-lg font-black text-rose-700">
+                    -{formatCurrency(breakEven.fixed + breakEven.survival)}
+                  </p>
+                  <p className="mt-0.5 text-xs font-semibold text-black">
+                    {lang === "en"
+                      ? `Fixed: ${formatCurrency(breakEven.fixed)} / Survival: ${formatCurrency(breakEven.survival)}`
+                      : `固定費: ${formatCurrency(breakEven.fixed)} / 生存: ${formatCurrency(breakEven.survival)}`}
+                  </p>
+                </div>
+                <div className={`rounded-2xl border px-3 py-3 ${breakEven.free >= 0 ? "border-emerald-300 bg-emerald-50" : "border-rose-300 bg-rose-50"}`}>
+                  <p className="text-xs font-bold text-black">{lang === "en" ? "Free money" : "自由なお金"}</p>
+                  <p className={`mt-1 text-lg font-black ${breakEven.free >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
+                    {formatCurrency(breakEven.free)}
+                  </p>
+                  <p className="mt-0.5 text-xs font-semibold text-black">
+                    {breakEven.free >= 0
+                      ? (lang === "en" ? "Available for wants & savings" : "娯楽・貯蓄に使える")
+                      : (lang === "en" ? "Over essential budget" : "生存コスト超過")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 固定費・サブスク見直しフラグ */}
+          <div className="board-card border shadow-sm rounded-[28px] p-4 bg-white">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-black">
+              {lang === "en" ? "Fixed cost flags" : "固定費・サブスク見直しフラグ"}
+            </p>
+            <p className="mt-1 text-sm font-bold text-black">
+              {lang === "en"
+                ? "Cancellation and plan-change candidates from this month"
+                : "今月の固定費から、解約・プラン変更を検討する候補を表示します。"}
+            </p>
+            {fixedCostFlags.length === 0 ? (
+              <p className="mt-3 text-sm font-semibold text-black">
+                {lang === "en"
+                  ? "No fixed-cost cancellation candidates found for this month."
+                  : "今月は固定費・サブスクの見直し候補が見つかりませんでした。"}
+              </p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {fixedCostFlags.slice(0, 5).map((flag) => {
+                  const tone =
+                    flag.priority === "high"
+                      ? "border-rose-300 bg-rose-50 text-rose-700"
+                      : flag.priority === "medium"
+                        ? "border-amber-300 bg-amber-50 text-amber-800"
+                        : "border-cyan-300 bg-cyan-50 text-cyan-700";
+                  return (
+                    <div key={flag.id} className={`rounded-2xl border px-3 py-3 ${flag.reviewed ? "border-slate-200 bg-slate-50" : tone}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-black text-black">{flag.title}</p>
+                          <p className="text-xs font-semibold text-black">
+                            {lang === "en" ? flag.categoryLabelEn : flag.categoryLabelJa}
+                            {flag.reviewed ? (lang === "en" ? " · reviewed" : " · 確認済み") : ""}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-bold text-black">{lang === "en" ? "Monthly impact" : "月額影響"}</p>
+                          <p className={`text-base font-black ${flag.reviewed ? "text-slate-600" : ""}`}>
+                            {formatCurrency(flag.amount)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {(lang === "en" ? flag.reasonsEn : flag.reasonsJa).map((reason) => (
+                          <span key={reason} className="rounded-full border border-black/10 bg-white/70 px-2 py-0.5 text-[10px] font-bold text-black">
+                            {reason}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="mt-2 text-xs font-semibold text-black">
+                        {lang === "en" ? flag.actionEn : flag.actionJa}
+                      </p>
+                    </div>
+                  );
+                })}
+                {fixedCostFlags.length > 5 && (
+                  <p className="pl-1 text-xs font-bold text-black">
+                    {lang === "en" ? `+${fixedCostFlags.length - 5} more in Goals` : `ほか ${fixedCostFlags.length - 5} 件は目標タブで確認できます`}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           <div className="grid items-stretch gap-3 lg:grid-cols-2">
             <div className="board-card border shadow-sm h-full rounded-[28px] p-4 bg-white">

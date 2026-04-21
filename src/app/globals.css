@@ -390,26 +390,65 @@ html[data-theme="light"] .dashboard-light-copy .font-black {
 
 html[data-theme="light"] .dashboard-light-copy .board-card {
   background:
-    radial-gradient(circle at top right, rgba(251, 207, 232, 0.16), transparent 32%),
-    radial-gradient(circle at bottom left, rgba(191, 219, 254, 0.16), transparent 34%),
-    linear-gradient(180deg, rgba(255, 252, 255, 0.992) 0%, rgba(255, 247, 251, 0.986) 48%, rgba(246, 250, 255, 0.99) 100%) !important;
-  border-color: #64748b !important;
+    radial-gradient(circle at top right, rgba(244, 114, 182, 0.1), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(14, 165, 233, 0.1), transparent 30%),
+    linear-gradient(180deg, #ffffff 0%, #fff7fb 48%, #f8fbff 100%) !important;
+  border-color: #1e293b !important;
   border-width: 2px !important;
   box-shadow:
-    0 16px 28px -24px rgba(15, 23, 42, 0.12),
+    0 18px 34px -24px rgba(15, 23, 42, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.94);
 }
 
 html[data-theme="light"] .dashboard-light-copy .board-tile {
   background:
-    radial-gradient(circle at top left, rgba(244, 114, 182, 0.08), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(96, 165, 250, 0.1), transparent 32%),
-    linear-gradient(180deg, rgba(255, 250, 253, 0.988) 0%, rgba(251, 247, 255, 0.982) 52%, rgba(247, 250, 255, 0.988) 100%) !important;
-  border-color: #64748b !important;
+    radial-gradient(circle at top left, rgba(244, 114, 182, 0.12), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 28%),
+    linear-gradient(180deg, #ffffff 0%, #fff7fb 52%, #f8fbff 100%) !important;
+  border-color: #334155 !important;
   border-width: 2px !important;
   box-shadow:
-    0 12px 22px -20px rgba(15, 23, 42, 0.1),
+    0 12px 24px -18px rgba(15, 23, 42, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.96);
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="bg-slate-800"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-slate-900"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-slate-950"] {
+  background: #ffffff !important;
+  border-color: #1e293b !important;
+  border-width: 2px !important;
+  color: #000000 !important;
+  box-shadow: 0 12px 24px -20px rgba(15, 23, 42, 0.28) !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="bg-rose-50"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-rose-950"] {
+  background: #ffe4e6 !important;
+  border-color: #be123c !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="bg-amber-50"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-amber-950"] {
+  background: #fef3c7 !important;
+  border-color: #b45309 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="bg-cyan-50"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-cyan-950"] {
+  background: #cffafe !important;
+  border-color: #0e7490 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="bg-emerald-50"],
+html[data-theme="light"] .dashboard-light-copy [class*="bg-emerald-950"] {
+  background: #d1fae5 !important;
+  border-color: #047857 !important;
+}
+
+html[data-theme="light"] .dashboard-light-copy [class*="text-slate-400"],
+html[data-theme="light"] .dashboard-light-copy [class*="text-slate-500"] {
+  color: #0f172a !important;
 }
 
 html[data-theme="light"] .dashboard-light-copy .safety-contrast-card {
